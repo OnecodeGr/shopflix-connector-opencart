@@ -16,7 +16,8 @@ use Onecode\Shopflix\Helper;
  * @property-read \ModelSettingExtension $model_setting_extension
  * @property-read \ModelSettingEvent $model_setting_event
  * @property-read \ModelSettingModule $model_setting_module
- * @property-read \ModelExtensionModuleOnecodeShopflixBasic $model_extension_module_onecode_shopflix_Basic
+ * @property-read \ModelExtensionModuleOnecodeShopflixOrder $model_extension_module_onecode_shopflix_order
+ * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
  */
 class ControllerExtensionModuleOnecodeShopflix extends Controller
 {
@@ -29,9 +30,10 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->load->model('setting/module');
         $this->load->model('setting/event');
         $this->load->model('setting/extension');
-        $this->load->model('extension/module/onecode/shopflix/Basic');
-        $this->load->helper('onecode/shopflix/Helper');
-        $this->load->language(Helper\Basic::getMainLink());
+        $this->load->model('extension/module/onecode/shopflix/order');
+        $this->load->model('extension/module/onecode/shopflix/product');
+        $this->load->helper('onecode/shopflix/BasicHelper');
+        $this->load->language(Helper\BasicHelper::getMainLink());
     }
 
     public function index()
@@ -43,10 +45,10 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         }
         else
         {
-            $module = Helper\Basic::getCurrentModule($this->model_setting_module);
+            $module = Helper\BasicHelper::getCurrentModule($this->model_setting_module);
             $this->response->redirect(
                 $this->url->link(
-                    Helper\Basic::getMainLink(),
+                    Helper\BasicHelper::getMainLink(),
                     [
                         'user_token' => $this->session->data['user_token'],
                         'module_id' => $module['module_id'],
@@ -57,11 +59,10 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
 
     public function install()
     {
-        $this->model_extension_module_onecode_shopflix_Basic->install();
-        $this->model_setting_setting->editSetting(Helper\Basic::getModuleId(), [
-            Helper\Basic::getModuleId() . '_status' => 1,
+        $this->model_setting_setting->editSetting(Helper\BasicHelper::getModuleId(), [
+            Helper\BasicHelper::getModuleId() . '_status' => 1,
         ]);
-        $this->model_setting_extension->install('module', Helper\Basic::getModuleId());
+        $this->model_setting_extension->install('module', Helper\BasicHelper::getModuleId());
         foreach ($this->getEventList()->get() as $item)
         {
             $this->model_setting_event->addEvent(
@@ -72,17 +73,20 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                 $item->order ?? 0
             );
         }
+        $this->model_extension_module_onecode_shopflix_order->install();
+        $this->model_extension_module_onecode_shopflix_product->install();
     }
 
     public function uninstall()
     {
-        $this->model_extension_module_onecode_shopflix_Basic->uninstall();
-        $this->model_setting_setting->deleteSetting(Helper\Basic::getModuleId());
+        $this->model_setting_setting->deleteSetting(Helper\BasicHelper::getModuleId());
         foreach ($this->getEventList()->get() as $item)
         {
             $this->model_setting_event->deleteEventByCode($item->code);
         }
-        $this->model_setting_extension->uninstall('module', Helper\Basic::getModuleId());
+        $this->model_setting_extension->uninstall('module', Helper\BasicHelper::getModuleId());
+        $this->model_extension_module_onecode_shopflix_order->uninstall();
+        $this->model_extension_module_onecode_shopflix_product->uninstall();
     }
 
     public function validate()
@@ -107,10 +111,12 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             //    $postData['s1']['token'] = $this->SoftoneApiLibrary->createS1AuthToken($postData['s1']['username'], $postData['s1']['password']);
             //    unset($postData['s1']['createToken']);
             //}
-            //$this->model_extension_module_onecode_shopflix_basic->save($postData, $moduleId);
+
+            $postData['name'] = Helper\BasicHelper::getModuleId();
+            $this->model_setting_module->editModule($moduleId, $postData);
             $this->session->data['success'] = $this->language->get('text_success');
             $this->response->redirect(
-                $this->url->link(Helper\Basic::getMainLink(), [
+                $this->url->link(Helper\BasicHelper::getMainLink(), [
                     'user_token' => $this->session->data['user_token'],
                     'module_id' => $moduleId,
                 ], true));
@@ -123,7 +129,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $data['header'] = $this->load->controller('common/header');
         $data['footer'] = $this->load->controller('common/footer');
         $data['column_left'] = $this->load->controller('common/column_left');
-        $this->response->setOutput($this->load->view(Helper\Basic::getPath().'/config', $data));
+        $this->response->setOutput($this->load->view(Helper\BasicHelper::getPath().'/config', $data));
     }
 
     protected function formBreadcrumbs(): array
@@ -140,7 +146,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                 ],
                 [
                     'text' => $this->language->get('heading_title_main'),
-                    'href' => $this->url->link(Helper\Basic::getMainLink(), $args, true),
+                    'href' => $this->url->link(Helper\BasicHelper::getMainLink(), $args, true),
                 ],
             ],
         ];
@@ -168,12 +174,24 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
     {
         $user_token = $this->session->data['user_token'];
         return array_merge([
-            'action' => $this->url->link(Helper\Basic::getMainLink(), [
+            'action' => $this->url->link(Helper\BasicHelper::getMainLink(), [
                 'user_token' => $user_token,
                 'module_id' => $moduleId,
             ], true),
             'user_token' => $user_token,
-        ], $this->model_extension_module_onecode_shopflix_Basic->load());
+        ], $this->loadData());
+    }
+
+    protected function loadData(): array
+    {
+        $data = current($this->getModuleList());
+        $data = $data['setting'] ?? [];
+        return json_decode($data, true);
+    }
+
+    private function getModuleList(): array
+    {
+        return (array) $this->model_setting_module->getModulesByCode(Helper\BasicHelper::getModuleId());
     }
 
     protected function getEventList(): EventGroup

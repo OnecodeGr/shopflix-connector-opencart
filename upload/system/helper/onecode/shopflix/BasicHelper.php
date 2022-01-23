@@ -1,7 +1,7 @@
 <?php
 namespace Onecode\Shopflix\Helper;
 
-class Basic
+class BasicHelper
 {
     public static function getModuleId(): string
     {

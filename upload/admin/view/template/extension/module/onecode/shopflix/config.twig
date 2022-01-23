@@ -30,57 +30,60 @@
             <div class="panel-body">
                 <form action="{{ action }}" method="post" enctype="multipart/form-data"
                       id="form-module" class="form-horizontal">
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label"
-                               for="input-status">{{ entry_status }}</label>
-                        <div class="col-sm-10">
-                            <select name="status" id="input-status" class="form-control">
-                                {% if status %}
-                                    <option value="1"
-                                            selected="selected">{{ text_enabled }}</option>
-                                    <option value="0">{{ text_disabled }}</option>
-                                {% else %}
-                                    <option value="1">{{ text_enabled }}</option>
-                                    <option value="0"
-                                            selected="selected">{{ text_disabled }}</option>
-                                {% endif %}
-                            </select>
+                    <fieldset>
+                        <legend>{{ entry_api_configuration }}</legend>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"
+                                   for="input-status">{{ entry_status }}</label>
+                            <div class="col-sm-10">
+                                <select name="status" id="input-status" class="form-control">
+                                    {% if status %}
+                                        <option value="1"
+                                                selected="selected">{{ text_enabled }}</option>
+                                        <option value="0">{{ text_disabled }}</option>
+                                    {% else %}
+                                        <option value="1">{{ text_enabled }}</option>
+                                        <option value="0"
+                                                selected="selected">{{ text_disabled }}</option>
+                                    {% endif %}
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label"
-                               for="input-convert_to_order">{{ entry_convert_to_order }}</label>
-                        <div class="col-sm-4">
-                            <select name="convert_to_order" id="input-convert_to_order"
-                                    class="form-control">
-                                {% if convert_to_order %}
-                                    <option value="1"
-                                            selected="selected">{{ text_enabled }}</option>
-                                    <option value="0">{{ text_disabled }}</option>
-                                {% else %}
-                                    <option value="1">{{ text_enabled }}</option>
-                                    <option value="0"
-                                            selected="selected">{{ text_disabled }}</option>
-                                {% endif %}
-                            </select>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"
+                                   for="input-convert_to_order">{{ entry_convert_to_order }}</label>
+                            <div class="col-sm-4">
+                                <select name="convert_to_order" id="input-convert_to_order"
+                                        class="form-control">
+                                    {% if convert_to_order %}
+                                        <option value="1"
+                                                selected="selected">{{ text_enabled }}</option>
+                                        <option value="0">{{ text_disabled }}</option>
+                                    {% else %}
+                                        <option value="1">{{ text_enabled }}</option>
+                                        <option value="0"
+                                                selected="selected">{{ text_disabled }}</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                            <label class="col-sm-2 control-label"
+                                   for="input-auto_accept_order">{{ entry_auto_accept_order }}</label>
+                            <div class="col-sm-4">
+                                <select name="auto_accept_order" id="input-auto_accept_order"
+                                        class="form-control">
+                                    {% if auto_accept_order %}
+                                        <option value="1"
+                                                selected="selected">{{ text_enabled }}</option>
+                                        <option value="0">{{ text_disabled }}</option>
+                                    {% else %}
+                                        <option value="1">{{ text_enabled }}</option>
+                                        <option value="0"
+                                                selected="selected">{{ text_disabled }}</option>
+                                    {% endif %}
+                                </select>
+                            </div>
                         </div>
-                        <label class="col-sm-2 control-label"
-                               for="input-auto_accept_order">{{ entry_auto_accept_order }}</label>
-                        <div class="col-sm-4">
-                            <select name="auto_accept_order" id="input-auto_accept_order"
-                                    class="form-control">
-                                {% if auto_accept_order %}
-                                    <option value="1"
-                                            selected="selected">{{ text_enabled }}</option>
-                                    <option value="0">{{ text_disabled }}</option>
-                                {% else %}
-                                    <option value="1">{{ text_enabled }}</option>
-                                    <option value="0"
-                                            selected="selected">{{ text_disabled }}</option>
-                                {% endif %}
-                            </select>
-                        </div>
-                    </div>
+                    </fieldset>
                     <fieldset>
                         <legend>{{ entry_api_configuration }}</legend>
                         <div class="form-group">
@@ -106,10 +109,149 @@
                             <label class="col-sm-2 control-label"
                                    for="input-api_password">{{ entry_api_password }}</label>
                             <div class="col-sm-4">
-                                <input type="password" name="api_password"
+                                <input type="text" name="api_password"
                                        value="{{ api_password }}"
                                        placeholder="{{ entry_api_password }}"
                                        id="input-api_password"
+                                       class="form-control" autocomplete="off"/>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset>
+                        <legend>{{ entry_xml_configuration }}</legend>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_status">{{ entry_xml_status }}</label>
+                            <div class="col-sm-10">
+                                <select name="xml_status" id="input-xml_status"
+                                        class="form-control">
+                                    {% if xml_status %}
+                                        <option value="1"
+                                                selected="selected">{{ text_enabled }}</option>
+                                        <option value="0">{{ text_disabled }}</option>
+                                    {% else %}
+                                        <option value="1">{{ text_enabled }}</option>
+                                        <option value="0"
+                                                selected="selected">{{ text_disabled }}</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_export_category_tree">{{ entry_xml_export_category_tree }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_export_category_tree"
+                                        id="input-xml_export_category_tree" class="form-control">
+                                    {% if xml_export_category_tree %}
+                                        <option value="1"
+                                                selected="selected">{{ text_enabled }}</option>
+                                        <option value="0">{{ text_disabled }}</option>
+                                    {% else %}
+                                        <option value="1">{{ text_enabled }}</option>
+                                        <option value="0"
+                                                selected="selected">{{ text_disabled }}</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_mnp_attr">{{ entry_xml_mnp_attr }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_mnp_attr" id="input-xml_mnp_attr"
+                                        class="form-control"
+                                        data-display="#input-xml_mnp_attr_other">
+                                    <option value="mnp" selected="selected">{{ text_mnp }}</option>
+                                    <option value="other">{{ text_other }}</option>
+                                </select>
+                                <input type="text" name="xml_mnp_attr_other"
+                                       value="{{ xml_mnp_attr_other }}"
+                                       placeholder="{{ entry_xml_mnp_attr_other }}"
+                                       id="input-xml_mnp_attr_other"
+                                       class="form-control" autocomplete="off"/>
+                            </div>
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_ean_attr">{{ entry_xml_ean_attr }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_ean_attr" id="input-xml_ean_attr"
+                                        class="form-control"
+                                        data-display="#input-xml_ean_attr_other">
+                                    <option value="ean" selected="selected">{{ text_ean }}</option>
+                                    <option value="other">{{ text_other }}</option>
+                                </select>
+                                <input type="text" name="xml_ean_attr_other"
+                                       value="{{ xml_ean_attr_other }}"
+                                       placeholder="{{ entry_xml_ean_attr_other }}"
+                                       id="input-xml_ean_attr_other"
+                                       class="form-control" autocomplete="off"/>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_title_attr">{{ entry_xml_title_attr }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_title_attr" id="input-xml_title_attr"
+                                        class="form-control"
+                                        data-display="#input-xml_title_attr_other">
+                                    <option value="title"
+                                            selected="selected">{{ text_title }}</option>
+                                    <option value="other">{{ text_other }}</option>
+                                </select>
+                                <input type="text" name="xml_title_attr_other"
+                                       value="{{ xml_title_attr_other }}"
+                                       placeholder="{{ entry_xml_title_attr_other }}"
+                                       id="input-xml_title_attr_other"
+                                       class="form-control" autocomplete="off"/>
+                            </div>
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_description">{{ entry_xml_description_attr }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_description" id="input-xml_description"
+                                        class="form-control"
+                                        data-display="#input-xml_description_attr_other">
+                                    <option value="description"
+                                            selected="selected">{{ text_description }}</option>
+                                    <option value="other">{{ text_other }}</option>
+                                </select>
+                                <input type="text" name="xml_description_attr_other"
+                                       value="{{ xml_description_attr_other }}"
+                                       placeholder="{{ entry_xml_description_attr_other }}"
+                                       id="input-xml_description_attr_other"
+                                       class="form-control" autocomplete="off"/>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_brand_attr">{{ entry_xml_brand_attr }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_brand_attr" id="input-xml_brand_attr"
+                                        class="form-control"
+                                        data-display="#input-xml_brand_attr_other">
+                                    <option value="manufacturer"
+                                            selected="selected">{{ text_manufacturer }}</option>
+                                    <option value="other">{{ text_other }}</option>
+                                </select>
+                                <input type="text" name="xml_brand_attr_other"
+                                       value="{{ xml_brand_attr_other }}"
+                                       placeholder="{{ entry_xml_brand_attr_other }}"
+                                       id="input-xml_brand_attr_other"
+                                       class="form-control" autocomplete="off"/>
+                            </div>
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_weight_attr">{{ entry_xml_weight_attr }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_weight_attr" id="input-xml_weight_attr"
+                                        class="form-control"
+                                        data-display="#input-xml_weight_attr_other">
+                                    <option value="weight"
+                                            selected="selected">{{ text_weight }}</option>
+                                    <option value="other">{{ text_other }}</option>
+                                </select>
+                                <input type="text" name="xml_weight_attr_other"
+                                       value="{{ xml_weight_attr_other }}"
+                                       placeholder="{{ entry_xml_weight_attr_other }}"
+                                       id="input-xml_weight_attr_other"
                                        class="form-control" autocomplete="off"/>
                             </div>
                         </div>
@@ -119,4 +261,17 @@
         </div>
     </div>
 </div>
+<script type="text/javascript"><!--
+    $(document).ready(function () {
+        $('select[data-display]').on('click', function (){
+            var _this = $(this)
+            var target = $(_this.attr('data-display'))
+            if(_this.val() === "other"){
+                target.show()
+            } else {
+                target.hide()
+            }
+        }).trigger('click')
+    })
+    //--></script>
 {{ footer }}
