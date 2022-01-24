@@ -1,0 +1,30 @@
+{
+    "name": "onecode/shopflix-connector-library",
+    "type": "library",
+    "require": {
+        "guzzlehttp/guzzle": "^6.5.5",
+        "spyrmp/json-serializer-deserializer": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Onecode\\ShopFlixConnector\\Library\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Spyrmp\\ShopFlixConnector\\Tests\\": "tests/"
+        }
+    },
+    "license": "LGPL-3.0",
+    "version": "1.0.1",
+    "authors": [
+        {
+            "name": "spyrm",
+            "email": "spyros@onecode.gr"
+        }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "^9",
+        "symfony/var-dumper": "^5.4"
+    }
+}

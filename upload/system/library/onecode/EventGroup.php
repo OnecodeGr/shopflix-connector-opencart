@@ -15,8 +15,21 @@ class EventGroup
         $this->group = $group;
     }
 
-    public function add(string $key, EventRow $row): self
-    {
+    public function addRaw(
+        string $key,
+        string $code,
+        string $trigger,
+        string $action,
+        int    $order,
+        bool   $status = true
+    ): self {
+        return $this->add($key, new EventRow($code, $trigger, $action, $order, $status));
+    }
+
+    public
+    function add(
+        string $key, EventRow $row
+    ): self {
         $this->group[$key] = $row;
         return $this;
     }

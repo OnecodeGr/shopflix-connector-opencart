@@ -17,8 +17,8 @@ class ModelExtensionModuleOnecodeShopflixProduct extends Model
     public function install()
     {
         $this->db->query(sprintf("CREATE TABLE IF NOT EXISTS %s (
- `proiduct_id` INT NOT NULL,
- `status` tinyint(1) NOT NULL default 0,
+ `proiduct_id` INT UNSIGNED NOT NULL,
+ `status` tinyint(1) UNSIGNED NOT NULL default 0,
  `mpn` varchar(255),
  `ean` varchar(255),
  `title` varchar(255),

@@ -17,7 +17,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Model
     protected function createOrderTable()
     {
         $this->db->query(sprintf("CREATE TABLE IF NOT EXISTS %s (
- `id` INT AUTO_INCREMENT NOT NULL,
+ `id` INT UNSIGNED AUTO_INCREMENT NOT NULL,
  `refernce_id` varchar(255),
  `status` varchar(255),
  `sub_total` decimal(10,3),
@@ -36,8 +36,8 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Model
     protected function createOrderAddressTable()
     {
         $this->db->query(sprintf("CREATE TABLE IF NOT EXISTS %s (
- `id` INT AUTO_INCREMENT UNSIGNED NOT NULL,
- `order_id` INT,
+ `id` INT UNSIGNED AUTO_INCREMENT NOT NULL,
+ `order_id` INT UNSIGNED NOT NULL,
  `firstname` varchar(255),
  `lastname` varchar(255),
  `postcode` varchar(255),
@@ -48,20 +48,22 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Model
  `email` varchar(255),
  `country_id` varchar(255),
  PRIMARY KEY (`id`),
- UNIQUE INDEX (`order_id`,`type`)
-)", Helper\Model\Order::getAddressTableName()));
+ UNIQUE INDEX (`order_id`,`type`),
+    FOREIGN KEY (order_id) REFERENCES %s(id) ON DELETE CASCADE ON UPDATE CASCADE
+)", Helper\Model\Order::getAddressTableName(),Helper\Model\Order::getTableName()));
     }
 
     protected function createOrderItemTable()
     {
         $this->db->query(sprintf("CREATE TABLE IF NOT EXISTS %s (
- `id` INT AUTO_INCREMENT UNSIGNED NOT NULL,
- `order_id` INT,
+ `id` INT UNSIGNED AUTO_INCREMENT NOT NULL,
+ `order_id` INT UNSIGNED NOT NULL,
  `sku` varchar(255),
  `price` decimal(10,3),
- `quantity` SMALLINT() UNSIGNED
- PRIMARY KEY (`id`)
-)", Helper\Model\Order::getItemTableName()));
+ `quantity` SMALLINT UNSIGNED,
+ PRIMARY KEY (`id`),
+    FOREIGN KEY (order_id) REFERENCES %s(id) ON DELETE CASCADE ON UPDATE CASCADE
+)", Helper\Model\Order::getItemTableName(),Helper\Model\Order::getTableName()));
     }
 
     public function install()
@@ -73,8 +75,8 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Model
 
     public function uninstall()
     {
-        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', Helper\Model\Order::getTableName()));
-        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', Helper\Model\Order::getAddressTableName()));
         $this->db->query(sprintf('DROP TABLE IF EXISTS %s', Helper\Model\Order::getItemTableName()));
+        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', Helper\Model\Order::getAddressTableName()));
+        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', Helper\Model\Order::getTableName()));
     }
 }
