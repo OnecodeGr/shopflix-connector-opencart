@@ -4,8 +4,10 @@
 # https://www.opencart.com/index.php?route=marketplace/extension/info&member_token=396ed49ec2c97aab514825fbe62b1b9b&extension_id=33410&filter_category_id=5&filter_license=0&filter_download_id=56&sort=date_added
 # Write permission to `system/helper` 
     Error The directory system/helper is not allowed to be written to!
-
-
+# XML URLs
+## {proto}://{open-cart-url}/index.php?route=extension/module/onecode/shopflix/product/feed/minimal&token={token-hash}
+## {proto}://{open-cart-url}/index.php?route=extension/module/onecode/shopflix/product/feed/detailed&token={token-hash}
+# configure attributes 
 
 ## Getting started
 

@@ -1,6 +1,7 @@
 <?php
 
 use Onecode\Library\EventGroup;
+use Onecode\Shopflix\Helper;
 
 require_once DIR_SYSTEM . 'library/onecode/EventGroup.php';
 
@@ -15,6 +16,7 @@ class ModelExtensionModuleOnecodeShopflixEvent extends Model
     {
         parent::__construct($registry);
         $this->load->model('setting/event');
+        $this->load->helper('onecode/shopflix/BasicHelper');
     }
 
     public function getEventList(): EventGroup
@@ -24,7 +26,7 @@ class ModelExtensionModuleOnecodeShopflixEvent extends Model
             'admin_menu_item',
             'onecode_shopflix_menu_admin_item',
             'admin/view/common/column_left/before',
-            'extension/module/onecode_shopflix/eventInjectAdminMenuItem',
+            Helper\BasicHelper::getMainLink().'/eventInjectAdminMenuItem',
             1
         );
         return $group;

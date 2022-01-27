@@ -85,7 +85,7 @@
                         </div>
                     </fieldset>
                     <fieldset>
-                        <legend>{{ entry_api_configuration }}</legend>
+                        <legend>{{ text_api_configuration }}</legend>
                         <div class="form-group">
                             <label class="col-sm-2 control-label"
                                    for="input-api_url">{{ entry_api_url }}</label>
@@ -118,7 +118,7 @@
                         </div>
                     </fieldset>
                     <fieldset>
-                        <legend>{{ entry_xml_configuration }}</legend>
+                        <legend>{{ text_xml_configuration }}</legend>
                         <div class="form-group">
                             <label class="col-sm-2 control-label"
                                    for="input-xml_status">{{ entry_xml_status }}</label>
@@ -135,6 +135,17 @@
                                                 selected="selected">{{ text_disabled }}</option>
                                     {% endif %}
                                 </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_token">{{ entry_xml_token }}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="xml_token"
+                                       value="{{ xml_token }}"
+                                       placeholder="{{ entry_xml_token }}"
+                                       id="input-xml_token"
+                                       class="form-control" autocomplete="off"/>
                             </div>
                         </div>
                         <div class="form-group">
@@ -157,18 +168,18 @@
                         </div>
                         <div class="form-group">
                             <label class="col-sm-2 control-label"
-                                   for="input-xml_mnp_attr">{{ entry_xml_mnp_attr }}</label>
+                                   for="input-xml_mpn_attr">{{ entry_xml_mpn_attr }}</label>
                             <div class="col-sm-4">
-                                <select name="xml_mnp_attr" id="input-xml_mnp_attr"
+                                <select name="xml_mpn_attr" id="input-xml_mpn_attr"
                                         class="form-control"
-                                        data-display="#input-xml_mnp_attr_other">
+                                        data-display="#input-xml_mpn_attr_other">
                                     <option value="mnp" selected="selected">{{ text_mnp }}</option>
                                     <option value="other">{{ text_other }}</option>
                                 </select>
-                                <input type="text" name="xml_mnp_attr_other"
-                                       value="{{ xml_mnp_attr_other }}"
-                                       placeholder="{{ entry_xml_mnp_attr_other }}"
-                                       id="input-xml_mnp_attr_other"
+                                <input type="text" name="xml_mpn_attr_other"
+                                       value="{{ xml_mpn_attr_other }}"
+                                       placeholder="{{ entry_xml_mpn_attr_other }}"
+                                       id="input-xml_mpn_attr_other"
                                        class="form-control" autocomplete="off"/>
                             </div>
                             <label class="col-sm-2 control-label"
@@ -205,9 +216,9 @@
                                        class="form-control" autocomplete="off"/>
                             </div>
                             <label class="col-sm-2 control-label"
-                                   for="input-xml_description">{{ entry_xml_description_attr }}</label>
+                                   for="input-xml_description_attr">{{ entry_xml_description_attr }}</label>
                             <div class="col-sm-4">
-                                <select name="xml_description" id="input-xml_description"
+                                <select name="xml_description_attr" id="input-xml_description_attr"
                                         class="form-control"
                                         data-display="#input-xml_description_attr_other">
                                     <option value="description"
@@ -253,6 +264,75 @@
                                        placeholder="{{ entry_xml_weight_attr_other }}"
                                        id="input-xml_weight_attr_other"
                                        class="form-control" autocomplete="off"/>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset>
+                        <legend>{{ text_xml_extra_attributes }}</legend>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_list_price_attr">{{ entry_xml_list_price }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_list_price_attr" id="input-xml_list_price_attr"
+                                        class="form-control">
+                                    {% for attr in product_attributes %}
+                                        <option value="{{ attr.attribute_id }}">{{ attr.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_shipping_time_attr">{{ entry_xml_shipping_time }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_shipping_time_attr" id="input-xml_shipping_time_attr"
+                                        class="form-control">
+                                    {% for attr in product_attributes %}
+                                        <option value="{{ attr.attribute_id }}">{{ attr.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_offer_from">{{ entry_xml_offer_from }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_offer_from" id="input-xml_offer_from"
+                                        class="form-control">
+                                    {% for attr in product_attributes %}
+                                        <option value="{{ attr.attribute_id }}">{{ attr.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_offer_to">{{ entry_xml_offer_to }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_offer_to" id="input-xml_offer_to"
+                                        class="form-control">
+                                    {% for attr in product_attributes %}
+                                        <option value="{{ attr.attribute_id }}">{{ attr.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_offer_price_attr">{{ entry_xml_offer_price }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_offer_price_attr" id="input-xml_offer_price_attr"
+                                        class="form-control">
+                                    {% for attr in product_attributes %}
+                                        <option value="{{ attr.attribute_id }}">{{ attr.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <label class="col-sm-2 control-label"
+                                   for="input-xml_offer_quantity">{{ entry_xml_offer_quantity }}</label>
+                            <div class="col-sm-4">
+                                <select name="xml_offer_quantity" id="input-xml_offer_quantity"
+                                        class="form-control">
+                                    {% for attr in product_attributes %}
+                                        <option value="{{ attr.attribute_id }}">{{ attr.name }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                         </div>
                     </fieldset>
