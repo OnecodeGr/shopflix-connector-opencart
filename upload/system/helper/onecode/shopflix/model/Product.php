@@ -34,7 +34,6 @@ class Product extends \Model
         {
             $sql[] = " AND pd.name LIKE '" . $this->db->escape($data['filter_name']) . "%'";
         }
-
         if (! empty($data['filter_model']))
         {
             $sql[] = " AND p.model LIKE '" . $this->db->escape($data['filter_model']) . "%'";

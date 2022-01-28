@@ -2,18 +2,14 @@
 
 use Onecode\Shopflix\Helper;
 
+require_once DIR_SYSTEM . 'helper/onecode/shopflix/model/Order.php';
+
 /**
  * @property-read \DB $db
  * @property-read \Loader $load
  */
-class ModelExtensionModuleOnecodeShopflixOrder extends Model
+class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
 {
-    public function __construct($registry)
-    {
-        parent::__construct($registry);
-        $this->load->helper('onecode/shopflix/model/Order');
-    }
-
     protected function createOrderTable()
     {
         $this->db->query(sprintf("CREATE TABLE IF NOT EXISTS %s (
@@ -21,7 +17,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Model
  `refernce_id` varchar(255),
  `status` varchar(255),
  `sub_total` decimal(10,3),
- `dicount_amount` decimal(10,3),
+ `discount_amount` decimal(10,3),
  `total_paid` decimal(10,3),
  `customer_email` varchar(255),
  `customer_firstname` varchar(255),
@@ -30,7 +26,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Model
  `customer_note` varchar(255),
  PRIMARY KEY (`id`),
  UNIQUE INDEX (`refernce_id`)
-)", Helper\Model\Order::getTableName()));
+)", self::getTableName()));
     }
 
     protected function createOrderAddressTable()
@@ -50,7 +46,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Model
  PRIMARY KEY (`id`),
  UNIQUE INDEX (`order_id`,`type`),
     FOREIGN KEY (order_id) REFERENCES %s(id) ON DELETE CASCADE ON UPDATE CASCADE
-)", Helper\Model\Order::getAddressTableName(),Helper\Model\Order::getTableName()));
+)", self::getAddressTableName(), self::getTableName()));
     }
 
     protected function createOrderItemTable()
@@ -63,7 +59,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Model
  `quantity` SMALLINT UNSIGNED,
  PRIMARY KEY (`id`),
     FOREIGN KEY (order_id) REFERENCES %s(id) ON DELETE CASCADE ON UPDATE CASCADE
-)", Helper\Model\Order::getItemTableName(),Helper\Model\Order::getTableName()));
+)", self::getItemTableName(), self::getTableName()));
     }
 
     public function install()
@@ -75,8 +71,69 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Model
 
     public function uninstall()
     {
-        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', Helper\Model\Order::getItemTableName()));
-        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', Helper\Model\Order::getAddressTableName()));
-        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', Helper\Model\Order::getTableName()));
+        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getItemTableName()));
+        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getAddressTableName()));
+        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getTableName()));
+    }
+
+    public function getOrderById($order_id): array
+    {
+        $sql = "SELECT * FROM " . self::getTableName() . " WHERE id = " . intval($order_id);
+        return $this->db->query($sql)->row;
+    }
+
+    public function getTotalOrders($data = []): int
+    {
+        $sql = sprintf("SELECT COUNT(DISTINCT o.product_id) AS total FROM %s AS o", self::getTableName());
+        if (! empty($data['filter_reference_id']))
+        {
+            $sql .= " AND o.reference_id LIKE '" . $this->db->escape($data['filter_reference_id']) . "%'";
+        }
+        if (! empty($data['filter_customer_email']))
+        {
+            $sql .= " AND o.customer_email LIKE '" . $this->db->escape($data['filter_customer_email']) . "%'";
+        }
+        if (! empty($data['filter_sub_total']))
+        {
+            $sql .= " AND o.sub_total = " . floatval($data['filter_sub_total']);
+        }
+        if (! empty($data['filter_total_paid']))
+        {
+            $sql .= " AND o.total_paid = " . floatval($data['filter_total_paid']);
+        }
+        $query = $this->db->query($sql);
+        return (int) $query->row['total'];
+    }
+
+    public function getAllOrders($data = []): array
+    {
+        $sql = sprintf("SELECT DISTINCT * FROM %s AS o", self::getTableName());
+        if (! empty($data['filter_reference_id']))
+        {
+            $sql .= " AND o.reference_id LIKE '" . $this->db->escape($data['filter_reference_id']) . "%'";
+        }
+        if (! empty($data['filter_customer_email']))
+        {
+            $sql .= " AND o.customer_email LIKE '" . $this->db->escape($data['filter_customer_email']) . "%'";
+        }
+        if (! empty($data['filter_sub_total']))
+        {
+            $sql .= " AND o.sub_total = " . floatval($data['filter_sub_total']);
+        }
+        if (! empty($data['filter_total_paid']))
+        {
+            $sql .= " AND o.total_paid = " . floatval($data['filter_total_paid']);
+        }
+        $query = $this->db->query($sql);
+        return $query->rows;
+    }
+
+    public function accept($order_id): void
+    {
+
+    }
+
+    public function decline($order_id): void
+    {
     }
 }
