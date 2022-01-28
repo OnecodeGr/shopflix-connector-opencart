@@ -58,65 +58,67 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
         $this->getList();
     }
 
-    public function edit()
+    public function enableAll()
     {
-        $this->document->setTitle($this->language->get('heading_title'));
-        if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateForm())
+        //clear data from table
+        $this->model_extension_module_onecode_shopflix_product->clearAll();
+        //fetch all products
+        $products = $this->model_catalog_product->getProducts(['filter_status' => 1]);
+        //store all product to shopflix table
+        $this->model_extension_module_onecode_shopflix_product->enable(array_column($products, 'product_id'));
+        $this->response->redirect(
+            $this->url->link(
+                $this->getLink(),
+                [
+                    'user_token' => $this->session->data['user_token'],
+                ], true
+            ));
+    }
+
+    public function enable()
+    {
+        error_log('111');
+        if (isset($this->request->post['selected']))
         {
-            $this->model_extension_module_onecode_shopflix_product->editProduct(
-                $this->request->get['product_id'],
-                $this->request->post
-            );
-
-            $this->session->data['success'] = $this->language->get('text_success');
-
-            $url = '';
-
-            if (isset($this->request->get['filter_name']))
-            {
-                $url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
-            }
-
-            if (isset($this->request->get['filter_model']))
-            {
-                $url .= '&filter_model=' . urlencode(html_entity_decode($this->request->get['filter_model'], ENT_QUOTES, 'UTF-8'));
-            }
-
-            if (isset($this->request->get['filter_status']))
-            {
-                $url .= '&filter_status=' . $this->request->get['filter_status'];
-            }
-
-            if (isset($this->request->get['filter_enabled']))
-            {
-                $url .= '&filter_enabled=' . $this->request->get['filter_enabled'];
-            }
-
-            if (isset($this->request->get['sort']))
-            {
-                $url .= '&sort=' . $this->request->get['sort'];
-            }
-
-            if (isset($this->request->get['order']))
-            {
-                $url .= '&order=' . $this->request->get['order'];
-            }
-
-            if (isset($this->request->get['page']))
-            {
-                $url .= '&page=' . $this->request->get['page'];
-            }
-
-            $this->response->redirect(
-                $this->url->link(
-                    $this->getLink(),
-                    'user_token=' . $this->session->data['user_token'] . $url,
-                    true
-                )
-            );
+            error_log(json_encode($this->request->post['selected']));
+            $id_list = $this->request->post['selected'];
+            $this->model_extension_module_onecode_shopflix_product->enable($id_list);
         }
+        $this->response->redirect(
+            $this->url->link(
+                $this->getLink(),
+                [
+                    'user_token' => $this->session->data['user_token'],
+                ], true
+            ));
+    }
 
-        $this->getForm();
+    public function disableAll()
+    {
+        $this->model_extension_module_onecode_shopflix_product->clearAll();
+        $this->response->redirect(
+            $this->url->link(
+                $this->getLink(),
+                [
+                    'user_token' => $this->session->data['user_token'],
+                ], true
+            ));
+    }
+
+    public function disable()
+    {
+        $id_list = key_exists('selected', $this->request->post) ? $this->request->post['selected'] : [];
+        if (count($id_list))
+        {
+            $this->model_extension_module_onecode_shopflix_product->disable($id_list);
+        }
+        $this->response->redirect(
+            $this->url->link(
+                $this->getLink(),
+                [
+                    'user_token' => $this->session->data['user_token'],
+                ], true
+            ));
     }
 
     protected function getForm()
@@ -309,6 +311,11 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
             $url .= '&filter_status=' . $this->request->get['filter_status'];
         }
 
+        if (isset($this->request->get['filter_enabled']))
+        {
+            $url .= '&filter_enabled=' . $this->request->get['filter_enabled'];
+        }
+
         if (isset($this->request->get['order']))
         {
             $url .= '&order=' . $this->request->get['order'];
@@ -332,6 +339,27 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
                 $url, true),
         ];
 
+        $data['enable_all'] = $this->url->link(
+            $this->getLink() . '/enableAll',
+            'user_token=' . $this->session->data['user_token'] . $url,
+            true
+        );
+        $data['enable'] = $this->url->link(
+            $this->getLink() . '/enable',
+            'user_token=' . $this->session->data['user_token'] . $url,
+            true
+        );
+        $data['disable'] = $this->url->link(
+            $this->getLink() . '/disable',
+            'user_token=' . $this->session->data['user_token'] . $url,
+            true
+        );
+        $data['disable_all'] = $this->url->link(
+            $this->getLink() . '/disableAll',
+            'user_token=' . $this->session->data['user_token'] . $url,
+            true
+        );
+
         $data['products'] = [];
 
         $filter_data = [
@@ -350,36 +378,15 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
 
         foreach ($results as $result)
         {
-            if (is_file(DIR_IMAGE . $result['image']))
-            {
-                $image = $this->model_tool_image->resize($result['image'], 40, 40);
-            }
-            else
-            {
-                $image = $this->model_tool_image->resize('no_image.png', 40, 40);
-            }
-
-            $special = false;
-
-            $product_specials = $this->model_catalog_product->getProductSpecials($result['product_id']);
-
-            foreach ($product_specials as $product_special)
-            {
-                if (($product_special['date_start'] == '0000-00-00' || strtotime($product_special['date_start']) < time()) && ($product_special['date_end'] == '0000-00-00' || strtotime($product_special['date_end']) > time()))
-                {
-                    $special = $this->currency->format($product_special['price'], $this->config->get('config_currency'));
-
-                    break;
-                }
-            }
+            $image = (is_file(DIR_IMAGE . $result['image']))
+                ? $this->model_tool_image->resize($result['image'], 40, 40)
+                : $this->model_tool_image->resize('no_image.png', 40, 40);
 
             $data['products'][] = [
                 'product_id' => $result['product_id'],
                 'image' => $image,
                 'name' => $result['name'],
                 'model' => $result['model'],
-                'special' => $special,
-                'quantity' => $result['quantity'],
                 'status' => $result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled'),
                 'enabled' => $result['enabled'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled'),
                 'edit' => $this->url->link($this->getLink() . '/edit', 'user_token=' .
@@ -416,6 +423,11 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
         if (isset($this->request->get['filter_status']))
         {
             $url .= '&filter_status=' . $this->request->get['filter_status'];
+        }
+
+        if (isset($this->request->get['filter_enabled']))
+        {
+            $url .= '&filter_enabled=' . $this->request->get['filter_enabled'];
         }
 
         if ($order == 'ASC')

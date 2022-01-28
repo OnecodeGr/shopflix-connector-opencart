@@ -18,6 +18,7 @@
  * @property-read \ModelExtensionModuleOnecodeShopflixConfig $model_extension_module_onecode_shopflix_config
  * @property-read \ModelExtensionModuleOnecodeShopflixXml $model_extension_module_onecode_shopflix_xml
  * @property-read \Onecode\Shopflix\Helper\BasicHelper $basicHelper
+ * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
  * @property-read \Onecode\Shopflix\Helper\ConfigHelper $configHelper
  */
 class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
@@ -112,36 +113,27 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
      */
     protected function getProducts(): array
     {
-        $start = 0;
-        $step = 1000;
         $products = [];
-        do
+        $db_prod = $this->model_extension_module_onecode_shopflix_product->getAllEnabledProducts([
+            'sort' => 'p.product_id',
+            'order' => 'DESC'
+        ]);
+        $loadCategories = $this->model_extension_module_onecode_shopflix_xml->exportCategories();
+        foreach ($db_prod as $product)
         {
-            $db_prod = $this->model_catalog_product->getProducts([
-                'sort' => 'p.product_id',
-                'order' => 'DESC',
-                'start' => $start,
-                'limit' => $step,
-            ]);
-            $count = count($db_prod);
-            $loadCategories = $this->model_extension_module_onecode_shopflix_xml->exportCategories();
-            foreach ($db_prod as $product)
+            $product['categories'] = [];
+            if ($loadCategories)
             {
-                $product['categories'] = [];
-                if ($loadCategories)
-                {
-                    $product['attributes'] = $this->model_catalog_product->getProductAttributes($product['product_id']);
-                    $categories = $this->model_catalog_product->getCategories($product['product_id']);
-                    $product['categories'] = array_map(function ($item): string {
-                        $row = $this->model_catalog_category->getCategory($item['category_id']);
-                        return key_exists('name', $row) ? $row['name'] : '';
-                    }, $categories);
-                }
-                $products[] = $product;
+                $product['attributes'] = $this->model_catalog_product->getProductAttributes($product['product_id']);
+                $categories = $this->model_catalog_product->getCategories($product['product_id']);
+                $product['categories'] = array_map(function ($item): string {
+                    $row = $this->model_catalog_category->getCategory($item['category_id']);
+                    return key_exists('name', $row) ? $row['name'] : '';
+                }, $categories);
             }
-            $start += $step;
+            $products[] = $product;
         }
-        while ($count == $step);
+
         return $products;
     }
 }

@@ -12,12 +12,6 @@ class Product extends \Model
         $this->db->query(sprintf("CREATE TABLE IF NOT EXISTS %s (
  `product_id` INT UNSIGNED NOT NULL,
  `status` tinyint(1) UNSIGNED NOT NULL default 0,
- `mpn` varchar(255),
- `ean` varchar(255),
- `title` varchar(255),
- `description` varchar(255),
- `manufacturer` varchar(255),
- `weight` varchar(255),
  PRIMARY KEY (`product_id`)
 )", self::getTableName()));
     }
@@ -49,7 +43,10 @@ class Product extends \Model
         {
             $sql[] = " AND p.status = '" . (int) $data['filter_status'] . "'";
         }
-
+        if (isset($data['filter_enabled']) && $data['filter_enabled'] !== '')
+        {
+            $sql[] = " AND op.status = '" . (int) $data['filter_enabled'] . "'";
+        }
         $query = $this->db->query(implode(' ', $sql));
 
         return (int) $query->row['total'];
@@ -64,13 +61,8 @@ class Product extends \Model
     {
         $sql = [
             sprintf("SELECT 
-       op.product_id,
-       op.*,
        pd.name,
-       p.status,
-       p.model,
-       p.image,
-       p.quantity,
+       p.*,
        (CASE WHEN op.status IS NOT NULL THEN op.status ELSE 0 END) AS enabled
 FROM %s%s AS p",
                 \DB_PREFIX, 'product'),
@@ -79,11 +71,15 @@ FROM %s%s AS p",
             sprintf("WHERE pd.language_id = '%d'", (int) $this->config->get('config_language_id')),
         ];
 
+        if (! empty($data['filter_product_id']))
+        {
+            $list = is_array($data['filter_product_id']) ? $data['filter_product_id'] : [$data['filter_product_id']];
+            $sql[] = sprintf(" AND p.product_id IN (%s)", implode(',', $list));
+        }
         if (! empty($data['filter_name']))
         {
             $sql[] = " AND pd.name LIKE '" . $this->db->escape($data['filter_name']) . "%'";
         }
-
         if (! empty($data['filter_model']))
         {
             $sql[] = " AND p.model LIKE '" . $this->db->escape($data['filter_model']) . "%'";
@@ -92,9 +88,9 @@ FROM %s%s AS p",
         {
             $sql[] = " AND p.status = '" . (int) $data['filter_status'] . "'";
         }
-        if (isset($data['filter_enabled']) && $data['filter_enabled'] !== '')
+        if (isset($data['filter_enabled']) && $data['filter_enabled'] == '1')
         {
-            $sql[] = " AND enabled = '" . (int) $data['filter_enabled'] . "'";
+            $sql[] = " AND op.status = '" . (int) $data['filter_enabled'] . "'";
         }
 
         $sql[] = " GROUP BY p.product_id";
@@ -120,6 +116,7 @@ FROM %s%s AS p",
             $sql[] = " LIMIT " . (int) $data['start'] . "," . (int) $data['limit'];
         }
 
+        //print_r(implode(' ', $sql));
         $query = $this->db->query(implode(' ', $sql));
 
         return $query->rows;
