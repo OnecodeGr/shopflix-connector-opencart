@@ -38,7 +38,8 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
     {
         $this->db->query(sprintf("CREATE TABLE IF NOT EXISTS %s (
  `id` INT UNSIGNED AUTO_INCREMENT NOT NULL,
- `refernce_id` varchar(255),
+ `reference_id` varchar(255),
+ `state` varchar(255),
  `status` varchar(255),
  `sub_total` decimal(10,3),
  `discount_amount` decimal(10,3),
@@ -48,8 +49,10 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
  `customer_lastname` varchar(255),
  `customer_remote_ip` varchar(255),
  `customer_note` varchar(255),
+ `created_at` timestamp not null,
+ `update_at` timestamp default current_timestamp not null,
  PRIMARY KEY (`id`),
- UNIQUE INDEX (`refernce_id`)
+ UNIQUE INDEX (`reference_id`)
 )", self::getTableName()));
     }
 
@@ -58,7 +61,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         $this->db->query("CREATE TABLE IF NOT EXISTS " . self::getRelationTableName() . " (
  `shopflix_id` INT UNSIGNED NOT NULL,
  `oc_id` INT UNSIGNED NOT NULL,
- `created_at` UNIX_TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
  PRIMARY KEY (`shopflix_id`,`oc_id`),
     FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE CASCADE ON DELETE RESTRICT ,
     FOREIGN KEY (oc_id) REFERENCES " . \DB_PREFIX . "order(id) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -117,6 +120,12 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
     public function getOrderById($order_id): array
     {
         $sql = "SELECT * FROM " . self::getTableName() . " WHERE id = " . intval($order_id);
+        return $this->db->query($sql)->row;
+    }
+
+    public function getOrderByReferenceId($order_id): array
+    {
+        $sql = "SELECT * FROM " . self::getTableName() . " WHERE reference_id = " . intval($order_id);
         return $this->db->query($sql)->row;
     }
 
@@ -402,5 +411,74 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
             return $this->model_catalog_product->getProduct($query->row['product_id']);
         }
         return [];
+    }
+
+    public function save(array $data): ?array
+    {
+        $existing_order = $this->getOrderByReferenceId($data['reference_id']);
+        if (count($existing_order))
+        {
+            return $existing_order;
+        }
+        $this->db->query("START TRANSACTION;");
+        try
+        {
+            $this->db->query("INSERT INTO " . self::getTableName() .
+                "(`reference_id`,`status`,`state`,`sub_total`,`discount_amount`,`total_paid`,`customer_email`,`customer_firstname`,`customer_lastname`,`customer_remote_ip`,`customer_note`, `created_at`)" .
+                " VALUES " .
+                "('" . $this->db->escape($data['reference_id']) . "','" . $data['status'] . "','" . $data['state'] . "',"
+                . $data['sub_total'] . "," . $data['discount_amount'] . "," . $data['total_paid'] . ",'"
+                . $data['customer_email'] . "','" . $this->db->escape($data['customer_firstname']) . "','"
+                . $this->db->escape($data['customer_lastname']) . "','" . $this->db->escape($data['customer_remote_ip']) . "','"
+                . $this->db->escape($data['customer_note']) . "',now())"
+            );
+            $query = $this->db->query('SELECT id FROM ' . self::getTableName() . ' WHERE reference_id = \'' . $data['reference_id'] . '\' LIMIT 1;');
+            $order_id = intval(count($query->rows) ? $query->row['id'] : '0');
+            $data['id'] = $order_id;
+            if ($data['id'] == 0)
+            {
+                $this->db->query('ROLLBACK;');
+                return null;
+            }
+            array_walk($data['address'], function ($item) use ($order_id) {
+                $query = "INSERT INTO " . self::getAddressTableName() .
+                    "(`order_id`,`firstname`,`lastname`,`postcode`,`telephone`,`street`,`type`,`city`,`email`,`country_id`)" .
+                    " VALUES " .
+                    "(" . $order_id . ",'" . $this->db->escape($item['firstname']) . "','" . $this->db->escape($item['lastname']) . "','"
+                    . $this->db->escape($item['postcode']) . "','" . $item['telephone'] . "','"
+                    . $this->db->escape($item['street']) . "','" . $item['type'] . "','" . $this->db->escape($item['city']) .
+                    "','" . $item['email'] . "','" . $this->db->escape($item['country_id']) . "')";
+                //print_r([$item, $query]);
+                $this->db->query($query);
+            });
+            array_walk($data['items'], function ($item) use ($order_id) {
+                $this->db->query("INSERT INTO " . self::getItemTableName() .
+                    "(`sku`,`order_id`,`price`,`quantity`)" .
+                    " VALUES " .
+                    "('" . $this->db->escape($item['sku']) . "'," . $order_id . "," . $item['price'] . "," . $item['quantity'] . ")"
+                );
+            });
+
+            $query = $this->db->query('SELECT COUNT(*) as c FROM ' . self::getAddressTableName() . ' WHERE order_id = ' . $order_id);
+            if (intval(count($query->rows) ? $query->row['c'] : '0') == 0)
+            {
+                $this->db->query('ROLLBACK;');
+                return null;
+            }
+            $query = $this->db->query('SELECT COUNT(*) as c FROM ' . self::getItemTableName() . ' WHERE order_id = ' . $order_id);
+            if (intval(count($query->rows) ? $query->row['c'] : '0') == 0)
+            {
+                $this->db->query('ROLLBACK;');
+                return null;
+            }
+            $this->db->query("COMMIT;");
+            return $data;
+        }
+        catch (\Exception $e)
+        {
+            print_r(['error' => $e->getMessage()]);
+            $this->db->query('ROLLBACK;');
+            return null;
+        }
     }
 }

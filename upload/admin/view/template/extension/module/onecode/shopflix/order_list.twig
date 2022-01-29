@@ -12,11 +12,13 @@
                         btn-danger"
                         onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
                     <i class="fa fa-remove"></i></button>
+                {% if accept == false %}
                 <button type="button" form="form-order" formaction="{{ accept }}"
                         data-toggle="tooltip" title="{{ button_accept }}" class="btn
                         btn-success"
                         onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
                     <i class="fa fa-check"></i></button>
+                {% endif %}
                 <button type="button" form="form-order" formaction="{{ manual_sync }}"
                         data-toggle="tooltip" title="{{ button_sync }}" class="btn
                         btn-primary"
@@ -60,6 +62,13 @@
                         </div>
                         <div class="form-group">
                             <label class="control-label"
+                                   for="input-customer_mail">{{ column_customer_email }}</label>
+                            <input type="text" name="filter_customer_mail" value="{{ filter_customer_mail }}"
+                                   placeholder="{{ entry_customer_mail }}" id="input-customer_mail"
+                                   class="form-control"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label"
                                    for="input-sub_total">{{ column_sub_total }}</label>
                             <input type="text" name="filter_sub_total" value="{{ filter_sub_total }}"
                                    placeholder="{{ entry_sub_total }}" id="input-sub_total"
@@ -70,13 +79,6 @@
                                    for="input-total_paid">{{ column_total_paid }}</label>
                             <input type="text" name="filter_total_paid" value="{{ filter_total_paid }}"
                                    placeholder="{{ entry_sub_total }}" id="input-total_paid"
-                                   class="form-control"/>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label"
-                                   for="input-customer_mail">{{ column_customer_mail }}</label>
-                            <input type="text" name="filter_customer_mail" value="{{ filter_customer_mail }}"
-                                   placeholder="{{ entry_customer_mail }}" id="input-customer_mail"
                                    class="form-control"/>
                         </div>
                         <div class="form-group text-right">
@@ -107,26 +109,32 @@
                                                     class="{{ order|lower }}">{{ column_reference_id }}</a> {% else %}
                                                 <a href="{{ sort_reference_id }}">{{ column_reference_id }}</a> {% endif %}
                                         </td>
-                                        <td class="text-left">{% if sort == 'o.sub_total' %} <a
-                                                    href="{{ sort_sub_total }}"
-                                                    class="{{ order|lower }}">{{ column_sub_total }}</a> {% else %}
-                                                <a href="{{ sort_sub_total }}">{{ column_sub_total }}</a> {% endif %}
-                                        </td>
-                                        <td class="text-left">{% if sort == 'o.discount_amount' %} <a
-                                                    href="{{ sort_discount_amount }}"
-                                                    class="{{ order|lower }}">{{ column_discount_amount }}</a> {% else %}
-                                                <a href="{{ sort_discount_amount }}">{{ column_discount_amount }}</a> {% endif %}
-                                        </td>
-                                        <td class="text-left">{% if sort == 'o.total_paid' %} <a
-                                                    href="{{ sort_total_paid }}"
-                                                    class="{{ order|lower }}">{{ column_total_paid }}</a> {% else %}
-                                                <a href="{{ sort_total_paid }}">{{ column_total_paid }}</a> {% endif %}
-                                        </td>
                                         <td class="text-left">{% if sort == 'o.customer_email' %} <a
                                                     href="{{ sort_customer_email }}"
                                                     class="{{ order|lower }}">{{ column_customer_email }}</a> {% else %}
                                                 <a href="{{ sort_customer_email }}">{{ column_customer_email }}</a> {% endif %}
                                         </td>
+                                        <td class="text-left">{% if sort == 'o.sub_total' %} <a
+                                                    href="{{ sort_sub_total }}"
+                                                    class="{{ order|lower }}">{{ column_sub_total }}</a> {% else %}
+                                        <a href="{{ sort_sub_total }}">{{ column_sub_total }}</a> {% endif %}
+                                        </td>
+                                        <td class="text-left">{% if sort == 'o.discount_amount' %} <a
+                                                    href="{{ sort_discount_amount }}"
+                                                    class="{{ order|lower }}">{{ column_discount_amount }}</a> {% else %}
+                                        <a href="{{ sort_discount_amount }}">{{ column_discount_amount }}</a> {% endif %}
+                                        </td>
+                                        <td class="text-left">{% if sort == 'o.total_paid' %} <a
+                                                    href="{{ sort_total_paid }}"
+                                                    class="{{ order|lower }}">{{ column_total_paid }}</a> {% else %}
+                                        <a href="{{ sort_total_paid }}">{{ column_total_paid }}</a> {% endif %}
+                                        </td>
+                                        <td class="text-left">{% if sort == 'o.status' %} <a
+                                                    href="{{ sort_status }}"
+                                                    class="{{ order|lower }}">{{ column_status }}</a> {% else %}
+                                                <a href="{{ sort_status }}">{{ column_status }}</a> {% endif %}
+                                        </td>
+                                        <td class="text-right">{{ column_action }}</td>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -143,10 +151,17 @@
                                                                value="{{ order.id }}"/>
                                                     {% endif %}</td>
                                                 <td class="text-left">{{ order.reference_id }}</td>
+                                                <td class="text-left">{{ order.customer_email }}</td>
                                                 <td class="text-left">{{ order.sub_total }}</td>
                                                 <td class="text-left">{{ order.discount_amount }}</td>
                                                 <td class="text-left">{{ order.total_paid }}</td>
-                                                <td class="text-left">{{ order.customer_email }}</td>
+                                                <td class="text-left">{{ order.status }}</td>
+                                                <td class="text-right">
+                                                    <a href="{{ order.edit }}"
+                                                       data-toggle="tooltip"
+                                                       title="{{ button_view }}"
+                                                       class="btn btn-primary"
+                                                    ><i class="fa fa-eye"></i></a></td>
                                             </tr>
                                         {% endfor %}
                                     {% else %}
@@ -169,7 +184,7 @@
             </div>
         </div>
     </div>
-    <script type="text/javascript"><!--
+    <script type="text/javascript">
         $('#button-filter').on('click', function () {
             var url = '';
 
@@ -202,8 +217,8 @@
             }
             location = 'index.php?route=extension/module/onecode_shopflix_product&user_token={{ user_token }}' + url;
         });
-        //--></script>
-    <script type="text/javascript"><!--
+    </script>
+    <script type="text/javascript">
         // IE and Edge fix!
         $('button[form=\'form-order\']').on('click', function(e) {
             $('#form-order').attr('action', $(this).attr('formaction'));
@@ -248,6 +263,7 @@
                 $('input[name=\'filter_model\']').val(item['label']);
             }
         });
-        //--></script>
+
+    </script>
 </div>
 {{ footer }}

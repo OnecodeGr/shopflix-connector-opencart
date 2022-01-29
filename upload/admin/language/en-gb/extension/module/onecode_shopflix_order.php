@@ -9,6 +9,8 @@ $_['text_enabled'] = 'Enabled';
 $_['text_disabled'] = 'Disabled';
 $_['text_filter'] = 'Filters';
 $_['text_list'] = 'Order List';
+$_['text_success_sync'] = 'Success Synchronize';
+
 //Help
 $_['help_status'] = 'Enable / Disable ';
 //Entry
@@ -19,13 +21,15 @@ $_['entry_customer_mail'] = 'Customer mail';
 
 //Error
 $_['error_permission'] = 'Warning: You do not have permission to modify `OneCodeGr - ShopFlix` module!';
+$_['error_on_sync'] = 'Warning: Synchronization does not complete, unable to save order';
 
 // Column
 $_['column_reference_id'] = 'Reference Id';
 $_['column_sub_total'] = 'Sub Total';
 $_['column_total_paid'] = 'Total Paid';
 $_['column_discount_amount'] = 'Discount amount';
-$_['column_customer_mail'] = 'Customer email';
+$_['column_customer_email'] = 'Customer email';
+$_['column_status'] = 'Status';
 
 //Button
 $_['button_sync'] = 'Manual Sync';

@@ -12,7 +12,22 @@
 
 limitation product without options
 
+composer require onecode/shopflix-connector-library
 
+```json
+ {
+  "require": {
+    "php": ">=7.3",
+    "onecode/shopflix-connector-library": "^1.0",
+    "braintree/braintree_php": "3.40.0",
+    "cardinity/cardinity-sdk-php": "^1.0",
+    "divido/divido-php": ">=1.1.1",
+    "scssphp/scssphp": "1.1.1",
+    "twig/twig": "^2.4.8",
+    "zoujingli/wechat-php-sdk": ">=1.3.10"
+  }
+}
+```
 ## Getting started
 
 To make it easy for you to get started with GitLab, here's a list of recommended next steps.

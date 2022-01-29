@@ -1,6 +1,7 @@
 <?php
 
 use Onecode\Shopflix\Helper;
+use Onecode\ShopFlixConnector\Library\Connector;
 
 /**
  * @property-read \Document $document
@@ -11,19 +12,29 @@ use Onecode\Shopflix\Helper;
  * @property-read \Language $language
  * @property-read \Url $url
  * @property-read \Cart\User $user
+ * @property-read Connector $connector
  * @property-read \Onecode\Shopflix\Helper\BasicHelper $basicHelper
  * @property-read \ModelExtensionModuleOnecodeShopflixOrder $model_extension_module_onecode_shopflix_order
+ * @property-read \ModelExtensionModuleOnecodeShopflixConfig $model_extension_module_onecode_shopflix_config
  */
 class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
 {
+    private $error = [];
+
     public function __construct($registry)
     {
         parent::__construct($registry);
         $this->load->model('localisation/language');
         $this->load->model('setting/store');
         $this->load->model('extension/module/onecode/shopflix/order');
+        $this->load->model('extension/module/onecode/shopflix/config');
         $this->load->helper('onecode/shopflix/BasicHelper');
         $this->basicHelper = new Helper\BasicHelper($registry);
+        $this->connector = new Connector(
+            $this->model_extension_module_onecode_shopflix_config->apiUsername(),
+            $this->model_extension_module_onecode_shopflix_config->apiPassword(),
+            $this->model_extension_module_onecode_shopflix_config->apiUrl()
+        );
         $this->load->language($this->getLink());
     }
 
@@ -144,9 +155,79 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             ));
     }
 
+    public function manual_sync()
+    {
+        try
+        {
+            $this->sync();
+            $this->session->data['success'] = $this->language->get('text_success_sync');
+        }
+        catch (\LogicException $exception)
+        {
+            $this->session->data['errors'] = [$this->language->get('error_on_sync')];
+        }
+        $this->response->redirect(
+            $this->url->link(
+                $this->getLink(),
+                [
+                    'user_token' => $this->session->data['user_token'],
+                ], true
+            ));
+    }
+
     public function sync()
     {
-        //execute sync
+        $orders = $this->connector->getNewOrders();
+        $to_save = [];
+        array_walk($orders, function ($row) use (&$to_save) {
+            $orders_data = $row['order'];
+            $addresses_data = $row['addresses'];
+            $items_row = $row['items'];
+
+            $o_d = [
+                'reference_id' => $orders_data['shopflix_order_id'],
+                'state' => $orders_data['state'],
+                'status' => $orders_data['status'],
+                'sub_total' => $orders_data['subtotal'],
+                'total_paid' => $orders_data['total_paid'],
+                'discount_amount' => $orders_data['discount_amount'],
+                'customer_email' => $orders_data['customer_email'],
+                'customer_firstname' => $orders_data['customer_firstname'],
+                'customer_lastname' => $orders_data['customer_lastname'],
+                'customer_remote_ip' => $orders_data['customer_remote_ip'],
+                'customer_note' => $orders_data['customer_note'],
+            ];
+            array_walk($addresses_data, function ($address_row) use (&$o_d) {
+                $o_d['address'][] = [
+                    'firstname' => $address_row['firstname'],
+                    'lastname' => $address_row['lastname'],
+                    'postcode' => $address_row['postcode'],
+                    'telephone' => $address_row['telephone'],
+                    'street' => $address_row['street'],
+                    'type' => $address_row['address_type'],
+                    'email' => $address_row['email'],
+                    'city' => $address_row['city'],
+                    'country_id' => $address_row['country_id'],
+                ];
+            });
+            array_walk($items_row, function ($item_row) use (&$o_d) {
+                $o_d['items'][] = [
+                    "sku" => $item_row['sku'],
+                    "price" => $item_row['price'],
+                    "quantity" => $item_row['qty'],
+                ];
+            });
+            $to_save[] = $o_d;
+        });
+
+        foreach ($to_save as $order)
+        {
+            $order_stored = $this->model_extension_module_onecode_shopflix_order->save($order);
+            if (is_null($order_stored))
+            {
+                throw new LogicException('Error during order save');
+            }
+        }
         return true;
     }
 
@@ -190,7 +271,10 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             'href' => $this->url->link($this->getLink(), 'user_token=' . $user_token . $url, true),
         ];
         $data['manual_sync'] = $this->url->link($this->getLink() . '/manual_sync', 'user_token=' . $user_token . $url, true);
-        $data['accept'] = $this->url->link($this->getLink() . '/accept', 'user_token=' . $user_token . $url, true);
+        $data['accept'] = ($this->model_extension_module_onecode_shopflix_config->convertOrders())
+            ? $this->url->link($this->getLink() . '/accept', 'user_token=' . $user_token . $url, true)
+            : false;
+
         $data['decline'] = $this->url->link($this->getLink() . '/decline', 'user_token=' . $user_token . $url, true);
 
         $data['orders'] = [];
@@ -238,6 +322,11 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         else
         {
             $data['success'] = '';
+        }
+        if (isset($this->session->data['errors']))
+        {
+            $data['warning'] = $this->session->data['errors'][0];
+            unset($this->session->data['errors']);
         }
         $data['selected'] = isset($this->request->post['selected']) ? (array) $this->request->post['selected'] : [];
 

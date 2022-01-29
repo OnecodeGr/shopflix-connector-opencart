@@ -8,21 +8,21 @@
                         class="btn btn-default hidden-md hidden-lg"><i class="fa fa-filter"></i>
                 </button>
                 <button type="button" form="form-product" formaction="{{ enable_all }}"
-                        data-toggle="tooltip" title="{{ button_enable_all }}" class="btn btn-warning"
+                        data-toggle="tooltip" title="{{ button_enable_all }}" class="btn btn-default"
                         onclick="confirm('{{ text_confirm }}') ? $('#form-product').attr('action', $(this).attr('formaction')).submit() : false;">
-                    <i class="fa fa-save"></i></button>
+                    <i class="fa fa-download"></i></button>
                 <button type="button" form="form-product" formaction="{{ enable }}"
-                        data-toggle="tooltip" title="{{ button_enable }}" class="btn btn-primary"
+                        data-toggle="tooltip" title="{{ button_enable }}" class="btn btn-success"
                         onclick="confirm('{{ text_confirm }}') ? $('#form-product').attr('action', $(this).attr('formaction')).submit() : false;">
-                    <i class="fa fa-save"></i></button>
+                    <i class="fa fa-download"></i></button>
                 <button type="button" form="form-product" formaction="{{ disable }}"
                         data-toggle="tooltip" title="{{ button_disable }}" class="btn btn-primary"
                         onclick="confirm('{{ text_confirm }}') ? $('#form-product').attr('action', $(this).attr('formaction')).submit() : false;">
-                    <i class="fa fa-remove"></i></button>
+                    <i class="fa fa-ban"></i></button>
                 <button type="button" form="form-product" formaction="{{ disable_all }}"
-                        data-toggle="tooltip" title="{{ button_disable_all }}" class="btn btn-warning"
+                        data-toggle="tooltip" title="{{ button_disable_all }}" class="btn btn-danger"
                         onclick="confirm('{{ text_confirm }}') ? $('#form-product').attr('action', $(this).attr('formaction')).submit() : false;">
-                    <i class="fa fa-remove"></i></button>
+                    <i class="fa fa-ban"></i></button>
             </div>
             <h1>{{ heading_title }}</h1>
             <ul class="breadcrumb">

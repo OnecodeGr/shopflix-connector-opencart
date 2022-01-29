@@ -37,14 +37,12 @@ class Configuration extends \Model
 
     public function convertOrders(): bool
     {
-        $data = $this->loadData();
-        return $data['convert_to_order'] == '1';
+        return $this->isEnabled() && $this->loadData()['convert_to_order'] == '1';
     }
 
     public function autoAcceptOrder(): bool
     {
-        $data = $this->loadData();
-        return $data['auto_accept_order'] == '1';
+        return $this->isEnabled() && $this->loadData()['auto_accept_order'] == '1';
     }
 
     public function apiUrl(): string
