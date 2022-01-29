@@ -11,8 +11,11 @@ require_once DIR_SYSTEM . 'library/onecode/EventGroup.php';
  * @property-read \Response $response
  * @property-read \Loader $load
  * @property-read \Language $language
+ * @property-read \Config $config
  * @property-read \Url $url
  * @property-read \Cart\User $user
+ * @property-read \ModelSettingExtension $model_setting_extension
+ * @property-read \ModelCustomerCustomerGroup $model_customer_customer_group
  * @property-read \ModelExtensionModuleOnecodeShopflixOrder $model_extension_module_onecode_shopflix_order
  * @property-read \ModelExtensionModuleOnecodeShopflixProductAttributes
  * $model_extension_module_onecode_shopflix_product_attributes
@@ -30,6 +33,8 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
     public function __construct($registry)
     {
         parent::__construct($registry);
+        $this->load->model('customer/customer_group');
+        $this->load->model('setting/extension');
         $this->load->model('extension/module/onecode/shopflix/order');
         $this->load->model('extension/module/onecode/shopflix/product');
         $this->load->model('extension/module/onecode/shopflix/product_attributes');
@@ -132,6 +137,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             'error_keyword' => $this->error['error_keyword'] ?? '',
             'error_status' => $this->error['error_status'] ?? '',
             'error_convert_to_order' => $this->error['error_convert_to_order'] ?? '',
+            'error_customer_group' => $this->error['error_customer_group'] ?? '',
             'error_api_url' => $this->error['error_api_url'] ?? '',
             'error_api_username' => $this->error['error_api_username'] ?? '',
             'error_api_password' => $this->error['error_api_password'] ?? '',
@@ -155,6 +161,24 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
     protected function formData(string $moduleId): array
     {
         $user_token = $this->session->data['user_token'];
+        $customer_groups = array_map(function ($row) {
+            return [
+                'id' => $row['customer_group_id'],
+                'name' => $row['name'],
+            ];
+        }, $this->model_customer_customer_group->getCustomerGroups());
+        $shipping_methods = array_map(function ($row) {
+            return [
+                'id' => $row,
+                'name' => $row,
+            ];
+        }, $this->fetchShippingMethods());
+        $payment_methods = array_map(function ($row) {
+            return [
+                'id' => $row,
+                'name' => $row,
+            ];
+        }, $this->fetchPaymentMethods());
         $attributes = $this->model_extension_module_onecode_shopflix_product_attributes
             ->getProductAttributes();
         $lang_id = $this->config->get('config_language_id');
@@ -173,6 +197,9 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                 'module_id' => $moduleId,
             ], true),
             'user_token' => $user_token,
+            'payment_methods' => $payment_methods,
+            'shipping_methods' => $shipping_methods,
+            'customer_groups' => $customer_groups,
             'product_attributes' => $attributes,
         ], $this->model_extension_module_onecode_shopflix_config->loadData());
     }
@@ -264,5 +291,37 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                 }
             }
         }
+    }
+
+    private function fetchPaymentMethods(): array
+    {
+        $extensions = $this->model_setting_extension->getInstalled('payment');
+
+        foreach ($extensions as $key => $value) {
+            if (!is_file(DIR_APPLICATION . 'controller/extension/payment/' . $value . '.php') &&
+                !is_file(DIR_APPLICATION . 'controller/payment/' . $value . '.php')) {
+                unset($extensions[$key]);
+            }
+            if(!$this->config->get('payment_' . $value . '_status')){
+                unset($extensions[$key]);
+            }
+        }
+        return $extensions;
+    }
+
+    private function fetchShippingMethods(): array
+    {
+        $extensions = $this->model_setting_extension->getInstalled('shipping');
+
+        foreach ($extensions as $key => $value) {
+            if (!is_file(DIR_APPLICATION . 'controller/extension/shipping/' . $value . '.php') &&
+                !is_file(DIR_APPLICATION . 'controller/shipping/' . $value . '.php')) {
+                unset($extensions[$key]);
+            }
+            if(!$this->config->get('shipping_' . $value . '_status')){
+                unset($extensions[$key]);
+            }
+        }
+        return $extensions;
     }
 }

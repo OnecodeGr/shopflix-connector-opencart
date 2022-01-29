@@ -91,13 +91,13 @@ class Xml extends \Model
     public function offerFromAttr(): bool
     {
         $data = $this->loadData();
-        return $data['xml_offer_from'] ?? '';
+        return $data['xml_offer_from_attr'] ?? '';
     }
 
     public function offerToAttr(): bool
     {
         $data = $this->loadData();
-        return $data['xml_offer_to'] ?? '';
+        return $data['xml_offer_to_attr'] ?? '';
     }
 
     public function offerPriceAttr(): bool
@@ -109,7 +109,7 @@ class Xml extends \Model
     public function offerQuantityAttr(): ?string
     {
         $data = $this->loadData();
-        return $data['xml_offer_quantity'] ?? '';
+        return $data['xml_offer_quantity_attr'] ?? '';
     }
 
     public function token(): string

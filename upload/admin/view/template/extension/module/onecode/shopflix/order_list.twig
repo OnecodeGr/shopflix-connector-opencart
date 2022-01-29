@@ -9,19 +9,19 @@
                 </button>
                 <button type="button" form="form-order" formaction="{{ decline }}"
                         data-toggle="tooltip" title="{{ button_decline }}" class="btn
-                        btn-warning"
+                        btn-danger"
                         onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
                     <i class="fa fa-remove"></i></button>
                 <button type="button" form="form-order" formaction="{{ accept }}"
                         data-toggle="tooltip" title="{{ button_accept }}" class="btn
                         btn-success"
                         onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
-                    <i class="fa fa-download"></i></button>
+                    <i class="fa fa-check"></i></button>
                 <button type="button" form="form-order" formaction="{{ manual_sync }}"
                         data-toggle="tooltip" title="{{ button_sync }}" class="btn
                         btn-primary"
                         onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
-                    <i class="fa fa-spin"></i></button>
+                    <i class="fa fa-cloud-download"></i></button>
             </div>
             <h1>{{ heading_title }}</h1>
             <ul class="breadcrumb">
@@ -51,7 +51,8 @@
                     </div>
                     <div class="panel-body">
                         <div class="form-group">
-                            <label class="control-label" for="input-reference_id">{{ entry_reference_id
+                            <label class="control-label" for="input-reference_id">{{
+                                column_reference_id
                                 }}</label>
                             <input type="text" name="filter_reference_id" value="{{ filter_reference_id }}"
                                    placeholder="{{ entry_reference_id }}" id="input-reference_id"

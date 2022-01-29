@@ -27,6 +27,8 @@ $_['text_offer_quantity'] = 'Offer Quantity';
 $_['text_xml_extra_attributes'] = 'ShopFlix Attributes';
 $_['text_api_configuration'] = 'Api Configuration';
 $_['text_xml_configuration'] = 'XML Configuration';
+$_['text_customer_group'] = 'Customer Group';
+$_['text_order_configuration'] = 'Order Configuration';
 //Help
 $_['help_status'] = 'Enable / Disable ';
 $_['help_convert_to_order'] = 'When a shopflix order has been accepted do you want to convert it to OpenCart order';
@@ -43,6 +45,7 @@ $_['help_xml_title_attr'] = 'Select the attribute where you use as Title Attribu
 $_['help_xml_description'] = 'Select the attribute where you use as Description Attribute';
 $_['help_xml_brand_attr'] = 'Select the attribute where you use as Brand Attribute';
 $_['help_xml_weight_attr'] = 'Select the attribute where you use as Weight Attribute';
+$_['help_customer_group'] = 'Select the customer group which you want to use on order creation from shopflix';
 //Entry
 $_['entry_status'] = 'Status';
 $_['entry_convert_to_order'] = 'Convert to OpenCart order';
@@ -71,6 +74,9 @@ $_['entry_xml_offer_from'] = 'Offer from';
 $_['entry_xml_offer_to'] = 'Offer To';
 $_['entry_xml_offer_price'] = 'Offer Price';
 $_['entry_xml_offer_quantity'] = 'Offer Quantity';
+$_['entry_customer_group'] = 'Customer Group';
+$_['entry_shipping_method'] = 'Shipping method';
+$_['entry_payment_method'] = 'Payment method';
 //Error
 $_['error_permission'] = 'Warning: You do not have permission to modify `OneCodeGr - ShopFlix` module!';
 $_['error_status'] = '`Enable` value is not accepted';
@@ -79,3 +85,4 @@ $_['error_auto_accept_order'] = '`Auto accept order` value is not accepted';
 $_['error_api_url'] = '`Endpoint` value is not accepted';
 $_['error_api_username'] = '`API Username` is not accepted';
 $_['error_api_password'] = '`Api Key` is not accepted';
+$_['error_customer_group'] = '`Customer group` is not accepted';

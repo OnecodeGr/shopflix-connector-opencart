@@ -47,18 +47,33 @@ class Configuration extends \Model
         return $data['auto_accept_order'] == '1';
     }
 
-    public function apiUrl(): bool
+    public function apiUrl(): string
     {
         return $this->loadData()['api_url'];
     }
 
-    public function apiUsername(): bool
+    public function apiUsername(): string
     {
         return $this->loadData()['api_username'];
     }
 
-    public function apiPassword(): bool
+    public function apiPassword(): string
     {
         return $this->loadData()['api_password'];
+    }
+
+    public function customerGroup(): int
+    {
+        return $this->loadData()['customer_group'] || 1;
+    }
+
+    public function shippingMethod(): int
+    {
+        return $this->loadData()['shipping_method'] || 0;
+    }
+
+    public function paymentMethod(): int
+    {
+        return $this->loadData()['payment_method'] || 0;
     }
 }

@@ -21,7 +21,7 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         parent::__construct($registry);
         $this->load->model('localisation/language');
         $this->load->model('setting/store');
-        $this->load->helper('onecode/shopflix/BasicHelper');
+        $this->load->model('extension/module/onecode/shopflix/order');
         $this->load->helper('onecode/shopflix/BasicHelper');
         $this->basicHelper = new Helper\BasicHelper($registry);
         $this->load->language($this->getLink());

@@ -9,6 +9,10 @@
 ## {proto}://{open-cart-url}/index.php?route=extension/module/onecode/shopflix/product/feed/detailed&token={token-hash}
 # configure attributes 
 
+
+limitation product without options
+
+
 ## Getting started
 
 To make it easy for you to get started with GitLab, here's a list of recommended next steps.

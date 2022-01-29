@@ -1,11 +1,16 @@
 <?php
 namespace Onecode\Shopflix\Helper\Model;
 
-class Order
+class Order extends \Model
 {
     public static function getTableName()
     {
         return \DB_PREFIX . 'onecode_shopflix_order';
+    }
+
+    public static function getRelationTableName()
+    {
+        return \DB_PREFIX . 'onecode_shopflix-oc_order';
     }
 
     public static function getAddressTableName()
