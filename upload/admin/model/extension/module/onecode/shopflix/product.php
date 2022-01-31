@@ -57,4 +57,17 @@ class ModelExtensionModuleOnecodeShopflixProduct extends Helper\Model\Product
         $this->db->query(sprintf("DELETE FROM %s WHERE product_id in (%s)", self::getTableName(), implode(",",
             $common)));
     }
+
+    public function getCatalogProductBySku($sku): array
+    {
+        $sku = trim(preg_replace('/\s+/', ' ', $sku));
+        $query = $this->db->query('SELECT * FROM ' . \DB_PREFIX . 'product WHERE sku = \'' . $this->db->escape($sku) . '\'');
+        if (! empty($query->row))
+        {
+            $product = $this->model_catalog_product->getProduct($query->row['product_id']);
+            $product['description'] = $this->model_catalog_product->getProductDescriptions($query->row['product_id']);
+            return $product;
+        }
+        return [];
+    }
 }

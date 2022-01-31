@@ -15,6 +15,7 @@ require_once DIR_SYSTEM . 'helper/onecode/shopflix/model/Order.php';
  * @property-read \ModelSettingExtension $model_setting_extension
  * @property-read \ModelSettingStore $model_setting_store
  * @property-read \ModelLocalisationCurrency $model_localisation_currency
+ * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
  * @property-read \ModelExtensionModuleOnecodeShopflixConfig $model_extension_module_onecode_shopflix_config
  */
 class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
@@ -31,6 +32,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         $this->load->model('setting/extension');
         $this->load->model('localisation/currency');
         $this->load->model('catalog/product');
+        $this->load->model('extension/module/onecode/shopflix/product');
         $this->load->model('extension/module/onecode/shopflix/config');
     }
 
@@ -41,7 +43,8 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
  `reference_id` varchar(255),
  `state` varchar(255),
  `status` varchar(255),
- `sub_total` decimal(10,3),
+ `sub_total` decimal(10,3
+                    ),
  `discount_amount` decimal(10,3),
  `total_paid` decimal(10,3),
  `customer_email` varchar(255),
@@ -60,11 +63,10 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
     {
         $this->db->query("CREATE TABLE IF NOT EXISTS " . self::getRelationTableName() . " (
  `shopflix_id` INT UNSIGNED NOT NULL,
- `oc_id` INT UNSIGNED NOT NULL,
+ `oc_id` INT(11) UNSIGNED NOT NULL,
  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
  PRIMARY KEY (`shopflix_id`,`oc_id`),
-    FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE CASCADE ON DELETE RESTRICT ,
-    FOREIGN KEY (oc_id) REFERENCES " . \DB_PREFIX . "order(id) ON UPDATE CASCADE ON DELETE RESTRICT
+    FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE CASCADE ON DELETE RESTRICT
 )");
     }
 
@@ -119,19 +121,20 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
 
     public function getOrderById($order_id): array
     {
-        $sql = "SELECT * FROM " . self::getTableName() . " WHERE id = " . intval($order_id);
-        return $this->db->query($sql)->row;
+        $sql = "SELECT * FROM " . self::getTableName() . " WHERE id = " . intval($order_id) . " LIMIT 1";
+        $query = $this->db->query($sql);
+        return count($query->rows) ? $query->row : [];
     }
 
-    public function getOrderByReferenceId($order_id): array
+    public function getOrderByReferenceId($id): array
     {
-        $sql = "SELECT * FROM " . self::getTableName() . " WHERE reference_id = " . intval($order_id);
+        $sql = "SELECT * FROM " . self::getTableName() . " WHERE reference_id = '" . $id . "'";
         return $this->db->query($sql)->row;
     }
 
     public function getTotalOrders($data = []): int
     {
-        $sql = sprintf("SELECT COUNT(DISTINCT o.id) AS total FROM %s AS o", self::getTableName());
+        $sql = sprintf("SELECT COUNT(DISTINCT o.id) AS total FROM %s AS o WHERE o.id > 0 ", self::getTableName());
         if (! empty($data['filter_reference_id']))
         {
             $sql .= " AND o.reference_id LIKE '" . $this->db->escape($data['filter_reference_id']) . "%'";
@@ -154,7 +157,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
 
     public function getAllOrders($data = []): array
     {
-        $sql = sprintf("SELECT DISTINCT * FROM %s AS o", self::getTableName());
+        $sql = sprintf("SELECT DISTINCT * FROM %s AS o WHERE o.id > 0  ", self::getTableName());
         if (! empty($data['filter_reference_id']))
         {
             $sql .= " AND o.reference_id LIKE '" . $this->db->escape($data['filter_reference_id']) . "%'";
@@ -171,6 +174,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         {
             $sql .= " AND o.total_paid = " . floatval($data['filter_total_paid']);
         }
+
         $query = $this->db->query($sql);
         return $query->rows;
     }
@@ -187,18 +191,33 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         return $this->db->query($sql)->rows;
     }
 
-    public function accept($order_id): void
+    public function accept(array $order_ids): void
     {
-        $oc_id = $this->createOpenCartOrder($order_id);
-        $this->acceptOrderDB($order_id, $oc_id);
-        $this->acceptOrderShopflix($order_id);
+        foreach ($order_ids as $id)
+        {
+            $order = $this->getOrderById($id);
+            if ($order['status'] != 'pending_acceptance')
+            {
+                continue;
+            }
+            $oc_id = $this->createOpenCartOrder($id);
+            $this->acceptOrderDB($id, $oc_id);
+            $this->acceptOrderShopflix($id);
+        }
     }
 
+    /**
+     * @param $shopflix_id
+     *
+     * @return int
+     * @throws \LogicException
+     */
     protected function createOpenCartOrder($shopflix_id): int
     {
         $order = $this->getOrderById($shopflix_id);
         $items = $this->getOrderItems($shopflix_id);
         $address = $this->getOrderAddress($shopflix_id);
+
         $order_data = $this->setupOrderFields();
         //update order fields
         $order_data['total'] = $order['total_paid'];
@@ -235,8 +254,11 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         //products
         foreach ($items as $item)
         {
-            $product = $this->getCatalogProductBySku($item['sku']);
-
+            $product = $this->model_extension_module_onecode_shopflix_product->getCatalogProductBySku($item['sku']);
+            if (! isset($product['product_id']))
+            {
+                continue;
+            }
             $product_data = [
                 'product_id' => $product['product_id'],
                 'name' => $product['name'],
@@ -252,9 +274,14 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
             ];
             $order_data['products'][] = $product_data;
         }
+
+        if (count($items) != count($order_data['products']))
+        {
+            throw new LogicException(sprintf($this->language->get('error_on_sync_items'), $order['reference_id']));
+        }
         //POST DATA -> var url = '{{ catalog }}index.php?route=api/order/add&api_token={{ api_token }}&store_id=' + $
         //('select[name=\'store_id\'] option:selected').val();
-        return  1;
+        return 1;
     }
 
     protected function setupOrderFields(): array
@@ -269,30 +296,30 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
             'taxes' => &$taxes,
             'total' => &$total,
         ];
-
-        $sort_order = [];
-        $results = $this->model_setting_extension->getExtensions('total');
-        foreach ($results as $key => $value)
-        {
-            $sort_order[$key] = $this->config->get('total_' . $value['code'] . '_sort_order');
-        }
-        array_multisort($sort_order, SORT_ASC, $results);
-
-        foreach ($results as $result)
-        {
-            if ($this->config->get('total_' . $result['code'] . '_status'))
-            {
-                $this->load->model('extension/total/' . $result['code']);
-                // We have to put the totals in an array so that they pass by reference.
-                $this->{'model_extension_total_' . $result['code']}->getTotal($total_data);
-            }
-        }
-        $sort_order = [];
-        foreach ($totals as $key => $value)
-        {
-            $sort_order[$key] = $value['sort_order'];
-        }
-        array_multisort($sort_order, SORT_ASC, $totals);
+        //
+        //$sort_order = [];
+        //$results = $this->model_setting_extension->getExtensions('total');
+        //foreach ($results as $key => $value)
+        //{
+        //    $sort_order[$key] = $this->config->get('total_' . $value['code'] . '_sort_order');
+        //}
+        //array_multisort($sort_order, SORT_ASC, $results);
+        //
+        //foreach ($results as $result)
+        //{
+        //    if ($this->config->get('total_' . $result['code'] . '_status'))
+        //    {
+        //        $this->load->model('extension/total/' . $result['code']);
+        //        // We have to put the totals in an array so that they pass by reference.
+        //        $this->{'model_extension_total_' . $result['code']}->getTotal($total_data);
+        //    }
+        //}
+        //$sort_order = [];
+        //foreach ($totals as $key => $value)
+        //{
+        //    $sort_order[$key] = $value['sort_order'];
+        //}
+        //array_multisort($sort_order, SORT_ASC, $totals);
         $order_data['totals'] = $totals;
 
         $order_data['invoice_prefix'] = $this->config->get('config_invoice_prefix');
@@ -356,7 +383,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         $order_data['tracking'] = '';
 
         $order_data['language_id'] = $this->config->get('config_language_id');
-        $order_data['currency_code'] = $this->session->data['currency'];
+        $order_data['currency_code'] = $this->config->get('config_currency');
 
         $currencies = $this->model_localisation_currency->getCurrencies();
         $currency = (isset($currencies[$order_data['currency_code']])) ?
@@ -374,7 +401,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
     protected function acceptOrderDB($order_id, $oc_id)
     {
         //update database
-        $this->db->query('UPDATE TABLE `' . self::getTableName() . '` SET `status`= \'completed\' WHERE `id` = ' .
+        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'completed\' WHERE `id` = ' .
             $order_id . ';');
         $this->db->query('DELETE FROM `' . self::getRelationTableName() . '` WHERE `id` = ' . $order_id . ' and  `oc_id`=' . $oc_id . ';');
         $this->db->query('INSERT INTO `' . self::getRelationTableName() . '` VALUES (' . $order_id . ', ' . $oc_id . ');');
@@ -384,33 +411,30 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
     {
     }
 
-    public function decline($order_id): void
+    public function decline($order_ids): void
     {
-        $this->declineOrderDB($order_id);
-        $this->declineOrderShopflix($order_id);
+        foreach ($order_ids as $id)
+        {
+            $order = $this->getOrderById($id);
+            if ($order['status'] != 'pending_acceptance')
+            {
+                continue;
+            }
+            $this->declineOrderDB($id);
+            $this->declineOrderShopflix($id);
+        }
     }
 
     protected function declineOrderDB($order_id)
     {
         //update database
-        $this->db->query('UPDATE TABLE `' . self::getTableName() . '` SET `status`= \'cancelled\' WHERE `id` = ' .
+        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'cancelled\' WHERE `id` = ' .
             $order_id . ';');
-        $this->db->query('DELETE FROM `' . self::getRelationTableName() . '` WHERE `id` = ' . $order_id . ';');
+        $this->db->query('DELETE FROM `' . self::getRelationTableName() . '` WHERE `shopflix_id` = ' . $order_id . ';');
     }
 
     protected function declineOrderShopflix($order_id)
     {
-    }
-
-    protected function getCatalogProductBySku($sku): array
-    {
-        $sku = trim(preg_replace('/\s+/', ' ', $sku));
-        $query = $this->db->query('SELECT * FROM ' . \DB_PREFIX . 'product WHERE sku = \'' . $this->db->escape($sku) . '\'');
-        if (! empty($query->row))
-        {
-            return $this->model_catalog_product->getProduct($query->row['product_id']);
-        }
-        return [];
     }
 
     public function save(array $data): ?array
@@ -437,8 +461,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
             $data['id'] = $order_id;
             if ($data['id'] == 0)
             {
-                $this->db->query('ROLLBACK;');
-                return null;
+                throw new Exception('No order saved');
             }
             array_walk($data['address'], function ($item) use ($order_id) {
                 $query = "INSERT INTO " . self::getAddressTableName() .
@@ -462,21 +485,19 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
             $query = $this->db->query('SELECT COUNT(*) as c FROM ' . self::getAddressTableName() . ' WHERE order_id = ' . $order_id);
             if (intval(count($query->rows) ? $query->row['c'] : '0') == 0)
             {
-                $this->db->query('ROLLBACK;');
-                return null;
+                throw new Exception('No address saved');
             }
             $query = $this->db->query('SELECT COUNT(*) as c FROM ' . self::getItemTableName() . ' WHERE order_id = ' . $order_id);
             if (intval(count($query->rows) ? $query->row['c'] : '0') == 0)
             {
-                $this->db->query('ROLLBACK;');
-                return null;
+                throw new Exception('No item saved');
             }
             $this->db->query("COMMIT;");
             return $data;
         }
         catch (\Exception $e)
         {
-            print_r(['error' => $e->getMessage()]);
+            error_log($e->getMessage());
             $this->db->query('ROLLBACK;');
             return null;
         }

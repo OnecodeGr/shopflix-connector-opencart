@@ -1,7 +1,7 @@
 <?php
 namespace Onecode\Shopflix\Helper\Model;
 
-class Shipment
+class Shipment extends \Model
 {
     public static function getTableName()
     {

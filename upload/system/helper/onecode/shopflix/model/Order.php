@@ -10,7 +10,7 @@ class Order extends \Model
 
     public static function getRelationTableName()
     {
-        return \DB_PREFIX . 'onecode_shopflix-oc_order';
+        return \DB_PREFIX . 'onecode_shopflix_oc_order';
     }
 
     public static function getAddressTableName()
