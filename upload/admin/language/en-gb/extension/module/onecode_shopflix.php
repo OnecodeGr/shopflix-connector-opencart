@@ -77,6 +77,7 @@ $_['entry_xml_offer_quantity'] = 'Offer Quantity';
 $_['entry_customer_group'] = 'Customer Group';
 $_['entry_shipping_method'] = 'Shipping method';
 $_['entry_payment_method'] = 'Payment method';
+$_['entry_api_user'] = 'OC Api User';
 //Error
 $_['error_permission'] = 'Warning: You do not have permission to modify `OneCodeGr - ShopFlix` module!';
 $_['error_status'] = '`Enable` value is not accepted';

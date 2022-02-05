@@ -1,6 +1,11 @@
 <?php
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\RequestOptions;
 use Onecode\Shopflix\Helper;
+use Onecode\ShopFlixConnector\Library\Connector;
+use Onecode\ShopFlixConnector\Library\Interfaces\OrderInterface;
 
 require_once DIR_SYSTEM . 'helper/onecode/shopflix/model/Order.php';
 
@@ -9,14 +14,19 @@ require_once DIR_SYSTEM . 'helper/onecode/shopflix/model/Order.php';
  * @property-read \Loader $load
  * @property-read \Config $config
  * @property-read \Language $language
+ * @property-read \Request $request
  * @property-read \Session $session
+ * @property-read \Cart\Cart $cart
  * @property-read \ModelSaleOrder $model_sale_order
+ * @property-read \ModelUserApi $model_user_api
+ * @property-read \Cart\User $user
  * @property-read \ModelCatalogProduct $model_catalog_product
  * @property-read \ModelSettingExtension $model_setting_extension
  * @property-read \ModelSettingStore $model_setting_store
  * @property-read \ModelLocalisationCurrency $model_localisation_currency
  * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
  * @property-read \ModelExtensionModuleOnecodeShopflixConfig $model_extension_module_onecode_shopflix_config
+ * @property-read \GuzzleHttp\Client $client
  */
 class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
 {
@@ -28,12 +38,22 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         parent::__construct($registry);
         $this->load->model('sale/order');
         $this->load->model('setting/store');
+        $this->load->model('setting/store');
         $this->load->model('setting/extension');
         $this->load->model('setting/extension');
         $this->load->model('localisation/currency');
+        $this->load->model('user/api');
         $this->load->model('catalog/product');
         $this->load->model('extension/module/onecode/shopflix/product');
         $this->load->model('extension/module/onecode/shopflix/config');
+        $catalog = $this->request->server['HTTPS'] ? HTTPS_CATALOG : HTTP_CATALOG;
+        $catalog = parse_url($catalog, \PHP_URL_HOST) == 'opencart.test' ? 'http://apache/' : $catalog;
+        $this->client = new Client(['base_uri' => $catalog . 'index.php']);
+        $this->connector = new Connector(
+            $this->model_extension_module_onecode_shopflix_config->apiUsername(),
+            $this->model_extension_module_onecode_shopflix_config->apiPassword(),
+            $this->model_extension_module_onecode_shopflix_config->apiUrl()
+        );
     }
 
     protected function createOrderTable()
@@ -195,246 +215,475 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
     {
         foreach ($order_ids as $id)
         {
-            $order = $this->getOrderById($id);
-            if ($order['status'] != 'pending_acceptance')
+            try
             {
-                continue;
+                $order = $this->getOrderById($id);
+                if ($order['status'] != OrderInterface::STATUS_PENDING_ACCEPTANCE)
+                {
+                    continue;
+                }
+                $this->db->query('START TRANSACTION;');
+
+                $oc_id = $this->createOpenCartOrder($id);
+                //$this->connector->picking($order['reference_id']);
+                $this->acceptOrderDB($id, $oc_id);
+                $this->db->query('COMMIT;');
             }
-            $oc_id = $this->createOpenCartOrder($id);
-            $this->acceptOrderDB($id, $oc_id);
-            $this->acceptOrderShopflix($id);
+            catch (\RuntimeException $exception)
+            {
+                $this->db->query('ROLLBACK;');
+                throw new RuntimeException($exception->getMessage());
+            }
+            catch (\LogicException $exception)
+            {
+                $this->db->query('ROLLBACK;');
+                throw new LogicException($exception->getMessage());
+            }
+            catch (\Exception $exception)
+            {
+                $this->db->query('ROLLBACK;');
+                throw new Exception($exception->getMessage());
+            }
         }
     }
 
+    private function apiLogin(): string
+    {
+        $api_info = $this->model_user_api->getApi($this->config->get('config_api_id'));
+        try
+        {
+            $res = $this->client->post('', [
+                RequestOptions::QUERY => [
+                    'route' => 'api/login',
+                ],
+                RequestOptions::FORM_PARAMS => [
+                    'key' => $api_info['key'],
+                ],
+            ]);
+            $body = json_decode($res->getBody()->getContents(), true);
+            if ($res->getStatusCode() != 200 || ! isset($body['api_token']))
+            {
+                throw new \RuntimeException('Error on login');
+            }
+            return $body['api_token'];
+        }
+        catch (GuzzleException $e)
+        {
+            error_log($e->getMessage());
+            return '';
+        }
+    }
+
+    private function apiCustomer(array $order, string $api_token): bool
+    {
+        try
+        {
+            $res = $this->client->post('', [
+                RequestOptions::QUERY => [
+                    'route' => 'api/customer',
+                    'api_token' => $api_token,
+                ],
+                RequestOptions::FORM_PARAMS => [
+                    'firstname' => $order['customer_firstname'],
+                    'lastname' => $order['customer_lastname'],
+                    'email' => $order['customer_email'],
+                    'telephone' => '000',
+                ],
+            ]);
+            $raw = $res->getBody()->getContents();
+            $body = json_decode($raw, true);
+            if ($res->getStatusCode() != 200 || isset($body['error']))
+            {
+                error_log(sprintf('Customer : %s', $raw));
+                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on customer');
+            }
+            return true;
+        }
+        catch (GuzzleException $e)
+        {
+            error_log(json_encode(['-----customer cart-----', $e->getMessage()]));
+            throw new \RuntimeException('-----customer cart-----');
+        }
+    }
+
+    private function apiProduct(array $items, string $api_token): bool
+    {
+        try
+        {
+            $products = [];
+            foreach ($items as $item)
+            {
+                $product = $this->model_extension_module_onecode_shopflix_product->getCatalogProductBySku($item['sku']);
+                if (! isset($product['product_id']))
+                {
+                    continue;
+                }
+                $product_data = [
+                    'product_id' => $product['product_id'],
+                    'quantity' => $item['quantity'],
+                ];
+                $products[] = $product_data;
+            }
+            $res = $this->client->post('', [
+                RequestOptions::QUERY => [
+                    'route' => 'api/cart/add',
+                    'api_token' => $api_token,
+                ],
+                RequestOptions::FORM_PARAMS => [
+                    'product' => $products,
+                ],
+            ]);
+            $raw = $res->getBody()->getContents();
+            $body = json_decode($raw, true);
+            if ($res->getStatusCode() != 200 || isset($body['error']))
+            {
+                error_log(sprintf('Products : %s', $raw));
+                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on products');
+            }
+            return true;
+        }
+        catch (GuzzleException $e)
+        {
+            error_log(json_encode(['-----product-----', $e->getMessage()]));
+            throw new \RuntimeException('-----product-----');
+        }
+    }
+
+    private function apiAddressPayment(array $items, string $api_token): bool
+    {
+        try
+        {
+            $record = [];
+            foreach ($items as $row)
+            {
+                if ($row['type'] != self::ADDRESS_TYPE_BILLING)
+                {
+                    continue;
+                }
+                $record = [
+                    'firstname' => $row['firstname'],
+                    'lastname' => $row['lastname'],
+                    'address_1' => $row['street'],
+                    'postcode' => $row['postcode'],
+                    'city' => $row['city'],
+                    'zone_id' => 0,
+                    'country_id' => $row['country_id'],
+                    'custom_field' => [
+                        'phone' => $row['telephone'],
+                        'email' => $row['email'],
+                    ],
+                ];
+                break;
+            }
+            $res = $this->client->post('', [
+                RequestOptions::QUERY => [
+                    'route' => 'api/payment/address',
+                    'api_token' => $api_token,
+                ],
+                RequestOptions::FORM_PARAMS => $record,
+
+            ]);
+            $raw = $res->getBody()->getContents();
+            $body = json_decode($raw, true);
+            if ($res->getStatusCode() != 200 || isset($body['error']))
+            {
+                error_log(sprintf('payment address : %s', $raw));
+                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on payment address');
+            }
+            return true;
+        }
+        catch (GuzzleException $e)
+        {
+            error_log(json_encode(['-----payment address-----', $e->getMessage()]));
+            throw new \RuntimeException('-----payment address-----');
+        }
+    }
+
+    private function apiAddressShipping(array $items, string $api_token): bool
+    {
+        try
+        {
+            $record = [];
+            foreach ($items as $row)
+            {
+                if ($row['type'] != self::ADDRESS_TYPE_SHIPPING)
+                {
+                    continue;
+                }
+                $record = [
+                    'firstname' => $row['firstname'],
+                    'lastname' => $row['lastname'],
+                    'address_1' => $row['street'],
+                    'postcode' => $row['postcode'],
+                    'city' => $row['city'],
+                    'zone_id' => 0,
+                    'country_id' => $row['country_id'],
+                    'custom_field' => [
+                        'phone' => $row['telephone'],
+                        'email' => $row['email'],
+                    ],
+                ];
+                break;
+            }
+            $res = $this->client->post('', [
+                RequestOptions::QUERY => [
+                    'route' => 'api/shipping/address',
+                    'api_token' => $api_token,
+                ],
+                RequestOptions::FORM_PARAMS => $record,
+
+            ]);
+            $raw = $res->getBody()->getContents();
+            $body = json_decode($raw, true);
+            if ($res->getStatusCode() != 200 || isset($body['error']))
+            {
+                error_log(sprintf('shipping address : %s', $raw));
+                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on shipping address');
+            }
+            return true;
+        }
+        catch (GuzzleException $e)
+        {
+            error_log(json_encode(['-----shipping address-----', $e->getMessage()]));
+            throw new \RuntimeException('-----shipping address-----');
+        }
+    }
+
+    private function apiShippingMethod(string $api_token): bool
+    {
+        try
+        {
+            $res_a = $this->client->get('', [
+                RequestOptions::QUERY => [
+                    'route' => 'api/shipping/methods',
+                    'api_token' => $api_token,
+                ],
+            ]);
+            $res = $this->client->post('', [
+                RequestOptions::QUERY => [
+                    'route' => 'api/shipping/method',
+                    'api_token' => $api_token,
+                ],
+                RequestOptions::FORM_PARAMS => [
+                    'shipping_method' => $this->model_extension_module_onecode_shopflix_config->shippingMethod(),
+                ],
+
+            ]);
+            $raw = $res->getBody()->getContents();
+            $body = json_decode($raw, true);
+            if ($res->getStatusCode() != 200 || isset($body['error']))
+            {
+                error_log(sprintf('shipping method : %s', $raw));
+                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on shipping method');
+            }
+            return true;
+        }
+        catch (GuzzleException $e)
+        {
+            error_log(json_encode(['-----shipping method-----', $e->getMessage()]));
+            throw new \RuntimeException('-----shipping method-----');
+        }
+    }
+
+    private function apiPaymentMethod(string $api_token): bool
+    {
+        try
+        {
+            $res_a = $this->client->get('', [
+                RequestOptions::QUERY => [
+                    'route' => 'api/payment/methods',
+                    'api_token' => $api_token,
+                ],
+            ]);
+            $res = $this->client->post('', [
+                RequestOptions::QUERY => [
+                    'route' => 'api/payment/method',
+                    'api_token' => $api_token,
+                ],
+                RequestOptions::FORM_PARAMS => [
+                    'payment_method' => $this->model_extension_module_onecode_shopflix_config->paymentMethod(),
+                ],
+
+            ]);
+            $raw = $res->getBody()->getContents();
+            $body = json_decode($raw, true);
+            if ($res->getStatusCode() != 200 || isset($body['error']))
+            {
+                error_log(sprintf('payment method : %s', $raw));
+                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on payment method');
+            }
+            return true;
+        }
+        catch (GuzzleException $e)
+        {
+            error_log(json_encode(['-----payment method-----', $e->getMessage()]));
+            throw new \RuntimeException('-----payment method-----');
+        }
+    }
+
+    private function apiOrderAdd(array $order_data, string $api_token): int
+    {
+        try
+        {
+            $res = $this->client->post('', [
+                RequestOptions::QUERY => [
+                    'route' => 'api/order/add',
+                    'api_token' => $api_token,
+                ],
+                RequestOptions::FORM_PARAMS => [
+                    'order_status_id' => 1,
+                    'comment' => $order_data['customer_note'],
+                ],
+
+            ]);
+            $raw = $res->getBody()->getContents();
+            $body = json_decode($raw, true);
+            if ($res->getStatusCode() != 200 || isset($body['error']) || ! isset($body['order_id']))
+            {
+                error_log(sprintf('order add : %s', $raw));
+                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on order add');
+            }
+            return intval($body['order_id']);
+        }
+        catch (GuzzleException $e)
+        {
+            error_log(json_encode(['-----order add-----', $e->getMessage()]));
+            throw new \RuntimeException('-----order add-----');
+        }
+    }
+
+    private function fineTuneTotals(int $order_id, float $sub_total, float $total): void
+    {
+        $this->db->query('UPDATE ' . DB_PREFIX . "order SET `total` = " . $total
+            . " WHERE `order_id` = " . $order_id . ";");
+        $this->db->query('UPDATE ' . DB_PREFIX . "order_total SET `value` = " . $sub_total
+            . " WHERE `order_id` = " . $order_id . " AND `code` = 'sub_total';");
+        $this->db->query('UPDATE ' . DB_PREFIX . "order_total SET `value` = " . $total
+            . " WHERE `order_id` = " . $order_id . " AND `code` = 'total';");
+        $this->db->query('UPDATE ' . DB_PREFIX . "order_total SET `value` = " . ($total - $sub_total)
+            . " WHERE `order_id` = " . $order_id . " AND `code` = 'shipping';");
+    }
+
+    private function fineTuneProductTotals(array $items, int $order_id): void
+    {
+        array_walk($items, function ($item) use ($order_id) {
+            $product = $this->model_extension_module_onecode_shopflix_product->getCatalogProductBySku($item['sku']);
+            $this->db->query('UPDATE ' . DB_PREFIX . "order_product SET `price` = " . $item['price'] . ", `total` = " .
+                $item['price'] * $item['quantity']
+                . " WHERE `order_id` = " . $order_id . " AND `product_id` = " . $product['product_id'] . ";");
+        });
+    }
+
     /**
-     * @param $shopflix_id
+     * @param $id
      *
      * @return int
      * @throws \LogicException
      */
-    protected function createOpenCartOrder($shopflix_id): int
+    protected function createOpenCartOrder($id): int
     {
-        $order = $this->getOrderById($shopflix_id);
-        $items = $this->getOrderItems($shopflix_id);
-        $address = $this->getOrderAddress($shopflix_id);
-
-        $order_data = $this->setupOrderFields();
-        //update order fields
-        $order_data['total'] = $order['total_paid'];
-        $order_data['comment'] = $order['customer_note'];
-        $order_data['order_status_id'] = 1; //Pending
-        $order_data['shipping_method'] = '';
-        $order_data['shipping_code'] = '';
-        //update customer fields
-        $order_data['firstname'] = $order['customer_firstname'];
-        $order_data['lastname'] = $order['customer_lastname'];
-        $order_data['email'] = $order['customer_email'];
-        $order_data['telephone'] = '';
-        //address
-        foreach ($address as $row)
-        {
-            $prefix = ($row['type'] == self::ADDRESS_TYPE_BILLING) ? 'payment_' : 'shipping_';
-            $order_data[$prefix . 'firstname'] = $row['firstname'];
-            $order_data[$prefix . 'lastname'] = $row['lastname'];
-            $order_data[$prefix . 'company'] = '';
-            $order_data[$prefix . 'address_1'] = $row['street'];
-            $order_data[$prefix . 'address_2'] = '';
-            $order_data[$prefix . 'city'] = $row['city'];
-            $order_data[$prefix . 'postcode'] = $row['postcode'];
-            $order_data[$prefix . 'zone'] = '';
-            $order_data[$prefix . 'zone_id'] = '';
-            $order_data[$prefix . 'country'] = '';
-            $order_data[$prefix . 'country_id'] = $row['country_id'];
-            $order_data[$prefix . 'address_format'] = '';
-            $order_data[$prefix . 'custom_field'] = [
-                'phone' => $row['telephone'],
-                'email' => $row['email'],
-            ];
-        }
-        //products
-        foreach ($items as $item)
-        {
-            $product = $this->model_extension_module_onecode_shopflix_product->getCatalogProductBySku($item['sku']);
-            if (! isset($product['product_id']))
-            {
-                continue;
-            }
-            $product_data = [
-                'product_id' => $product['product_id'],
-                'name' => $product['name'],
-                'model' => $product['model'],
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
-                'total' => $item['price'] * $item['quantity'],
-                'tax' => 0,
-                'option' => [],
-                'download' => 0,
-                'subtract' => '',
-                'reward' => '',
-            ];
-            $order_data['products'][] = $product_data;
-        }
-
-        if (count($items) != count($order_data['products']))
-        {
-            throw new LogicException(sprintf($this->language->get('error_on_sync_items'), $order['reference_id']));
-        }
-        //POST DATA -> var url = '{{ catalog }}index.php?route=api/order/add&api_token={{ api_token }}&store_id=' + $
-        //('select[name=\'store_id\'] option:selected').val();
-        return 1;
-    }
-
-    protected function setupOrderFields(): array
-    {
-        $order_data = [];
-        $totals = [];
-        $taxes = $this->cart->getTaxes();
-        $total = 0;
-
-        $total_data = [
-            'totals' => &$totals,
-            'taxes' => &$taxes,
-            'total' => &$total,
-        ];
-        //
-        //$sort_order = [];
-        //$results = $this->model_setting_extension->getExtensions('total');
-        //foreach ($results as $key => $value)
-        //{
-        //    $sort_order[$key] = $this->config->get('total_' . $value['code'] . '_sort_order');
-        //}
-        //array_multisort($sort_order, SORT_ASC, $results);
-        //
-        //foreach ($results as $result)
-        //{
-        //    if ($this->config->get('total_' . $result['code'] . '_status'))
-        //    {
-        //        $this->load->model('extension/total/' . $result['code']);
-        //        // We have to put the totals in an array so that they pass by reference.
-        //        $this->{'model_extension_total_' . $result['code']}->getTotal($total_data);
-        //    }
-        //}
-        //$sort_order = [];
-        //foreach ($totals as $key => $value)
-        //{
-        //    $sort_order[$key] = $value['sort_order'];
-        //}
-        //array_multisort($sort_order, SORT_ASC, $totals);
-        $order_data['totals'] = $totals;
-
-        $order_data['invoice_prefix'] = $this->config->get('config_invoice_prefix');
-        $order_data['store_id'] = $this->config->get('config_store_id');
-        $order_data['store_name'] = $this->config->get('config_name');
-
-        if ($order_data['store_id'])
-        {
-            $order_data['store_url'] = $this->config->get('config_url');
-        }
-        else
-        {
-            $order_data['store_url'] = ($this->request->server['HTTPS']) ? HTTPS_SERVER : HTTP_SERVER;
-        }
-
-        $order_data['customer_id'] = 0;
-        $order_data['customer_group_id'] = $this->model_extension_module_onecode_shopflix_config->customerGroup();
-        $order_data['firstname'] = '';
-        $order_data['lastname'] = '';
-        $order_data['email'] = '';
-        $order_data['telephone'] = '';
-        $order_data['custom_field'] = '';
-
-        $order_data['payment_firstname'] = '';
-        $order_data['payment_lastname'] = '';
-        $order_data['payment_company'] = '';
-        $order_data['payment_address_1'] = '';
-        $order_data['payment_address_2'] = '';
-        $order_data['payment_city'] = '';
-        $order_data['payment_postcode'] = '';
-        $order_data['payment_zone'] = '';
-        $order_data['payment_zone_id'] = '';
-        $order_data['payment_country'] = '';
-        $order_data['payment_country_id'] = '';
-        $order_data['payment_address_format'] = '';
-        $order_data['payment_custom_field'] = [];
-        $order_data['payment_method'] = '';
-        $order_data['payment_code'] = $this->model_extension_module_onecode_shopflix_config->paymentMethod();
-        $order_data['shipping_firstname'] = '';
-        $order_data['shipping_lastname'] = '';
-        $order_data['shipping_company'] = '';
-        $order_data['shipping_address_1'] = '';
-        $order_data['shipping_address_2'] = '';
-        $order_data['shipping_city'] = '';
-        $order_data['shipping_postcode'] = '';
-        $order_data['shipping_zone'] = '';
-        $order_data['shipping_zone_id'] = '';
-        $order_data['shipping_country'] = '';
-        $order_data['shipping_country_id'] = '';
-        $order_data['shipping_address_format'] = '';
-        $order_data['shipping_custom_field'] = [];
-        $order_data['shipping_method'] = '';
-        $order_data['shipping_code'] = $this->model_extension_module_onecode_shopflix_config->shippingMethod();
-        $order_data['products'] = [];
-        $order_data['comment'] = '';
-        $order_data['total'] = $total_data['total'];
-
-        $order_data['affiliate_id'] = 0;
-        $order_data['commission'] = 0;
-        $order_data['marketing_id'] = 0;
-        $order_data['tracking'] = '';
-
-        $order_data['language_id'] = $this->config->get('config_language_id');
-        $order_data['currency_code'] = $this->config->get('config_currency');
-
-        $currencies = $this->model_localisation_currency->getCurrencies();
-        $currency = (isset($currencies[$order_data['currency_code']])) ?
-            $currencies[$order_data['currency_code']] : ['currency_id' => 0, "value" => ''];
-
-        $order_data['currency_id'] = $currency['currency_id'];
-        $order_data['currency_value'] = $currency['value'];
-        $order_data['ip'] = '';
-        $order_data['forwarded_ip'] = '';
-        $order_data['user_agent'] = '';
-        $order_data['accept_language'] = '';
-        return $order_data;
+        $order = $this->getOrderById($id);
+        $items = $this->getOrderItems($id);
+        $address = $this->getOrderAddress($id);
+        $api_token = $this->apiLogin();
+        $this->apiCustomer($order, $api_token);
+        $this->apiProduct($items, $api_token);
+        $this->apiAddressPayment($address, $api_token);
+        $this->apiAddressShipping($address, $api_token);
+        $this->apiPaymentMethod($api_token);
+        $this->apiShippingMethod($api_token);
+        $order_id = $this->apiOrderAdd($order, $api_token);
+        $this->fineTuneTotals($order_id, (float) $order['sub_total'], (float) $order['total_paid']);
+        $this->fineTuneProductTotals($items, $order_id);
+        return $order_id;
     }
 
     protected function acceptOrderDB($order_id, $oc_id)
     {
         //update database
-        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'completed\' WHERE `id` = ' .
+        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' . OrderInterface::STATUS_PICKING . '\' WHERE `id` = ' .
             $order_id . ';');
-        $this->db->query('DELETE FROM `' . self::getRelationTableName() . '` WHERE `id` = ' . $order_id . ' and  `oc_id`=' . $oc_id . ';');
-        $this->db->query('INSERT INTO `' . self::getRelationTableName() . '` VALUES (' . $order_id . ', ' . $oc_id . ');');
+        $this->db->query('DELETE FROM `' . self::getRelationTableName() . '` WHERE `shopflix_id` = ' . $order_id . ' and  `oc_id`=' . $oc_id . ';');
+        $this->db->query('INSERT INTO `' . self::getRelationTableName() . '` (`shopflix_id`, `oc_id`)  VALUES (' .$order_id . ', ' . $oc_id .');');
     }
 
-    protected function acceptOrderShopflix($order_id)
+    protected function acceptOrderShopflix($order_id): bool
     {
+        $this->connector->picking($order_id);
     }
 
-    public function decline($order_ids): void
+    public function cancel($id, bool $force = false): array
+    {
+        $order = $this->getOrderById($id);
+        if ($order['status'] == OrderInterface::STATUS_PENDING_ACCEPTANCE || $force)
+        {
+            $order['status'] = OrderInterface::STATUS_CANCELED;
+            $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
+                OrderInterface::STATUS_CANCELED . '\' WHERE `id` = ' . $id . ';');
+            return $order;
+        }
+        return [];
+    }
+
+    public function onTheWay($id, bool $force = false): array
+    {
+        $order = $this->getOrderById($id);
+        if ($order['status'] == OrderInterface::STATUS_READY_TO_BE_SHIPPED || $force)
+        {
+            $order['status'] = OrderInterface::STATUS_ON_THE_WAY;
+            $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
+                OrderInterface::STATUS_ON_THE_WAY . '\' WHERE `id` = ' . $id . ';');
+            return $order;
+        }
+        return [false];
+    }
+
+    public function decline($order_ids, string $decline_message): void
     {
         foreach ($order_ids as $id)
         {
             $order = $this->getOrderById($id);
-            if ($order['status'] != 'pending_acceptance')
+            if ($order['status'] != OrderInterface::STATUS_PENDING_ACCEPTANCE)
             {
                 continue;
             }
-            $this->declineOrderDB($id);
-            $this->declineOrderShopflix($id);
+            if ($this->declineOrderShopflix($order['reference_id'], $decline_message))
+            {
+                $this->declineOrderDB($id);
+            }
         }
     }
 
     protected function declineOrderDB($order_id)
     {
         //update database
-        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'cancelled\' WHERE `id` = ' .
+        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
+            OrderInterface::STATUS_REJECTED . '\' WHERE `id` = ' .
             $order_id . ';');
         $this->db->query('DELETE FROM `' . self::getRelationTableName() . '` WHERE `shopflix_id` = ' . $order_id . ';');
     }
 
-    protected function declineOrderShopflix($order_id)
+    protected function declineOrderShopflix(string $order_id, string $message): bool
     {
+        try
+        {
+            $this->connector->rejected($order_id, $message);
+            //print_r([
+            //    'message' => $message,
+            //    'order_id' => $order_id
+            //]);
+            return true;
+        }
+        catch (\Exception $e)
+        {
+            error_log(json_encode([
+                'method' => 'declineOrderShopflix',
+                'error' => $e->getMessage(),
+                'message' => $message,
+                'order_id' => $order_id,
+            ]));
+            return false;
+        }
     }
 
     public function save(array $data): ?array
@@ -448,7 +697,10 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         try
         {
             $this->db->query("INSERT INTO " . self::getTableName() .
-                "(`reference_id`,`status`,`state`,`sub_total`,`discount_amount`,`total_paid`,`customer_email`,`customer_firstname`,`customer_lastname`,`customer_remote_ip`,`customer_note`, `created_at`)" .
+                "(`reference_id`,`status`,`state`,`sub_total`,`discount_amount`,`total_paid`,`customer_email`,`customer_firstname`,`customer_last
+                
+                
+                name`,`customer_remote_ip`,`customer_note`, `created_at`)" .
                 " VALUES " .
                 "('" . $this->db->escape($data['reference_id']) . "','" . $data['status'] . "','" . $data['state'] . "',"
                 . $data['sub_total'] . "," . $data['discount_amount'] . "," . $data['total_paid'] . ",'"

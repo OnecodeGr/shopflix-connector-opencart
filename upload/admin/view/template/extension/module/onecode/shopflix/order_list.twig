@@ -233,6 +233,14 @@
                 window.location.href = $(this).data('action') + '&reason=' + message
             }
         })
+        $('a.accept_btn').on('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            if (confirm('{{ text_accept_order_ }}'))
+            {
+                window.location.href = $(this).data('action')
+            }
+        })
         // IE and Edge fix!
         $('button[form=\'form-order\']').on('click', function (e) {
             $('#form-order').attr('action', $(this).attr('formaction'));

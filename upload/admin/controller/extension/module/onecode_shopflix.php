@@ -14,6 +14,7 @@ require_once DIR_SYSTEM . 'library/onecode/EventGroup.php';
  * @property-read \Config $config
  * @property-read \Url $url
  * @property-read \Cart\User $user
+ * @property-read \ModelUserApi $model_user_api
  * @property-read \ModelSettingExtension $model_setting_extension
  * @property-read \ModelCustomerCustomerGroup $model_customer_customer_group
  * @property-read \ModelExtensionModuleOnecodeShopflixOrder $model_extension_module_onecode_shopflix_order
@@ -35,6 +36,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         parent::__construct($registry);
         $this->load->model('customer/customer_group');
         $this->load->model('setting/extension');
+        $this->load->model('user/api');
         $this->load->model('extension/module/onecode/shopflix/order');
         $this->load->model('extension/module/onecode/shopflix/product');
         $this->load->model('extension/module/onecode/shopflix/product_attributes');
@@ -200,7 +202,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             'payment_methods' => $payment_methods,
             'shipping_methods' => $shipping_methods,
             'customer_groups' => $customer_groups,
-            'product_attributes' => $attributes,
+            'product_attributes' => $attributes
         ], $this->model_extension_module_onecode_shopflix_config->loadData());
     }
 

@@ -62,16 +62,21 @@ class Configuration extends \Model
 
     public function customerGroup(): int
     {
-        return $this->loadData()['customer_group'] || 1;
+        return (int) $this->loadData()['customer_group'] ?? 1;
     }
 
-    public function shippingMethod(): int
+    public function shippingMethod(): string
     {
-        return $this->loadData()['shipping_method'] || 0;
+        $rs = $this->loadData()['shipping_method'] ?? '';
+        if (count(explode('.', $rs)) < 2)
+        {
+            $rs = implode('.', [$rs, $rs]);
+        }
+        return $rs;
     }
 
-    public function paymentMethod(): int
+    public function paymentMethod(): string
     {
-        return $this->loadData()['payment_method'] || 0;
+        return $this->loadData()['payment_method'] ?? '';
     }
 }

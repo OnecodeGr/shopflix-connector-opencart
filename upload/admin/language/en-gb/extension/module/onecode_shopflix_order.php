@@ -19,11 +19,20 @@ $_['text_decline_prompt'] = 'Please fill the decline reason.';
 $_['text_status_pending_acceptance'] = 'Pending Acceptance';
 $_['text_status_cancelled'] = 'Cancelled';
 $_['text_status_accepted'] = 'Accepted';
+$_['text_status_ready_to_be_shipped'] = 'Ready to be shipped';
+$_['text_status_picking'] = 'Picking';
+$_['text_status_rejected'] = 'Rejected';
+$_['text_status_on_the_way'] = 'On the way';
+$_['text_status_completed'] = 'Completed';
+$_['text_status_shipped'] = 'Shipped';
+$_['text_status_partial_shipped'] = 'Partial Shipped';
 $_['text_shipments'] = 'Shipments';
 $_['text_products'] = 'Product list';
 $_['text_shipment_status_1'] = 'Pending';
 $_['text_shipment_status_2'] = 'Voucher';
 $_['text_shipment_status_3'] = 'On the way';
+$_['text_accept_order_first'] = 'Accept order first, then request shipments';
+$_['text_accept_order_'] = 'Proceed to accept the order ?';
 
 //Help
 $_['help_status'] = 'Enable / Disable ';
@@ -52,6 +61,10 @@ $_['entry_email'] = 'e-mail';
 $_['error_permission'] = 'Warning: You do not have permission to modify `OneCodeGr - ShopFlix` module!';
 $_['error_on_sync'] = 'Warning: Synchronization does not complete, unable to save order';
 $_['error_on_sync_items'] = 'Error: System is unable to convert order with reference ID (%s due to item mismatch';
+$_['error_on_reject_reason_missing'] = 'Error: reject reason missing';
+$_['error_no_accept_remote'] = 'Error: Remote system does not accept the order';
+$_['error_unable_to_store_order'] = 'Error: error occurs during order save ?';
+
 //Success
 $_['success_order_accepted'] = 'Success: Order successfully accepted';
 $_['success_orders_accepted'] = 'Success: Orders successfully accepted';

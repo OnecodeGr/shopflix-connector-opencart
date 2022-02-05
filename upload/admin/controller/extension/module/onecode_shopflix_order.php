@@ -1,7 +1,11 @@
 <?php
 
 use Onecode\Shopflix\Helper;
-use Onecode\ShopFlixConnector\Library\Connector;
+use Onecode\ShopFlixConnector\Library\Interfaces\AddressInterface;
+use Onecode\ShopFlixConnector\Library\Interfaces\ItemInterface;
+use Onecode\ShopFlixConnector\Library\Interfaces\OrderInterface;
+use Onecode\ShopFlixConnector\Library\Interfaces\ShipmentInterface;
+use Onecode\ShopFlixConnector\Library\Interfaces\ShipmentTrackInterface;
 
 /**
  * @property-read \Document $document
@@ -13,9 +17,9 @@ use Onecode\ShopFlixConnector\Library\Connector;
  * @property-read \Url $url
  * @property-read \Config $config
  * @property-read \Cart\User $user
- * @property-read Connector $connector
  * @property-read \Onecode\Shopflix\Helper\BasicHelper $basicHelper
  * @property-read \ModelExtensionModuleOnecodeShopflixOrder $model_extension_module_onecode_shopflix_order
+ * @property-read \ModelExtensionModuleOnecodeShopflixOrder $order_model
  * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
  * @property-read \ModelExtensionModuleOnecodeShopflixConfig $model_extension_module_onecode_shopflix_config
  * @property-read \ModelExtensionModuleOnecodeShopflixShipment $model_extension_module_onecode_shopflix_shipment
@@ -34,12 +38,8 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         $this->load->model('extension/module/onecode/shopflix/config');
         $this->load->model('extension/module/onecode/shopflix/shipment');
         $this->load->helper('onecode/shopflix/BasicHelper');
+        $this->order_model = new ModelExtensionModuleOnecodeShopflixOrder($registry);
         $this->basicHelper = new Helper\BasicHelper($registry);
-        $this->connector = new Connector(
-            $this->model_extension_module_onecode_shopflix_config->apiUsername(),
-            $this->model_extension_module_onecode_shopflix_config->apiPassword(),
-            $this->model_extension_module_onecode_shopflix_config->apiUrl()
-        );
         $this->load->language($this->getLink());
     }
 
@@ -73,7 +73,7 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
 
         $filter_order_id = (isset($this->request->get['order_id'])) ? intval($this->request->get['order_id']) : '';
         $user_token = $this->session->data['user_token'];
-        $db_order = $this->model_extension_module_onecode_shopflix_order->getOrderById($filter_order_id);
+        $db_order = $this->order_model->getOrderById($filter_order_id);
 
         if (count($db_order) == 0)
         {
@@ -108,19 +108,21 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         {
             $data['success'] = '';
         }
+
         if (isset($this->session->data['errors']))
         {
             $data['error_warning'] = $this->session->data['errors'][0];
             unset($this->session->data['errors']);
         }
-        $data['shipment'] = ($db_order['status'] == 'pending_acceptance')
+
+        $data['shipment'] = ($db_order['status'] == OrderInterface::STATUS_PICKING)
             ? $this->url->link($this->getLink() . '/syncShipments', 'user_token=' . $user_token . $url, true)
             : false;
         $data['accept'] = ($this->model_extension_module_onecode_shopflix_config->convertOrders() && $db_order['status'] == 'pending_acceptance')
             ? $this->url->link($this->getLink() . '/accept', 'user_token=' . $user_token . $url, true)
             : false;
 
-        $data['decline'] = ($db_order['status'] == 'pending_acceptance')
+        $data['decline'] = ($db_order['status'] == OrderInterface::STATUS_PENDING_ACCEPTANCE)
             ? $this->url->link($this->getLink() . '/decline', 'user_token=' . $user_token . $url, true)
             : false;
         $data['cancel'] = $this->url->link($this->getLink(), 'user_token=' . $user_token, true);
@@ -130,14 +132,14 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         $data['order']['discount_amount'] = number_format($data['order']['discount_amount'], 2);
         $data['order']['total_paid'] = number_format($data['order']['total_paid'], 2);
         $data['order']['sub_total'] = number_format($data['order']['sub_total'], 2);
-        $data['addresses'] = $this->model_extension_module_onecode_shopflix_order->getOrderAddress($filter_order_id);
+        $data['addresses'] = $this->order_model->getOrderAddress($filter_order_id);
         $data['addresses'] = array_map(function ($item) {
             $item['name'] = ($item['type'] == ModelExtensionModuleOnecodeShopflixOrder::ADDRESS_TYPE_BILLING)
                 ? $this->language->get('text_billing')
                 : $this->language->get('text_shipping');
             return $item;
         }, $data['addresses']);
-        $data['items'] = $this->model_extension_module_onecode_shopflix_order->getOrderItems($filter_order_id);
+        $data['items'] = $this->order_model->getOrderItems($filter_order_id);
         $data['items'] = array_map(function ($item) {
             $item['price'] = number_format($item['price'], 2);
             $catalog_product = $this->model_extension_module_onecode_shopflix_product->getCatalogProductBySku($item['sku']);
@@ -145,10 +147,10 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
                 ($catalog_product['description'][$this->config->get('config_language_id')]))
                 ? $catalog_product['description'][$this->config->get('config_language_id')]['name']
                 : $this->language->get('text_unknown_product');
-            $shipment = $this->model_extension_module_onecode_shopflix_shipment->getTrackingDataByProduct($item['order_id'],$item['sku']);
+            $shipment = $this->model_extension_module_onecode_shopflix_shipment->getTrackingDataByProduct($item['order_id'], $item['sku']);
             $item['shipment'] = [
                 'references' => array_column($shipment, 'reference_id'),
-                'urls' => array_column($shipment, 'url')
+                'urls' => array_column($shipment, 'url'),
             ];
             return $item;
         }, $data['items']);
@@ -185,13 +187,17 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         {
             if (count($order_ids))
             {
-                $this->model_extension_module_onecode_shopflix_order->accept($order_ids);
+                $this->order_model->accept($order_ids);
                 $this->session->data['success'] = count($order_ids) == 1
                     ? $this->language->get('success_order_accepted')
                     : $this->language->get('success_orders_accepted');
             }
         }
         catch (\LogicException $exception)
+        {
+            $this->session->data['errors'] = [$exception->getMessage()];
+        }
+        catch (\RuntimeException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
@@ -207,27 +213,40 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
 
     public function decline()
     {
-        $order_ids = null;
-        if (isset($this->request->get['order_id']))
+        try
         {
-            $order_ids = $this->request->get['order_id'];
-        }
-        elseif (isset($this->request->post['order_id']))
-        {
-            $order_ids = $this->request->post['order_id'];
-        }
-        elseif (isset($this->request->post['selected']))
-        {
-            $order_ids = $this->request->post['selected'];
-        }
-        if (! is_null($order_ids))
-        {
-            $order_ids = (! is_array($order_ids)) ? [$order_ids] : $order_ids;
-            if (count($order_ids))
+            $order_ids = null;
+            $reason = trim($this->request->get['reason'] ?? $this->request->post['reason']);
+            if ($reason == '')
             {
-                $this->model_extension_module_onecode_shopflix_order->decline($order_ids);
+                throw new LogicException($this->language->get('error_on_reject_reason_missing'));
+            }
+            if (isset($this->request->get['order_id']))
+            {
+                $order_ids = $this->request->get['order_id'];
+            }
+            elseif (isset($this->request->post['order_id']))
+            {
+                $order_ids = $this->request->post['order_id'];
+            }
+            elseif (isset($this->request->post['selected']))
+            {
+                $order_ids = $this->request->post['selected'];
+            }
+            if (! is_null($order_ids))
+            {
+                $order_ids = (! is_array($order_ids)) ? [$order_ids] : $order_ids;
+                if (count($order_ids))
+                {
+                    $this->order_model->decline($order_ids, $reason);
+                }
             }
         }
+        catch (\LogicException $e)
+        {
+            $this->session->data['errors'] = [$e->getMessage()];
+        }
+
         $this->response->redirect(
             $this->url->link(
                 $this->getLink(),
@@ -241,7 +260,9 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
     {
         try
         {
-            $this->syncOrders();
+            $this->getNewOrders();
+            $this->getCancelledOrders();
+            $this->geOnTheWayOrders();
             $this->session->data['success'] = $this->language->get('text_success_sync');
         }
         catch (\LogicException $exception)
@@ -260,12 +281,12 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
     public function syncShipments()
     {
         $order_id = $this->request->get['order_id'];
-        $order = $this->model_extension_module_onecode_shopflix_order->getOrderById($order_id);
+        $order = $this->order_model->getOrderById($order_id);
         if (count($order) == 0)
         {
             return false;
         }
-        $shipments = $this->connector->getShipment($order['reference_id']);
+        $shipments = $this->order_model->connector->getShipment($order['reference_id']);
         $to_save = [];
         array_walk($shipments, function ($row) use (&$to_save, $order_id) {
             $shipment_data = $row['shipment'];
@@ -275,13 +296,13 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             //print_r($shipment_data);
             $o_s = [
                 'order_id' => $order_id,
-                'reference_id' => $shipment_data['increment_id'],
-                'status' => $shipment_data['shipment_status'],
-                'created_at' => gmdate("Y-m-d\TH:i:s\Z", $shipment_data['created_at']),
+                'reference_id' => $shipment_data[ShipmentInterface::INCREMENT_ID],
+                'status' => $shipment_data[ShipmentInterface::SHIPMENT_STATUS],
+                'created_at' => gmdate("Y-m-d\TH:i:s\Z", $shipment_data[ShipmentInterface::CREATED_AT]),
             ];
             $o_s['track'] = [
-                'number' => $tracks_data['track_number'] != '' ? $tracks_data['track_number'] : "unknown number",
-                'url' => $tracks_data['tracking_url'],
+                'number' => $tracks_data[ShipmentTrackInterface::TRACK_NUMBER] != '' ? $tracks_data[ShipmentTrackInterface::TRACK_NUMBER] : "unknown number",
+                'url' => $tracks_data[ShipmentTrackInterface::TRACKING_URL],
             ];
             array_walk($items_row, function ($item) use (&$o_s) {
                 $o_s['items'][] = [
@@ -303,9 +324,9 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         return true;
     }
 
-    public function syncOrders()
+    public function getNewOrders(): bool
     {
-        $orders = $this->connector->getNewOrders();
+        $orders = $this->order_model->connector->getNewOrders();
         $to_save = [];
         array_walk($orders, function ($row) use (&$to_save) {
             $orders_data = $row['order'];
@@ -313,36 +334,36 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             $items_row = $row['items'];
 
             $o_d = [
-                'reference_id' => $orders_data['shopflix_order_id'],
-                'state' => $orders_data['state'],
-                'status' => $orders_data['status'],
-                'sub_total' => $orders_data['subtotal'],
-                'total_paid' => $orders_data['total_paid'],
-                'discount_amount' => $orders_data['discount_amount'],
-                'customer_email' => $orders_data['customer_email'],
-                'customer_firstname' => $orders_data['customer_firstname'],
-                'customer_lastname' => $orders_data['customer_lastname'],
-                'customer_remote_ip' => $orders_data['customer_remote_ip'],
-                'customer_note' => $orders_data['customer_note'],
+                'reference_id' => $orders_data[OrderInterface::SHOPFLIX_ORDER_ID],
+                'state' => $orders_data[OrderInterface::STATE],
+                'status' => $orders_data[OrderInterface::STATUS],
+                'sub_total' => $orders_data[OrderInterface::SUBTOTAL],
+                'total_paid' => $orders_data[OrderInterface::TOTAL_PAID],
+                'discount_amount' => $orders_data[OrderInterface::DISCOUNT_AMOUNT],
+                'customer_email' => $orders_data[OrderInterface::CUSTOMER_EMAIL],
+                'customer_firstname' => $orders_data[OrderInterface::CUSTOMER_FIRSTNAME],
+                'customer_lastname' => $orders_data[OrderInterface::CUSTOMER_LASTNAME],
+                'customer_remote_ip' => $orders_data[OrderInterface::CUSTOMER_REMOTE_IP],
+                'customer_note' => $orders_data[OrderInterface::CUSTOMER_NOTE],
             ];
             array_walk($addresses_data, function ($address_row) use (&$o_d) {
                 $o_d['address'][] = [
-                    'firstname' => $address_row['firstname'],
-                    'lastname' => $address_row['lastname'],
-                    'postcode' => $address_row['postcode'],
-                    'telephone' => $address_row['telephone'],
-                    'street' => $address_row['street'],
-                    'type' => $address_row['address_type'],
-                    'email' => $address_row['email'],
-                    'city' => $address_row['city'],
-                    'country_id' => $address_row['country_id'],
+                    'firstname' => $address_row[AddressInterface::FIRSTNAME],
+                    'lastname' => $address_row[AddressInterface::LASTNAME],
+                    'postcode' => $address_row[AddressInterface::POSTCODE],
+                    'telephone' => $address_row[AddressInterface::TELEPHONE],
+                    'street' => $address_row[AddressInterface::STREET],
+                    'type' => $address_row[AddressInterface::ADDRESS_TYPE],
+                    'email' => $address_row[AddressInterface::EMAIL],
+                    'city' => $address_row[AddressInterface::CITY],
+                    'country_id' => $address_row[AddressInterface::COUNTRY_ID],
                 ];
             });
             array_walk($items_row, function ($item_row) use (&$o_d) {
                 $o_d['items'][] = [
-                    "sku" => $item_row['sku'],
-                    "price" => $item_row['price'],
-                    "quantity" => $item_row['qty'],
+                    "sku" => $item_row[ItemInterface::SKU],
+                    "price" => $item_row[ItemInterface::PRICE],
+                    "quantity" => $item_row[ItemInterface::QTY],
                 ];
             });
             $to_save[] = $o_d;
@@ -350,10 +371,46 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
 
         foreach ($to_save as $order)
         {
-            $order_stored = $this->model_extension_module_onecode_shopflix_order->save($order);
+            $order_stored = $this->order_model->save($order);
             if (is_null($order_stored))
             {
                 throw new LogicException('Error during order save');
+            }
+        }
+        return true;
+    }
+
+    public function getCancelledOrders(): bool
+    {
+        $orders = $this->order_model->connector->getCancelOrders();
+        $to_cancel = [];
+        array_walk($orders, function ($row) use (&$to_cancel) {
+            $to_cancel = array_column($row['order'], OrderInterface::SHOPFLIX_ORDER_ID);
+        });
+
+        foreach ($to_cancel as $order)
+        {
+            if (count($this->order_model->cancel($order, true)) == 0)
+            {
+                throw new LogicException('Error during order cancelled');
+            }
+        }
+        return true;
+    }
+
+    public function geOnTheWayOrders(): bool
+    {
+        $orders = $this->order_model->connector->getOnTheWayOrders();
+        $to_update = [];
+        array_walk($orders, function ($row) use (&$to_update) {
+            $to_update = array_column($row['order'], OrderInterface::SHOPFLIX_ORDER_ID);
+        });
+
+        foreach ($to_update as $order)
+        {
+            if (count($this->order_model->onTheWay($order, true)) == 0)
+            {
+                throw new LogicException('Error during order cancelled');
             }
         }
         return true;
@@ -417,8 +474,8 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             'limit' => $this->config->get('config_limit_admin'),
         ];
 
-        $order_total = $this->model_extension_module_onecode_shopflix_order->getTotalOrders($filter_data);
-        $results = $this->model_extension_module_onecode_shopflix_order->getAllOrders($filter_data);
+        $order_total = $this->order_model->getTotalOrders($filter_data);
+        $results = $this->order_model->getAllOrders($filter_data);
 
         foreach ($results as $result)
         {
@@ -436,11 +493,11 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
                 'customer_remote_ip' => $result['customer_remote_ip'],
                 'view' => $this->url->link($this->getLink() . '/view', 'user_token=' .
                     $user_token . '&order_id=' . $result['id'] . $url, true),
-                'accept' => ($result['status'] == 'pending_acceptance')
+                'accept' => ($result['status'] == OrderInterface::STATUS_PENDING_ACCEPTANCE)
                     ? $this->url->link($this->getLink() . '/accept', 'user_token=' .
                         $user_token . '&order_id=' . $result['id'] . $url, true)
                     : false,
-                'decline' => ($result['status'] == 'pending_acceptance')
+                'decline' => ($result['status'] == OrderInterface::STATUS_PENDING_ACCEPTANCE)
                     ? $this->url->link($this->getLink() . '/decline', 'user_token=' .
                         $user_token . '&order_id=' . $result['id'] . $url, true)
                     : false,
@@ -534,7 +591,7 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
                 'limit' => $limit,
             ];
 
-            $results = $this->model_extension_module_onecode_shopflix_order->getAllOrders($filter_data);
+            $results = $this->order_model->getAllOrders($filter_data);
 
             foreach ($results as $result)
             {
