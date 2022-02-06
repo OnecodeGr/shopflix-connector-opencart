@@ -30,91 +30,90 @@ class Xml extends \Model
         return $this->configHelper->loadData();
     }
 
+    private function loadDataValue(string $key)
+    {
+        $data = $this->loadData();
+        return isset($data[$key]) ? $data[$key] : null;
+    }
+
     public function isEnabled(): bool
     {
-        return $this->loadData()['xml_status'] == '1';
+        return $this->loadDataValue('xml_status') == '1';
     }
 
     public function exportCategories(): bool
     {
-        return $this->loadData()['xml_export_category_tree'] == '1';
+        return $this->loadDataValue('xml_export_category_tree') == '1';
     }
 
-    public function mpnAttribute(): bool
+    public function mpnAttribute(): string
     {
-        $data = $this->loadData();
-        return $data['xml_mpn_attr'] == 'other' ? $data['xml_mpn_attr_other'] : $data['xml_mpn_attr'];
+        $value = $this->loadDataValue('xml_mpn_attr');
+        return $value == 'other' ? $this->loadDataValue('xml_mpn_attr') : $value;
     }
 
-    public function eanAttribute(): bool
+    public function eanAttribute(): string
     {
-        $data = $this->loadData();
-        return $data['xml_ean_attr'] == 'other' ? $data['xml_ean_attr_other'] : $data['xml_ean_attr'];
+        $value = $this->loadDataValue('xml_ean_attr');
+        return $value == 'other' ? $this->loadDataValue('xml_ean_attr_other') : $value;
     }
 
-    public function titleAttribute(): bool
+    public function nameAttribute(): string
     {
-        $data = $this->loadData();
-        return $data['xml_title_attr'] == 'other' ? $data['xml_ean_title_other'] : $data['xml_title_attr'];
+        $value = $this->loadDataValue('xml_name_attr');
+        return $value == 'other' ? $this->loadDataValue('xml_name_attr_other') : $value;
     }
 
-    public function descriptionAttribute(): bool
+    public function descriptionAttribute(): string
     {
-        $data = $this->loadData();
-        return $data['xml_description_attr'] == 'other' ? $data['xml_description_attr_other'] : $data['xml_description_attr'];
+        $value = $this->loadDataValue('xml_description_attr');
+        return $value == 'other' ? $this->loadDataValue('xml_description_attr_other') : $value;
     }
 
-    public function brandAttribute(): bool
+    public function brandAttribute(): string
     {
-        $data = $this->loadData();
-        return $data['xml_brand_attr'] == 'other' ? $data['xml_brand_attr_other'] : $data['xml_brand_attr'];
+        $value = $this->loadDataValue('xml_brand_attr');
+        return $value == 'other' ? $this->loadDataValue('xml_brand_attr_other') : $value;
     }
 
-    public function weightAttribute(): bool
+    public function weightAttribute(): string
     {
-        $data = $this->loadData();
-        return $data['xml_weight_attr'] == 'other' ? $data['xml_weight_attr_other'] : $data['xml_weight_attr'];
+        $value = $this->loadDataValue('xml_weight_attr');
+        return $value == 'other' ? $this->loadDataValue('xml_weight_attr_other') : $value;
     }
 
-    public function listPriceAttr(): bool
+    public function listPriceAttr(): string
     {
-        $data = $this->loadData();
-        return $data['xml_shipping_time_attr'] ?? '';
+        return $this->loadDataValue('xml_shipping_time_attr');
     }
 
-    public function shippingTimeAttr(): bool
+    public function shippingTimeAttr(): ?string
     {
-        $data = $this->loadData();
-        return $data['xml_shipping_time_attr'] ?? '';
+        return $this->loadDataValue('xml_shipping_time_attr');
     }
 
-    public function offerFromAttr(): bool
+    public function offerFromAttr(): ?string
     {
-        $data = $this->loadData();
-        return $data['xml_offer_from_attr'] ?? '';
+        return $this->loadDataValue('xml_offer_from_attr');
     }
 
-    public function offerToAttr(): bool
+    public function offerToAttr(): ?string
     {
-        $data = $this->loadData();
-        return $data['xml_offer_to_attr'] ?? '';
+        return $this->loadDataValue('xml_offer_to_attr');
     }
 
-    public function offerPriceAttr(): bool
+    public function offerPriceAttr(): ?string
     {
-        $data = $this->loadData();
-        return $data['xml_offer_price_attr'] ?? '';
+        return $this->loadDataValue('xml_offer_price_attr');
     }
 
     public function offerQuantityAttr(): ?string
     {
-        $data = $this->loadData();
-        return $data['xml_offer_quantity_attr'] ?? '';
+        return $this->loadDataValue('xml_offer_quantity_attr');
     }
 
-    public function token(): string
+    public function token(): ?string
     {
-        $data = $this->loadData();
-        return $data['xml_token'];
+        return $this->loadDataValue('xml_token');
     }
 }

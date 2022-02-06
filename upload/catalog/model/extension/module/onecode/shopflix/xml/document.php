@@ -92,7 +92,7 @@ class ModelExtensionModuleOnecodeShopflixXmlDocument extends Model
             $productElement->appendChild($nameElement);
             $productElement->appendChild($dom_doc->createElement('price', $product->getPrice()));
             $productElement->appendChild($dom_doc->createElement('list_price', $product->getListPrice()));
-            $productElement->appendChild($dom_doc->createElement('url', $product->getUrl()));
+            $productElement->appendChild($dom_doc->createElement('url', $product->getProductUrl()));
             $productElement->appendChild($dom_doc->createElement('shipping_lead_time', $product->getShippingTime()));
             $productElement->appendChild($dom_doc->createElement('offer_from', $product->getOfferFrom()));
             $productElement->appendChild($dom_doc->createElement('offer_to', $product->getOfferTo()));

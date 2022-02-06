@@ -4,8 +4,6 @@ use Onecode\Shopflix\Helper;
 use Onecode\ShopFlixConnector\Library\Interfaces\AddressInterface;
 use Onecode\ShopFlixConnector\Library\Interfaces\ItemInterface;
 use Onecode\ShopFlixConnector\Library\Interfaces\OrderInterface;
-use Onecode\ShopFlixConnector\Library\Interfaces\ShipmentInterface;
-use Onecode\ShopFlixConnector\Library\Interfaces\ShipmentTrackInterface;
 
 /**
  * @property-read \Document $document
@@ -23,6 +21,7 @@ use Onecode\ShopFlixConnector\Library\Interfaces\ShipmentTrackInterface;
  * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
  * @property-read \ModelExtensionModuleOnecodeShopflixConfig $model_extension_module_onecode_shopflix_config
  * @property-read \ModelExtensionModuleOnecodeShopflixShipment $model_extension_module_onecode_shopflix_shipment
+ * @property-read \ModelExtensionModuleOnecodeShopflixShipment $shipment_model
  */
 class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
 {
@@ -39,6 +38,7 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         $this->load->model('extension/module/onecode/shopflix/shipment');
         $this->load->helper('onecode/shopflix/BasicHelper');
         $this->order_model = new ModelExtensionModuleOnecodeShopflixOrder($registry);
+        $this->shipment_model = new ModelExtensionModuleOnecodeShopflixShipment($registry);
         $this->basicHelper = new Helper\BasicHelper($registry);
         $this->load->language($this->getLink());
     }
@@ -46,6 +46,11 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
     protected function getLink()
     {
         return Helper\BasicHelper::getMainLink() . '_order';
+    }
+
+    protected function getShipmentLink()
+    {
+        return Helper\BasicHelper::getMainLink() . '_shipment';
     }
 
     protected function response404()
@@ -115,6 +120,10 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             unset($this->session->data['errors']);
         }
 
+        $data['voucher'] = ($db_order['status'] == OrderInterface::STATUS_READY_TO_BE_SHIPPED || $db_order['status'] == OrderInterface::STATUS_SHIPPED)
+            ? $this->url->link($this->getShipmentLink() . '/print_voucher_order', 'user_token=' . $user_token . $url,
+                true)
+            : false;
         $data['shipment'] = ($db_order['status'] == OrderInterface::STATUS_PICKING)
             ? $this->url->link($this->getLink() . '/syncShipments', 'user_token=' . $user_token . $url, true)
             : false;
@@ -156,10 +165,12 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         }, $data['items']);
 
         $data['shipments'] = $this->model_extension_module_onecode_shopflix_shipment->getByOrderId($filter_order_id);
-        $data['shipments'] = array_map(function ($item) {
+        $data['shipments'] = array_map(function ($item) use ($user_token) {
             $item['status_string'] = $this->language->get('text_shipment_status_' . $item['status']);
+            $item['voucher'] = $this->url->link($this->getShipmentLink() . '/print_voucher', 'user_token=' .
+                $user_token . '&shipment_id=' . $item['id'], true);
             return $item;
-        },$data['shipments']);
+        }, $data['shipments']);
 
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
@@ -269,6 +280,10 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         {
             $this->session->data['errors'] = [$this->language->get('error_on_sync')];
         }
+        catch (\Exception $exception)
+        {
+            $this->session->data['errors'] = [$exception->getMessage()];
+        }
         $this->response->redirect(
             $this->url->link(
                 $this->getLink(),
@@ -280,54 +295,46 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
 
     public function syncShipments()
     {
-        $order_id = $this->request->get['order_id'];
-        $order = $this->order_model->getOrderById($order_id);
-        if (count($order) == 0)
+        try
         {
-            return false;
-        }
-        $shipments = $this->order_model->connector->getShipment($order['reference_id']);
-        $to_save = [];
-        array_walk($shipments, function ($row) use (&$to_save, $order_id) {
-            $shipment_data = $row['shipment'];
-            $tracks_data = $row['tracks'];
-            $items_row = $row['items'];
-
-            //print_r($shipment_data);
-            $o_s = [
-                'order_id' => $order_id,
-                'reference_id' => $shipment_data[ShipmentInterface::INCREMENT_ID],
-                'status' => $shipment_data[ShipmentInterface::SHIPMENT_STATUS],
-                'created_at' => gmdate("Y-m-d\TH:i:s\Z", $shipment_data[ShipmentInterface::CREATED_AT]),
-            ];
-            $o_s['track'] = [
-                'number' => $tracks_data[ShipmentTrackInterface::TRACK_NUMBER] != '' ? $tracks_data[ShipmentTrackInterface::TRACK_NUMBER] : "unknown number",
-                'url' => $tracks_data[ShipmentTrackInterface::TRACKING_URL],
-            ];
-            array_walk($items_row, function ($item) use (&$o_s) {
-                $o_s['items'][] = [
-                    "sku" => $item['sku'],
-                    "quantity" => $item['qty'],
-                ];
-            });
-            $to_save[] = $o_s;
-        });
-
-        foreach ($to_save as $shipment)
-        {
-            $stored = $this->model_extension_module_onecode_shopflix_shipment->save($shipment);
-            if (is_null($stored))
+            $order_id = $this->request->get['order_id'];
+            $order = $this->order_model->getOrderById($order_id);
+            if (count($order) == 0)
             {
-                throw new LogicException('Error during shipment save');
+                throw new LogicException('No order selected');
             }
+            $this->order_model->shipment([$order['id']]);
         }
-        return true;
+        catch (\LogicException $exception)
+        {
+            $this->session->data['errors'] = [$exception->getMessage()];
+        }
+        catch (\RuntimeException $exception)
+        {
+            $this->session->data['errors'] = [$exception->getMessage()];
+        }
+        catch (\Exception $exception)
+        {
+            $this->session->data['errors'] = [$exception->getMessage()];
+        }
+        $this->response->redirect(
+            $this->url->link(
+                $this->getLink(),
+                [
+                    'user_token' => $this->session->data['user_token'],
+                ], true
+            ));
     }
 
     public function getNewOrders(): bool
     {
         $orders = $this->order_model->connector->getNewOrders();
+        if (count($orders) == 0)
+        {
+            return false;
+        }
         $to_save = [];
+        $orders_to_accept = [];
         array_walk($orders, function ($row) use (&$to_save) {
             $orders_data = $row['order'];
             $addresses_data = $row['addresses'];
@@ -374,7 +381,19 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             $order_stored = $this->order_model->save($order);
             if (is_null($order_stored))
             {
-                throw new LogicException('Error during order save');
+                throw new LogicException($this->language->get('error_during_order_save'));
+            }
+            $orders_to_accept[] = $order_stored['id'];
+        }
+        if (count($orders_to_accept) && $this->model_extension_module_onecode_shopflix_config->convertOrders())
+        {
+            try
+            {
+                $this->order_model->accept($orders_to_accept);
+            }
+            catch (\Exception $exception)
+            {
+                error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $exception->getMessage()));
             }
         }
         return true;
@@ -479,6 +498,7 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
 
         foreach ($results as $result)
         {
+            $shipments = $this->shipment_model->getByOrderId($result['id']);
             $data['orders'][] = [
                 'order_id' => $result['id'],
                 'reference_id' => $result['reference_id'],
@@ -493,6 +513,14 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
                 'customer_remote_ip' => $result['customer_remote_ip'],
                 'view' => $this->url->link($this->getLink() . '/view', 'user_token=' .
                     $user_token . '&order_id=' . $result['id'] . $url, true),
+                'voucher' => (count($shipments))
+                    ? $this->url->link($this->getShipmentLink() . '/print_voucher_order', 'user_token=' .
+                        $user_token . '&order_id=' . $result['id'] . $url, true)
+                    : false,
+                'shipment' => ($result['status'] == OrderInterface::STATUS_PICKING)
+                    ? $this->url->link($this->getLink() . '/syncShipments', 'user_token=' .
+                        $user_token . '&order_id=' . $result['id'] . $url, true)
+                    : false,
                 'accept' => ($result['status'] == OrderInterface::STATUS_PENDING_ACCEPTANCE)
                     ? $this->url->link($this->getLink() . '/accept', 'user_token=' .
                         $user_token . '&order_id=' . $result['id'] . $url, true)

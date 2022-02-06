@@ -61,11 +61,14 @@ class Product extends \Model
         $sql = [
             sprintf("SELECT 
        pd.name,
+       pd.description,
+       mp.name as manufacturer,
        p.*,
        (CASE WHEN op.status IS NOT NULL THEN op.status ELSE 0 END) AS enabled
 FROM %s%s AS p",
                 \DB_PREFIX, 'product'),
             sprintf("LEFT JOIN %s%s AS pd ON p.product_id = pd.product_id", \DB_PREFIX, 'product_description'),
+            sprintf("LEFT JOIN %s%s AS mp ON p.manufacturer_id = mp.manufacturer_id", \DB_PREFIX, 'manufacturer'),
             sprintf("LEFT JOIN %s AS op ON p.product_id = op.product_id", self::getTableName()),
             sprintf("WHERE pd.language_id = '%d'", (int) $this->config->get('config_language_id')),
         ];
@@ -117,8 +120,28 @@ FROM %s%s AS p",
 
         //print_r(implode(' ', $sql));
         $query = $this->db->query(implode(' ', $sql));
+        $products = $query->rows;
+        if (count($products))
+        {
+            $products = array_map(function ($product) {
+                $attrs = $this->db->query(sprintf('SELECT * FROM %s%s WHERE product_id = %d and language_id = %d',
+                    \DB_PREFIX, 'product_attribute', $product['product_id'], (int) $this->config->get('config_language_id')));
+                if (count($attrs->rows))
+                {
+                    $items = $attrs->rows;
+                    $items = array_map(function ($item) {
+                        return [
+                            'attribute_id' => $item['attribute_id'],
+                            'name' => $item['text'],
+                        ];
+                    }, $items);
+                    $product['attributes'] = $items;
+                }
+                return $product;
+            }, $products);
+        }
 
-        return $query->rows;
+        return $products;
     }
 
     public function getProduct($product_id)

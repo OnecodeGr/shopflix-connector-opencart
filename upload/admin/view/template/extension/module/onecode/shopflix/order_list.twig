@@ -161,6 +161,22 @@
                                                        class="btn btn-success accept_btn"
                                                     ><i class="fa fa-check"></i></a>
                                                     {% endif %}
+                                                    {% if order.shipment != false %}
+                                                        <a href="#"
+                                                           data-action="{{ order.shipment }}"
+                                                           data-toggle="tooltip"
+                                                           title="{{ button_download_shipments }}"
+                                                           class="btn btn-primary shipment_btn"
+                                                        ><i class="fa fa-cloud-download"></i></a>
+                                                    {% endif %}
+                                                    {% if order.voucher != false %}
+                                                        <a href="#"
+                                                           data-action="{{ order.voucher }}"
+                                                           data-toggle="tooltip"
+                                                           title="{{ button_print_voucher }}"
+                                                           class="btn btn-primary voucher_btn"
+                                                        ><i class="fa fa-print"></i></a>
+                                                    {% endif %}
                                                     <a href="{{ order.view }}"
                                                        data-toggle="tooltip"
                                                        title="{{ button_view }}"

@@ -1,8 +1,6 @@
 <?php
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\RequestOptions;
 use Onecode\Shopflix\Helper;
 use Onecode\ShopFlixConnector\Library\Connector;
 use Onecode\ShopFlixConnector\Library\Interfaces\OrderInterface;
@@ -26,7 +24,13 @@ require_once DIR_SYSTEM . 'helper/onecode/shopflix/model/Order.php';
  * @property-read \ModelLocalisationCurrency $model_localisation_currency
  * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
  * @property-read \ModelExtensionModuleOnecodeShopflixConfig $model_extension_module_onecode_shopflix_config
+ * @property-read \ModelExtensionModuleOnecodeShopflixApi $model_extension_module_onecode_shopflix_api
+ * @property-read \ModelExtensionModuleOnecodeShopflixShipment $model_extension_module_onecode_shopflix_shipment
  * @property-read \GuzzleHttp\Client $client
+ * @property-read \Onecode\ShopFlixConnector\Library\Connector $connector
+ * @property-read  \ModelExtensionModuleOnecodeShopflixShipment $shipment_model
+ * @property-read  \ModelExtensionModuleOnecodeShopflixApi $api_model
+ * @property-read  \ModelExtensionModuleOnecodeShopflixConfig $config_model
  */
 class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
 {
@@ -44,15 +48,20 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         $this->load->model('localisation/currency');
         $this->load->model('user/api');
         $this->load->model('catalog/product');
+        $this->load->model('extension/module/onecode/shopflix/api');
         $this->load->model('extension/module/onecode/shopflix/product');
         $this->load->model('extension/module/onecode/shopflix/config');
+        $this->load->model('extension/module/onecode/shopflix/shipment');
+        $this->shipment_model = new ModelExtensionModuleOnecodeShopflixShipment($registry);
+        $this->api_model = new ModelExtensionModuleOnecodeShopflixApi($registry);
+        $this->config_model = new ModelExtensionModuleOnecodeShopflixConfig($registry);
         $catalog = $this->request->server['HTTPS'] ? HTTPS_CATALOG : HTTP_CATALOG;
         $catalog = parse_url($catalog, \PHP_URL_HOST) == 'opencart.test' ? 'http://apache/' : $catalog;
         $this->client = new Client(['base_uri' => $catalog . 'index.php']);
         $this->connector = new Connector(
-            $this->model_extension_module_onecode_shopflix_config->apiUsername(),
-            $this->model_extension_module_onecode_shopflix_config->apiPassword(),
-            $this->model_extension_module_onecode_shopflix_config->apiUrl()
+            $this->config_model->apiUsername(),
+            $this->config_model->apiPassword(),
+            $this->config_model->apiUrl()
         );
     }
 
@@ -141,8 +150,15 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
 
     public function getOrderById($order_id): array
     {
-        $sql = "SELECT * FROM " . self::getTableName() . " WHERE id = " . intval($order_id) . " LIMIT 1";
+        $sql = "SELECT * FROM " . self::getTableName() . " WHERE id = " . intval($order_id) . " LIMIT 1;";
         $query = $this->db->query($sql);
+        return count($query->rows) ? $query->row : [];
+    }
+
+    public function getLinkedOrder($shopflix_id): array
+    {
+        $query = $this->db->query(sprintf('SELECT * FROM %s WHERE `shopflix_id` = %d LIMIT 1;',
+            self::getRelationTableName(), $shopflix_id));
         return count($query->rows) ? $query->row : [];
     }
 
@@ -211,12 +227,33 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         return $this->db->query($sql)->rows;
     }
 
+    public function shipment(array $order_ids): array
+    {
+        $orders = [];
+        foreach ($order_ids as $id)
+        {
+            $order = $this->getOrderById($id);
+            if ($order['status'] != OrderInterface::STATUS_PICKING)
+            {
+                continue;
+            }
+            $orders[] = $order;
+        }
+
+        if (count($orders) == 0)
+        {
+            return [];
+        }
+        return $this->shipment_model->shipment($orders);
+    }
+
     public function accept(array $order_ids): void
     {
         foreach ($order_ids as $id)
         {
             try
             {
+                $oc_id = null;
                 $order = $this->getOrderById($id);
                 if ($order['status'] != OrderInterface::STATUS_PENDING_ACCEPTANCE)
                 {
@@ -224,14 +261,36 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
                 }
                 $this->db->query('START TRANSACTION;');
 
-                $oc_id = $this->createOpenCartOrder($id);
-                //$this->connector->picking($order['reference_id']);
-                $this->acceptOrderDB($id, $oc_id);
+                if ($this->config_model->convertOrders())
+                {
+                    $oc_id = $this->createOpenCartOrder($id);
+                    $this->connector->picking($order['reference_id']);
+                    $this->acceptOrderDB($id, $oc_id);
+                }
+                else
+                {
+                    error_log(sprintf('Class: %s, method: %s, warning: %s', __CLASS__, __METHOD__, 'Conversion is disabled'));
+                    $this->connector->picking($order['reference_id']);
+                }
                 $this->db->query('COMMIT;');
             }
             catch (\RuntimeException $exception)
             {
                 $this->db->query('ROLLBACK;');
+                //Error during shopflix communication (manual rollback for no innodb)
+                if (! is_null($oc_id))
+                {
+                    $token = $this->api_model->apiLogin();
+                    try
+                    {
+                        $this->api_model->apiOrderDelete($oc_id, $token);
+                    }
+                    catch (\Exception $exception)
+                    {
+                        error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $exception->getMessage()));
+                    }
+                    $this->api_model->apiLogout($token);
+                }
                 throw new RuntimeException($exception->getMessage());
             }
             catch (\LogicException $exception)
@@ -244,311 +303,6 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
                 $this->db->query('ROLLBACK;');
                 throw new Exception($exception->getMessage());
             }
-        }
-    }
-
-    private function apiLogin(): string
-    {
-        $api_info = $this->model_user_api->getApi($this->config->get('config_api_id'));
-        try
-        {
-            $res = $this->client->post('', [
-                RequestOptions::QUERY => [
-                    'route' => 'api/login',
-                ],
-                RequestOptions::FORM_PARAMS => [
-                    'key' => $api_info['key'],
-                ],
-            ]);
-            $body = json_decode($res->getBody()->getContents(), true);
-            if ($res->getStatusCode() != 200 || ! isset($body['api_token']))
-            {
-                throw new \RuntimeException('Error on login');
-            }
-            return $body['api_token'];
-        }
-        catch (GuzzleException $e)
-        {
-            error_log($e->getMessage());
-            return '';
-        }
-    }
-
-    private function apiCustomer(array $order, string $api_token): bool
-    {
-        try
-        {
-            $res = $this->client->post('', [
-                RequestOptions::QUERY => [
-                    'route' => 'api/customer',
-                    'api_token' => $api_token,
-                ],
-                RequestOptions::FORM_PARAMS => [
-                    'firstname' => $order['customer_firstname'],
-                    'lastname' => $order['customer_lastname'],
-                    'email' => $order['customer_email'],
-                    'telephone' => '000',
-                ],
-            ]);
-            $raw = $res->getBody()->getContents();
-            $body = json_decode($raw, true);
-            if ($res->getStatusCode() != 200 || isset($body['error']))
-            {
-                error_log(sprintf('Customer : %s', $raw));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on customer');
-            }
-            return true;
-        }
-        catch (GuzzleException $e)
-        {
-            error_log(json_encode(['-----customer cart-----', $e->getMessage()]));
-            throw new \RuntimeException('-----customer cart-----');
-        }
-    }
-
-    private function apiProduct(array $items, string $api_token): bool
-    {
-        try
-        {
-            $products = [];
-            foreach ($items as $item)
-            {
-                $product = $this->model_extension_module_onecode_shopflix_product->getCatalogProductBySku($item['sku']);
-                if (! isset($product['product_id']))
-                {
-                    continue;
-                }
-                $product_data = [
-                    'product_id' => $product['product_id'],
-                    'quantity' => $item['quantity'],
-                ];
-                $products[] = $product_data;
-            }
-            $res = $this->client->post('', [
-                RequestOptions::QUERY => [
-                    'route' => 'api/cart/add',
-                    'api_token' => $api_token,
-                ],
-                RequestOptions::FORM_PARAMS => [
-                    'product' => $products,
-                ],
-            ]);
-            $raw = $res->getBody()->getContents();
-            $body = json_decode($raw, true);
-            if ($res->getStatusCode() != 200 || isset($body['error']))
-            {
-                error_log(sprintf('Products : %s', $raw));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on products');
-            }
-            return true;
-        }
-        catch (GuzzleException $e)
-        {
-            error_log(json_encode(['-----product-----', $e->getMessage()]));
-            throw new \RuntimeException('-----product-----');
-        }
-    }
-
-    private function apiAddressPayment(array $items, string $api_token): bool
-    {
-        try
-        {
-            $record = [];
-            foreach ($items as $row)
-            {
-                if ($row['type'] != self::ADDRESS_TYPE_BILLING)
-                {
-                    continue;
-                }
-                $record = [
-                    'firstname' => $row['firstname'],
-                    'lastname' => $row['lastname'],
-                    'address_1' => $row['street'],
-                    'postcode' => $row['postcode'],
-                    'city' => $row['city'],
-                    'zone_id' => 0,
-                    'country_id' => $row['country_id'],
-                    'custom_field' => [
-                        'phone' => $row['telephone'],
-                        'email' => $row['email'],
-                    ],
-                ];
-                break;
-            }
-            $res = $this->client->post('', [
-                RequestOptions::QUERY => [
-                    'route' => 'api/payment/address',
-                    'api_token' => $api_token,
-                ],
-                RequestOptions::FORM_PARAMS => $record,
-
-            ]);
-            $raw = $res->getBody()->getContents();
-            $body = json_decode($raw, true);
-            if ($res->getStatusCode() != 200 || isset($body['error']))
-            {
-                error_log(sprintf('payment address : %s', $raw));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on payment address');
-            }
-            return true;
-        }
-        catch (GuzzleException $e)
-        {
-            error_log(json_encode(['-----payment address-----', $e->getMessage()]));
-            throw new \RuntimeException('-----payment address-----');
-        }
-    }
-
-    private function apiAddressShipping(array $items, string $api_token): bool
-    {
-        try
-        {
-            $record = [];
-            foreach ($items as $row)
-            {
-                if ($row['type'] != self::ADDRESS_TYPE_SHIPPING)
-                {
-                    continue;
-                }
-                $record = [
-                    'firstname' => $row['firstname'],
-                    'lastname' => $row['lastname'],
-                    'address_1' => $row['street'],
-                    'postcode' => $row['postcode'],
-                    'city' => $row['city'],
-                    'zone_id' => 0,
-                    'country_id' => $row['country_id'],
-                    'custom_field' => [
-                        'phone' => $row['telephone'],
-                        'email' => $row['email'],
-                    ],
-                ];
-                break;
-            }
-            $res = $this->client->post('', [
-                RequestOptions::QUERY => [
-                    'route' => 'api/shipping/address',
-                    'api_token' => $api_token,
-                ],
-                RequestOptions::FORM_PARAMS => $record,
-
-            ]);
-            $raw = $res->getBody()->getContents();
-            $body = json_decode($raw, true);
-            if ($res->getStatusCode() != 200 || isset($body['error']))
-            {
-                error_log(sprintf('shipping address : %s', $raw));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on shipping address');
-            }
-            return true;
-        }
-        catch (GuzzleException $e)
-        {
-            error_log(json_encode(['-----shipping address-----', $e->getMessage()]));
-            throw new \RuntimeException('-----shipping address-----');
-        }
-    }
-
-    private function apiShippingMethod(string $api_token): bool
-    {
-        try
-        {
-            $res_a = $this->client->get('', [
-                RequestOptions::QUERY => [
-                    'route' => 'api/shipping/methods',
-                    'api_token' => $api_token,
-                ],
-            ]);
-            $res = $this->client->post('', [
-                RequestOptions::QUERY => [
-                    'route' => 'api/shipping/method',
-                    'api_token' => $api_token,
-                ],
-                RequestOptions::FORM_PARAMS => [
-                    'shipping_method' => $this->model_extension_module_onecode_shopflix_config->shippingMethod(),
-                ],
-
-            ]);
-            $raw = $res->getBody()->getContents();
-            $body = json_decode($raw, true);
-            if ($res->getStatusCode() != 200 || isset($body['error']))
-            {
-                error_log(sprintf('shipping method : %s', $raw));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on shipping method');
-            }
-            return true;
-        }
-        catch (GuzzleException $e)
-        {
-            error_log(json_encode(['-----shipping method-----', $e->getMessage()]));
-            throw new \RuntimeException('-----shipping method-----');
-        }
-    }
-
-    private function apiPaymentMethod(string $api_token): bool
-    {
-        try
-        {
-            $res_a = $this->client->get('', [
-                RequestOptions::QUERY => [
-                    'route' => 'api/payment/methods',
-                    'api_token' => $api_token,
-                ],
-            ]);
-            $res = $this->client->post('', [
-                RequestOptions::QUERY => [
-                    'route' => 'api/payment/method',
-                    'api_token' => $api_token,
-                ],
-                RequestOptions::FORM_PARAMS => [
-                    'payment_method' => $this->model_extension_module_onecode_shopflix_config->paymentMethod(),
-                ],
-
-            ]);
-            $raw = $res->getBody()->getContents();
-            $body = json_decode($raw, true);
-            if ($res->getStatusCode() != 200 || isset($body['error']))
-            {
-                error_log(sprintf('payment method : %s', $raw));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on payment method');
-            }
-            return true;
-        }
-        catch (GuzzleException $e)
-        {
-            error_log(json_encode(['-----payment method-----', $e->getMessage()]));
-            throw new \RuntimeException('-----payment method-----');
-        }
-    }
-
-    private function apiOrderAdd(array $order_data, string $api_token): int
-    {
-        try
-        {
-            $res = $this->client->post('', [
-                RequestOptions::QUERY => [
-                    'route' => 'api/order/add',
-                    'api_token' => $api_token,
-                ],
-                RequestOptions::FORM_PARAMS => [
-                    'order_status_id' => 1,
-                    'comment' => $order_data['customer_note'],
-                ],
-
-            ]);
-            $raw = $res->getBody()->getContents();
-            $body = json_decode($raw, true);
-            if ($res->getStatusCode() != 200 || isset($body['error']) || ! isset($body['order_id']))
-            {
-                error_log(sprintf('order add : %s', $raw));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on order add');
-            }
-            return intval($body['order_id']);
-        }
-        catch (GuzzleException $e)
-        {
-            error_log(json_encode(['-----order add-----', $e->getMessage()]));
-            throw new \RuntimeException('-----order add-----');
         }
     }
 
@@ -585,14 +339,15 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         $order = $this->getOrderById($id);
         $items = $this->getOrderItems($id);
         $address = $this->getOrderAddress($id);
-        $api_token = $this->apiLogin();
-        $this->apiCustomer($order, $api_token);
-        $this->apiProduct($items, $api_token);
-        $this->apiAddressPayment($address, $api_token);
-        $this->apiAddressShipping($address, $api_token);
-        $this->apiPaymentMethod($api_token);
-        $this->apiShippingMethod($api_token);
-        $order_id = $this->apiOrderAdd($order, $api_token);
+        $api_token = $this->api_model->apiLogin();
+        $this->api_model->apiCustomer($order, $api_token);
+        $this->api_model->apiProduct($items, $api_token);
+        $this->api_model->apiAddressPayment($address, $api_token, self::ADDRESS_TYPE_BILLING);
+        $this->api_model->apiAddressShipping($address, $api_token, self::ADDRESS_TYPE_SHIPPING);
+        $this->api_model->apiPaymentMethod($api_token);
+        $this->api_model->apiShippingMethod($api_token);
+        $order_id = $this->api_model->apiOrderAdd($order, $api_token);
+        $this->api_model->apiLogout($api_token);
         $this->fineTuneTotals($order_id, (float) $order['sub_total'], (float) $order['total_paid']);
         $this->fineTuneProductTotals($items, $order_id);
         return $order_id;
@@ -601,15 +356,9 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
     protected function acceptOrderDB($order_id, $oc_id)
     {
         //update database
-        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' . OrderInterface::STATUS_PICKING . '\' WHERE `id` = ' .
-            $order_id . ';');
+        $this->updateStatusPicking($order_id);
         $this->db->query('DELETE FROM `' . self::getRelationTableName() . '` WHERE `shopflix_id` = ' . $order_id . ' and  `oc_id`=' . $oc_id . ';');
         $this->db->query('INSERT INTO `' . self::getRelationTableName() . '` (`shopflix_id`, `oc_id`)  VALUES (' .$order_id . ', ' . $oc_id .');');
-    }
-
-    protected function acceptOrderShopflix($order_id): bool
-    {
-        $this->connector->picking($order_id);
     }
 
     public function cancel($id, bool $force = false): array
@@ -618,8 +367,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         if ($order['status'] == OrderInterface::STATUS_PENDING_ACCEPTANCE || $force)
         {
             $order['status'] = OrderInterface::STATUS_CANCELED;
-            $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
-                OrderInterface::STATUS_CANCELED . '\' WHERE `id` = ' . $id . ';');
+            $this->updateStatusCancel($id);
             return $order;
         }
         return [];
@@ -631,8 +379,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         if ($order['status'] == OrderInterface::STATUS_READY_TO_BE_SHIPPED || $force)
         {
             $order['status'] = OrderInterface::STATUS_ON_THE_WAY;
-            $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
-                OrderInterface::STATUS_ON_THE_WAY . '\' WHERE `id` = ' . $id . ';');
+            $this->updateStatusOnTheWay($id);
             return $order;
         }
         return [false];
@@ -657,9 +404,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
     protected function declineOrderDB($order_id)
     {
         //update database
-        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
-            OrderInterface::STATUS_REJECTED . '\' WHERE `id` = ' .
-            $order_id . ';');
+        $this->updateStatusRejected($order_id);
         $this->db->query('DELETE FROM `' . self::getRelationTableName() . '` WHERE `shopflix_id` = ' . $order_id . ';');
     }
 
@@ -676,12 +421,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         }
         catch (\Exception $e)
         {
-            error_log(json_encode([
-                'method' => 'declineOrderShopflix',
-                'error' => $e->getMessage(),
-                'message' => $message,
-                'order_id' => $order_id,
-            ]));
+            error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $e->getMessage()));
             return false;
         }
     }
@@ -749,9 +489,39 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         }
         catch (\Exception $e)
         {
-            error_log($e->getMessage());
+            error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $e->getMessage()));
             $this->db->query('ROLLBACK;');
             return null;
         }
+    }
+
+    public function updateStatusReadyToBeShipped($order_id): void
+    {
+        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
+            OrderInterface::STATUS_READY_TO_BE_SHIPPED . '\' WHERE `id` = ' . $order_id . ';');
+    }
+
+    public function updateStatusPicking($order_id): void
+    {
+        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
+            OrderInterface::STATUS_PICKING . '\' WHERE `id` = ' . $order_id . ';');
+    }
+
+    public function updateStatusCancel($order_id): void
+    {
+        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
+            OrderInterface::STATUS_CANCELED . '\' WHERE `id` = ' . $order_id . ';');
+    }
+
+    public function updateStatusRejected($order_id): void
+    {
+        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
+            OrderInterface::STATUS_REJECTED . '\' WHERE `id` = ' . $order_id . ';');
+    }
+
+    public function updateStatusOnTheWay($order_id): void
+    {
+        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
+            OrderInterface::STATUS_ON_THE_WAY . '\' WHERE `id` = ' . $order_id . ';');
     }
 }

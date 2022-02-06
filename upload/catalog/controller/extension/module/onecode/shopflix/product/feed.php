@@ -32,6 +32,7 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
         $this->load->model('extension/module/onecode/shopflix/xml/document');
         $this->load->model('extension/module/onecode/shopflix/xml/minimal');
         $this->load->model('extension/module/onecode/shopflix/config');
+        $this->load->model('extension/module/onecode/shopflix/product');
         $this->load->model('extension/module/onecode/shopflix/xml');
         $this->load->helper('onecode/shopflix/BasicHelper');
         $this->basicHelper = new Onecode\Shopflix\Helper\BasicHelper($registry);
@@ -57,6 +58,7 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
             || $this->getQueryParameter('token') != $this->model_extension_module_onecode_shopflix_xml->token()
         )
         {
+            error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, 'xml validation'));
             return false;
         }
         return true;
@@ -80,7 +82,7 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
         if (! $this->validation())
         {
             $this->response404();
-            return '';
+            return;
         }
         $products = $this->getProducts();
         foreach ($products as $product)
@@ -96,7 +98,7 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
         if (! $this->validation())
         {
             $this->response404();
-            return '';
+            return;
         }
         $products = $this->getProducts();
         foreach ($products as $product)
@@ -104,7 +106,6 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
             $this->xmlMinimal->addProduct($product);
         }
         $this->response->addHeader('Content-Type: text/xml');
-
         $this->response->setOutput($this->xmlMinimal->getXML());
     }
 
@@ -116,24 +117,27 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
         $products = [];
         $db_prod = $this->model_extension_module_onecode_shopflix_product->getAllEnabledProducts([
             'sort' => 'p.product_id',
-            'order' => 'DESC'
+            'order' => 'DESC',
         ]);
-        $loadCategories = $this->model_extension_module_onecode_shopflix_xml->exportCategories();
-        foreach ($db_prod as $product)
-        {
-            $product['categories'] = [];
-            if ($loadCategories)
-            {
-                $product['attributes'] = $this->model_catalog_product->getProductAttributes($product['product_id']);
-                $categories = $this->model_catalog_product->getCategories($product['product_id']);
-                $product['categories'] = array_map(function ($item): string {
-                    $row = $this->model_catalog_category->getCategory($item['category_id']);
-                    return key_exists('name', $row) ? $row['name'] : '';
-                }, $categories);
-            }
-            $products[] = $product;
-        }
 
+        $loadCategories = $this->model_extension_module_onecode_shopflix_xml->exportCategories();
+        if (count($db_prod))
+        {
+            foreach ($db_prod as $product)
+            {
+                $product['categories'] = [];
+                if ($loadCategories)
+                {
+                    $product['attributes'] = $this->model_catalog_product->getProductAttributes($product['product_id']);
+                    $categories = $this->model_catalog_product->getCategories($product['product_id']);
+                    $product['categories'] = array_map(function ($item): string {
+                        $row = $this->model_catalog_category->getCategory($item['category_id']);
+                        return key_exists('name', $row) ? $row['name'] : '';
+                    }, $categories);
+                }
+                $products[] = $product;
+            }
+        }
         return $products;
     }
 }

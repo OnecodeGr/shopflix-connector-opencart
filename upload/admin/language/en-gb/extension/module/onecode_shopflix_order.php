@@ -64,6 +64,9 @@ $_['error_on_sync_items'] = 'Error: System is unable to convert order with refer
 $_['error_on_reject_reason_missing'] = 'Error: reject reason missing';
 $_['error_no_accept_remote'] = 'Error: Remote system does not accept the order';
 $_['error_unable_to_store_order'] = 'Error: error occurs during order save ?';
+$_['error_during_order_save'] = 'Error: during order save';
+$_['error_no_new_orders'] = 'Warning: No new orders';
+$_['error_conversion_is_disabled'] = 'Warning: Order Conversion is disabled';
 
 //Success
 $_['success_order_accepted'] = 'Success: Order successfully accepted';
@@ -78,6 +81,7 @@ $_['column_discount_amount'] = 'Discount amount';
 $_['column_customer_email'] = 'Customer email';
 $_['column_status'] = 'Status';
 $_['column_sku'] = 'SKU';
+$_['column_action'] = 'Action';
 $_['column_name'] = 'Name';
 $_['column_quantity'] = 'Quantity';
 $_['column_status'] = 'Status';
@@ -96,3 +100,4 @@ $_['button_sync'] = 'Manual Sync';
 $_['button_accept'] = 'Accept';
 $_['button_decline'] = 'Decline';
 $_['button_download_shipments'] = 'Download Shipments';
+$_['button_print_voucher'] = 'Print Voucher';

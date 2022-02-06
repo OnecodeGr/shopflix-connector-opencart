@@ -147,7 +147,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             'error_xml_export_category_tree' => $this->error['error_xml_export_category_tree'] ?? '',
             'error_xml_mpn_attr' => $this->error['error_xml_mpn_attr'] ?? '',
             'error_xml_ean_attr' => $this->error['error_xml_ean_attr'] ?? '',
-            'error_xml_title_attr' => $this->error['error_xml_title_attr'] ?? '',
+            'error_xml_name_attr' => $this->error['error_xml_name_attr'] ?? '',
             'error_auto_accept_order' => $this->error['error_auto_accept_order'] ?? '',
             'error_xml_description_attr' => $this->error['error_xml_description_attr'] ?? '',
             'error_xml_brand_attr' => $this->error['error_xml_brand_attr'] ?? '',
@@ -257,6 +257,14 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                 'name' => $this->language->get('text_Orders'),
                 'href' => $this->url->link(
                     Helper\BasicHelper::getMainLink().'_order',
+                    $url_params,
+                    true
+                )
+            ];
+            $shopflix_menu[] = [
+                'name' => $this->language->get('text_Shipments'),
+                'href' => $this->url->link(
+                    Helper\BasicHelper::getMainLink().'_shipment',
                     $url_params,
                     true
                 )

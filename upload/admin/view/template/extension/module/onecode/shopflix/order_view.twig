@@ -13,18 +13,23 @@
                     <i class="fa fa-remove"></i></button>
                 {% endif %}
                 {% if accept != false %}
-                    <button type="button" form="form-order" formaction="{{ accept }}"
-                            data-toggle="tooltip" title="{{ button_accept }}" class="btn
-                        btn-success"
-                            onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
-                        <i class="fa fa-check"></i></button>
+                <button type="button" form="form-order" formaction="{{ accept }}"
+                        data-toggle="tooltip" title="{{ button_accept }}" class="btn
+                    btn-success"
+                        onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
+                    <i class="fa fa-check"></i></button>
                 {% endif %}
                 {% if shipment != false %}
                 <button type="button" form="form-order" formaction="{{ shipment }}"
-                        data-toggle="tooltip" title="{{ button_download_shipments }}" class="btn
-                        btn-primary"
+                        data-toggle="tooltip" title="{{ button_download_shipments }}" class="btn btn-primary"
                         onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
                     <i class="fa fa-cloud-download"></i></button>
+                {% endif %}
+                {% if voucher != false %}
+                <button type="button" form="form-order" formaction="{{ voucher }}"
+                        data-toggle="tooltip" title="{{ button_print_voucher }}" class="btn btn-primary"
+                        onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
+                    <i class="fa fa-print"></i></button>
                 {% endif %}
             </div>
             <h1>{{ heading_title }}</h1>
@@ -314,6 +319,7 @@
                                             <td class="text-left">{{ column_reference_id }}</td>
                                             <td class="text-left">{{ column_created_at }}</td>
                                             <td class="text-left">{{ column_status }}</td>
+                                            <td class="text-left">{{ column_action }}</td>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -322,8 +328,15 @@
                                                 <tr>
                                                     <td class="text-left">{{ item.reference_id }}</td>
                                                     <td class="text-left">{{ item.created_at }}</td>
-                                                    <td class="text-left">{{ item.status_string
-                                                        }}</td>
+                                                    <td class="text-left">{{ item.status_string }}</td>
+                                                    <td class="text-left">
+                                                        <a href="#"
+                                                           data-action="{{ item.voucher }}"
+                                                           data-toggle="tooltip"
+                                                           title="{{ button_print_voucher }}"
+                                                           class="btn btn-primary voucher_btn"
+                                                        ><i class="fa fa-print"></i></a>
+                                                    </td>
                                                 </tr>
                                             {% endfor %}
                                         {% else %}

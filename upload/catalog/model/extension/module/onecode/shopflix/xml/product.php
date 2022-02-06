@@ -393,11 +393,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
         $attr = key_exists($attr, $product) ? $attr : 'ean';
         $this->setEan($product[$attr]);
 
-        $attr = $this->model_extension_module_onecode_shopflix_xml->titleAttribute();
-        $attr = key_exists($attr, $product) ? $attr : 'title';
-        $this->setName($product[$attr]);
-
-        $attr = $this->model_extension_module_onecode_shopflix_xml->titleAttribute();
+        $attr = $this->model_extension_module_onecode_shopflix_xml->nameAttribute();
         $attr = key_exists($attr, $product) ? $attr : 'title';
         $this->setName($product[$attr]);
 
@@ -413,60 +409,61 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
         $attr = key_exists($attr, $product) ? $attr : 'weight';
         $this->setWeight($product[$attr]);
 
-        $attr = $this->model_extension_module_onecode_shopflix_xml->listPriceAttr();
-        $list_price = 0.0;
-        array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-            if($item['attribute']['attribute_id'] == $attr){
-                $list_price = floatval($item['attribute']['name']);
-            }
-        });
-        $this->setListPrice($list_price);
+        if(count($product['attributes'])){
+            $attr = $this->model_extension_module_onecode_shopflix_xml->listPriceAttr();
+            $list_price = 0.0;
+            array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
+                if($item['attribute_id'] == $attr){
+                    $list_price = floatval($item['name']);
+                }
+            });
+            $this->setListPrice($list_price);
 
-        $attr = $this->model_extension_module_onecode_shopflix_xml->shippingTimeAttr();
-        $shipping_time = 0;
-        array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-            if($item['attribute']['attribute_id'] == $attr){
-                $list_price = intval($item['attribute']['name']);
-            }
-        });
-        $this->setShippingTime($shipping_time);
+            $attr = $this->model_extension_module_onecode_shopflix_xml->shippingTimeAttr();
+            $shipping_time = 0;
+            array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
+                if($item['attribute_id'] == $attr){
+                    $list_price = intval($item['name']);
+                }
+            });
+            $this->setShippingTime($shipping_time);
 
-        $attr = $this->model_extension_module_onecode_shopflix_xml->offerFromAttr();
-        $offer_from = 0;
-        array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-            if($item['attribute']['attribute_id'] == $attr){
-                $list_price = intval($item['attribute']['name']);
-            }
-        });
-        $this->setOfferFrom($offer_from);
+            $attr = $this->model_extension_module_onecode_shopflix_xml->offerFromAttr();
+            $offer_from = 0;
+            array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
+                if($item['attribute_id'] == $attr){
+                    $list_price = intval($item['name']);
+                }
+            });
+            $this->setOfferFrom($offer_from);
 
-        $attr = $this->model_extension_module_onecode_shopflix_xml->offerToAttr();
-        $offer_to = 0;
-        array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-            if($item['attribute']['attribute_id'] == $attr){
-                $list_price = intval($item['attribute']['name']);
-            }
-        });
-        $this->setOfferTo($offer_to);
+            $attr = $this->model_extension_module_onecode_shopflix_xml->offerToAttr();
+            $offer_to = 0;
+            array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
+                if($item['attribute_id'] == $attr){
+                    $list_price = intval($item['name']);
+                }
+            });
+            $this->setOfferTo($offer_to);
 
-        $attr = $this->model_extension_module_onecode_shopflix_xml->offerPriceAttr();
-        $offer_price = 0;
-        array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-            if($item['attribute']['attribute_id'] == $attr){
-                $list_price = floatval($item['attribute']['name']);
-            }
-        });
-        $this->setOfferPrice($offer_price);
+            $attr = $this->model_extension_module_onecode_shopflix_xml->offerPriceAttr();
+            $offer_price = 0;
+            array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
+                if($item['attribute_id'] == $attr){
+                    $list_price = floatval($item['name']);
+                }
+            });
+            $this->setOfferPrice($offer_price);
 
-        $attr = $this->model_extension_module_onecode_shopflix_xml->offerQuantityAttr();
-        $offer_quantity = 0;
-        array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-            if($item['attribute']['attribute_id'] == $attr){
-                $list_price = floatval($item['attribute']['name']);
-            }
-        });
-        $this->setOfferQuantity($offer_quantity);
-
+            $attr = $this->model_extension_module_onecode_shopflix_xml->offerQuantityAttr();
+            $offer_quantity = 0;
+            array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
+                if($item['attribute_id'] == $attr){
+                    $list_price = floatval($item['name']);
+                }
+            });
+            $this->setOfferQuantity($offer_quantity);
+        }
         return $this;
     }
 }
