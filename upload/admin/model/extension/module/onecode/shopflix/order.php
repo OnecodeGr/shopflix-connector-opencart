@@ -437,10 +437,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         try
         {
             $this->db->query("INSERT INTO " . self::getTableName() .
-                "(`reference_id`,`status`,`state`,`sub_total`,`discount_amount`,`total_paid`,`customer_email`,`customer_firstname`,`customer_last
-                
-                
-                name`,`customer_remote_ip`,`customer_note`, `created_at`)" .
+                "(`reference_id`,`status`,`state`,`sub_total`,`discount_amount`,`total_paid`,`customer_email`,`customer_firstname`,`customer_lastname`,`customer_remote_ip`,`customer_note`, `created_at`)" .
                 " VALUES " .
                 "('" . $this->db->escape($data['reference_id']) . "','" . $data['status'] . "','" . $data['state'] . "',"
                 . $data['sub_total'] . "," . $data['discount_amount'] . "," . $data['total_paid'] . ",'"

@@ -42,7 +42,7 @@ class ConfigHelper extends \Model
     {
         $module_id = BasicHelper::getModuleId();
         $modules = $this->getModulesByCode($module_id);
-        if (! count($modules))
+        if (count($modules) == 0)
         {
             $this->model_setting_module->addModule($module_id, ['name' => $module_id]);
             $modules = $this->getModulesByCode($module_id);

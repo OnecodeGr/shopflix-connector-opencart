@@ -67,6 +67,8 @@ $_['error_unable_to_store_order'] = 'Error: error occurs during order save ?';
 $_['error_during_order_save'] = 'Error: during order save';
 $_['error_no_new_orders'] = 'Warning: No new orders';
 $_['error_conversion_is_disabled'] = 'Warning: Order Conversion is disabled';
+$_['error_unable_to_save_order_with_reference'] = 'Warning: Unable to save order with reference (%s)';
+$_['error_order_reference_contains_invalid_sku'] = 'Warning: Order with reference id : (%s), contains an invalid sku: (%s)';
 
 //Success
 $_['success_order_accepted'] = 'Success: Order successfully accepted';

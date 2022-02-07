@@ -278,7 +278,7 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         }
         catch (\LogicException $exception)
         {
-            $this->session->data['errors'] = [$this->language->get('error_on_sync')];
+            $this->session->data['errors'] = [$exception->getMessage()];
         }
         catch (\Exception $exception)
         {
@@ -367,6 +367,12 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
                 ];
             });
             array_walk($items_row, function ($item_row) use (&$o_d) {
+                $catalog_item = $this->model_extension_module_onecode_shopflix_product->getCatalogProductBySku($item_row[ItemInterface::SKU]);
+                if (count($catalog_item) == 0)
+                {
+                    throw new LogicException(sprintf($this->language->get
+                    ('error_order_reference_contains_invalid_sku'), $o_d['reference_id'], $item_row[ItemInterface::SKU]));
+                }
                 $o_d['items'][] = [
                     "sku" => $item_row[ItemInterface::SKU],
                     "price" => $item_row[ItemInterface::PRICE],
@@ -376,14 +382,19 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             $to_save[] = $o_d;
         });
 
-        foreach ($to_save as $order)
+        if (count($to_save))
         {
-            $order_stored = $this->order_model->save($order);
-            if (is_null($order_stored))
+            foreach ($to_save as $order)
             {
-                throw new LogicException($this->language->get('error_during_order_save'));
+                $order_stored = $this->order_model->save($order);
+                //print_r($order_stored);
+                if (is_null($order_stored))
+                {
+                    throw new LogicException(sprintf($this->language->get
+                    ('error_unable_to_save_order_with_reference'), $order['reference_id']));
+                }
+                $orders_to_accept[] = $order_stored['id'];
             }
-            $orders_to_accept[] = $order_stored['id'];
         }
         if (count($orders_to_accept) && $this->model_extension_module_onecode_shopflix_config->convertOrders())
         {
@@ -513,7 +524,7 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
                 'customer_remote_ip' => $result['customer_remote_ip'],
                 'view' => $this->url->link($this->getLink() . '/view', 'user_token=' .
                     $user_token . '&order_id=' . $result['id'] . $url, true),
-                'voucher' => (count($shipments))
+                'voucher' => (count($shipments) && $result['status'] != 'cancelled')
                     ? $this->url->link($this->getShipmentLink() . '/print_voucher_order', 'user_token=' .
                         $user_token . '&order_id=' . $result['id'] . $url, true)
                     : false,

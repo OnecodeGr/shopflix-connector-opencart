@@ -112,6 +112,7 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
         {
             $order_link_data = $this->order_model->getLinkedOrder($result['order_id']);
             $order_data = $this->order_model->getOrderById($result['order_id']);
+            $tracking = $this->shipment_model->getTrackByShipment($result['id']);
             $data['shipments'][] = [
                 'id' => $result['id'],
                 'reference_id' => $result['reference_id'],
@@ -120,10 +121,10 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
                 'order_id_oc' => $order_link_data['oc_id'],
                 'status' => $result['status'],
                 'status_string' => $this->language->get('text_shipment_status_' . $result['status']),
-                'print' => $this->url->link($this->getLink() . '/print_voucher', 'user_token=' .
-                    $user_token . '&shipment_id=' . $result['id'] . $url, true),
-                'manifest' => $this->url->link($this->getLink() . '/print_manifest', 'user_token=' .
-                    $user_token . '&shipment_id=' . $result['id'] . $url, true),
+                'print' => count($tracking) ? $this->url->link($this->getLink() . '/print_voucher', 'user_token=' .
+                    $user_token . '&shipment_id=' . $result['id'] . $url, true) : false,
+                'manifest' => count($tracking) ? $this->url->link($this->getLink() . '/print_manifest', 'user_token=' .
+                    $user_token . '&shipment_id=' . $result['id'] . $url, true) : false,
             ];
         }
 
@@ -297,7 +298,7 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
                 throw new \LogicException('No shipment available for manifest');
             }
             $contents = $this->shipment_model->printManifest($ids);
-            print_r(['manifest' => $contents]);
+            //print_r(['manifest' => $contents]);
             if ($contents == null)
             {
                 throw new \LogicException('No voucher Content');

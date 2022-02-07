@@ -249,7 +249,7 @@
                 window.location.href = $(this).data('action') + '&reason=' + message
             }
         })
-        $('a.accept_btn').on('click', function (e) {
+        $('a.accept_btn, a.shipment_btn, a.voucher_btn').on('click', function (e) {
             e.stopPropagation();
             e.preventDefault();
             if (confirm('{{ text_accept_order_ }}'))

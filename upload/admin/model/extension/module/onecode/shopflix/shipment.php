@@ -1,5 +1,6 @@
 <?php
 
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ServerException;
 use Onecode\Shopflix\Helper;
 use Onecode\ShopFlixConnector\Library\Connector;
@@ -174,10 +175,16 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
         $result = $this->getTrackByShipment($shipment_id);
         if (empty($results->rows))
         {
-            return null;
+            $this->db->query("INSERT INTO " . self::getTrackingTableName()
+                . " (`shipment_id`,`number`,`url`)"
+                . " VALUES "
+                . " (" . $shipment_id . ",'" . $number . "','" . $url . "')");
         }
-        $this->db->query(sprintf('UPDATE %s SET `number` = \'%s\', `url` = \'%s\' WHERE `id` = %d'
-            , self::getTrackingTableName(), $number, $url, $result['id']));
+        else
+        {
+            $this->db->query(sprintf('UPDATE %s SET `number` = \'%s\', `url` = \'%s\' WHERE `id` = %d'
+                , self::getTrackingTableName(), $number, $url, $result['id']));
+        }
         return $this->getTrackByShipment($shipment_id);
     }
 
@@ -289,7 +296,7 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
             try
             {
                 $shipment = $this->getById($id);
-                if (! count($shipment))
+                if (count($shipment) == 0)
                 {
                     continue;
                 }
@@ -344,7 +351,7 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
         foreach ($shipment_ids as $id)
         {
             $shipment = $this->getById($id);
-            if (! count($shipment))
+            if (count($shipment) == 0)
             {
                 continue;
             }
@@ -364,11 +371,12 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
             foreach ($shipment_ids as $id)
             {
                 $shipment = $this->getById($id);
-                if (! count($shipment))
+                if (count($shipment) == 0)
                 {
                     continue;
                 }
                 $tracking = $this->getTrackByShipment($id);
+                //print_r([$tracking]);
                 if (in_array($tracking['number'], $voucher_list))
                 {
                     $order_list[] = $shipment['order_id'];
@@ -410,7 +418,7 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
         foreach ($shipment_ids as $id)
         {
             $shipment = $this->getById($id);
-            if (! count($shipment))
+            if (count($shipment) == 0)
             {
                 continue;
             }
@@ -419,12 +427,27 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
             {
                 continue;
             }
-            $list[] = $id;
+            $list[] = $shipment['reference_id'];
         }
         try
         {
+            //$client = new \GuzzleHttp\Client();
+            //$client = new Client([
+            //    "base_uri" => $this->model_extension_module_onecode_shopflix_config->apiUrl().'/',
+            //    "timeout" => 90,
+            //    'auth' => [$this->model_extension_module_onecode_shopflix_config->apiUsername(),
+            //        $this->model_extension_module_onecode_shopflix_config->apiPassword()]]
+            //);
+            //$response = $client->get(
+            //    'courier',[
+            //    "query" => [
+            //        "custom_manifest" => 1,
+            //        "shipments" => implode(",", $list)
+            //    ]
+            //]);
+            //$content = $response->getBody()->getContents();
+            //print_r([$content]);
             $manifest = $this->connector->printManifest($list);
-            print_r(['$manifest' => $manifest]);
             if (isset($manifest['status']) && $manifest['status'] == "error")
             {
                 throw new \LogicException($manifest['message']);
@@ -450,12 +473,12 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
 
     protected function clearShipments(int $order_id): void
     {
-        $this->db->query('DELETE FROM %s WHERE order_id = %d; ', self::getTableName(), $order_id);
+        $this->db->query(sprintf('DELETE FROM %s WHERE order_id = %d; ', self::getTableName(), $order_id));
     }
 
     protected function storeShipment(int $id, array $shipments): array
     {
-        $shipments = [];
+        $ship = [];
         $to_save = [];
         array_walk($shipments, function ($row) use (&$to_save, $id) {
             $shipment_data = $row['shipment'];
@@ -488,9 +511,9 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
             {
                 throw new LogicException('Error during shipment save');
             }
-            $shipments[] = $stored;
+            $ship[] = $stored;
         }
-        return $shipments;
+        return $ship;
     }
 
     public function updateStatusPending($id): void
@@ -520,9 +543,9 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
                     continue;
                 }
                 $this->db->query('START TRANSACTION;');
-                $shipments = $this->connector->getShipment($order['reference_id']);
+                $ship = $this->connector->getShipment($order['reference_id']);
                 $this->clearShipments($order['id']);
-                $shipments = array_merge($shipments, $this->storeShipment($order['id'], $shipments));
+                $shipments = array_merge($shipments, $this->storeShipment($order['id'], $ship));
                 $this->db->query('COMMIT;');
             }
             catch (\RuntimeException $exception)
