@@ -252,6 +252,10 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
             {
                 throw new \LogicException($this->language->get('error_no_available_shipments'));
             }
+            if(count($ids) > 20){
+                throw new \LogicException(sprintf($this->language->get('error_maximum_number_of_selected_shipments'),
+                    20));
+            }
             $this->download_voucher_pdf($ids);
             return;
         }
@@ -295,19 +299,24 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
         {
             if (count($ids) == 0)
             {
-                throw new \LogicException('No shipment available for manifest');
+                throw new \LogicException($this->language->get('error_no_available_shipments'));
+            }
+            if(count($ids) > 20){
+                throw new \LogicException(sprintf($this->language->get('error_maximum_number_of_selected_shipments'),
+                20));
             }
             $contents = $this->shipment_model->printManifest($ids);
             if ($contents == null)
             {
                 throw new \LogicException('No voucher Content');
             }
+            $date = (new DateTime())->format('Y-m-d_H-i-s');
             $this->response->addHeader('Content-Type: application/pdf');
             $this->response->addHeader('Expires: 0');
             $this->response->addHeader('Cache-Control: must-revalidate, post-check=0, pre-check=0');
             $this->response->addHeader('Pragma: public');
             $this->response->addHeader('Content-Length: ' . strlen($contents));
-            $this->response->addHeader('Content-Disposition: attachment; filename="manifest.pdf"');
+            $this->response->addHeader('Content-Disposition: attachment; filename="manifest-' . $date . '.pdf"');
             $this->response->setOutput($contents);
             return;
         }
@@ -385,12 +394,14 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
         {
             throw new \LogicException($this->language->get('error_no_manifest_contents'));
         }
+        $date = (new DateTime())->format('Y-m-d_H-i-s');
+
         $this->response->addHeader('Content-Type: application/pdf');
         $this->response->addHeader('Expires: 0');
         $this->response->addHeader('Cache-Control: must-revalidate, post-check=0, pre-check=0');
         $this->response->addHeader('Pragma: public');
         $this->response->addHeader('Content-Length: ' . strlen($contents));
-        $this->response->addHeader('Content-Disposition: attachment; filename="voucher.pdf"');
+        $this->response->addHeader('Content-Disposition: attachment; filename="voucher-' . $date . '.pdf"');
         $this->response->setOutput($contents);
     }
 }

@@ -38,6 +38,8 @@ $_['error_on_sync'] = 'Warning: Synchronization does not complete, unable to sav
 $_['error_no_available_voucher'] = 'Error: No available voucher';
 $_['error_no_available_shipments'] = 'Error: No available shipments';
 $_['error_no_manifest_contents'] = 'Error: No manifest Content';
+$_['error_maximum_number_of_selected_shipments'] = 'Error: The maximum number of selected shipments is : %d';
+$_['error_no_available_shipments'] = 'Error: No available shipments';
 
 //Success
 $_['success_'] = 'Success: ';

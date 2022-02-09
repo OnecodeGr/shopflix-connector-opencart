@@ -46,11 +46,11 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
         $this->db->query(sprintf("CREATE TABLE IF NOT EXISTS %s (
  `id` INT UNSIGNED AUTO_INCREMENT NOT NULL,
  `order_id` INT UNSIGNED NOT NULL,
- `refernce_id` varchar(255),
+ `reference_id` varchar(255),
  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
  `status` tinyint,
  PRIMARY KEY (`id`),
- UNIQUE INDEX (`refernce_id`),
+ UNIQUE INDEX (`reference_id`),
     FOREIGN KEY (order_id) REFERENCES %s(id) ON DELETE CASCADE ON UPDATE CASCADE 
 )", self::getTableName(), Helper\Model\Order::getTableName()));
     }

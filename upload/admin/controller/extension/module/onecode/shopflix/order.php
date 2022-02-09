@@ -52,7 +52,7 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
 
     protected function getShipmentLink()
     {
-        return Helper\BasicHelper::getMainLink() . '_shipment';
+        return 'extension/module/onecode/shopflix/shipment';
     }
 
     protected function response404()

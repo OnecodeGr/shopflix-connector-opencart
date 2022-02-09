@@ -38,42 +38,63 @@ class Configuration extends \Model
 
     public function convertOrders(): bool
     {
-        $data = $this->isEnabled();
-        return isset($data['convert_to_order']) && $data['convert_to_order'] == '1';
+        if (!$this->isEnabled()){
+            return false;
+        }
+        $data = $this->loadData();
+        return (isset($data['convert_to_order']) && $data['convert_to_order'] == '1');
     }
 
     public function autoAcceptOrder(): bool
     {
-        $data = $this->isEnabled();
+        if (!$this->isEnabled()){
+            return false;
+        }
+        $data = $this->loadData();
         return isset($data['auto_accept_order']) && $data['auto_accept_order'] == '1';
     }
 
     public function apiUrl(): string
     {
+        if (!$this->isEnabled()){
+            return '';
+        }
         $data = $this->loadData();
         return $data['api_url'] ?? '';
     }
 
     public function apiUsername(): string
     {
+        if (!$this->isEnabled()){
+            return '';
+        }
         $data = $this->loadData();
         return $data['api_username'] ?? '';
     }
 
     public function apiPassword(): string
     {
+        if (!$this->isEnabled()){
+            return '';
+        }
         $data = $this->loadData();
         return $data['api_password'] ?? '';
     }
 
     public function customerGroup(): int
     {
+        if (!$this->isEnabled()){
+            return 1;
+        }
         $data = $this->loadData();
         return (int) ($data['customer_group'] ?? 1);
     }
 
     public function shippingMethod(): string
     {
+        if (!$this->isEnabled()){
+            return '';
+        }
         $data = $this->loadData();
         $rs = $data['shipping_method'] ?? '';
         if (count(explode('.', $rs)) < 2)
@@ -85,6 +106,9 @@ class Configuration extends \Model
 
     public function paymentMethod(): string
     {
+        if (!$this->isEnabled()){
+            return '';
+        }
         $data = $this->loadData();
         return $data['payment_method'] ?? '';
     }

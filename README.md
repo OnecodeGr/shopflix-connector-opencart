@@ -1,119 +1,78 @@
 # OneCodeGR - ShopFlix plugin
 
-# Requirements
-# https://www.opencart.com/index.php?route=marketplace/extension/info&member_token=396ed49ec2c97aab514825fbe62b1b9b&extension_id=33410&filter_category_id=5&filter_license=0&filter_download_id=56&sort=date_added
-# Write permission to `system/helper` 
-    Error The directory system/helper is not allowed to be written to!
-# XML URLs
-## {proto}://{open-cart-url}/index.php?route=extension/module/onecode/shopflix/product/feed/minimal&token={token-hash}
-## {proto}://{open-cart-url}/index.php?route=extension/module/onecode/shopflix/product/feed/detailed&token={token-hash}
-# configure attributes 
+This extension is connecting your OpenCart v3.0.3.x with [SHOPFLIX](https://SHOPFLIX.gr)
 
+##  1. How to install
 
-limitation product without options
+### 1.1. Requirements
+* PHP >= 7.4
+* [Fix OC 3.x Extension Installer](https://www.opencart.com/index.php?route=marketplace/extension/info&member_token=396ed49ec2c97aab514825fbe62b1b9b&extension_id=33410&filter_category_id=5&filter_license=0&filter_download_id=56&sort=date_added )  
+  * Download and install the plugin in order to fix the permissions on `system` directory
 
-composer require onecode/shopflix-connector-library
+### 1.2. Installation
+* Upload [onecode-shopflix.ocmod.zip](https://github.com/OnecodeGr/shopflix-connector-opencart/blob/main/onecode-shopflix.ocmod.zip) to your system using **Admin > Extension > Installer**
+* Open `Admin > Extensions > Extensions `
+* Select `Modules`, and scroll until you find the module name **OneCodeGr - ShopFLix**
+* Press install button for the plugin
 
-```json
- {
-  "require": {
-    "php": ">=7.3",
-    "onecode/shopflix-connector-library": "^1.0",
-    "braintree/braintree_php": "3.40.0",
-    "cardinity/cardinity-sdk-php": "^1.0",
-    "divido/divido-php": ">=1.1.1",
-    "scssphp/scssphp": "1.1.1",
-    "twig/twig": "^2.4.8",
-    "zoujingli/wechat-php-sdk": ">=1.3.10"
-  }
-}
+### 1.3. Grand administration
+* Open **Admin > System > Users > User Groups**
+* Edit `Administrator`
+* Add to `Access Permission` & `Modify Permission` all the choices which contain 
+  `extension/module/onecode/*`
+* Add Server IP on `Admin > System > Users > APi ` under default Api Username
+
+### 1.3. Configure
+* As you have the access on the plugin , you will have a new Left side menu option `OneCode`
+* Select `Admin > OneCode > Shopflix > Configuration`
+* On configuration screen you will have the ability to enable / disable the plugin, set 
+  configuration for shopflix integration, and XML exportation
+* As you set your values press *Save*.
+
+##  2. Usage
+### 2.1. Product XML
+The product XML has two variants (simple/detailed) each one has its own url.
+* simple/minimal => **{proto}://{open-cart-domain}/index.php?
+  route=extension/module/onecode/shopflix/product/feed/minimal&token={token-hash}**
+* full/detailed => **{proto}://{open-cart-domain}/index.php?
+  route=extension/module/onecode/shopflix/product/feed/detailed&token={token-hash}**
+
+### 2.2. Sync Orders
+In order to fetch your orders from shopflix you can press the `sync` button under 
+`Admin > OneCode > Shopflix > Order `
+
+Also, you can use the plugin [oc-cli](https://github.com/iSenseLabs/oc_cli.git) to enable the 
+cli access to sync method.
+
+An example call should be : 
 ```
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/techmindgr/onecode/opencart/shopflix.git
-git branch -M main
-git push -uf origin main
+php ./oc_cli.php admin extension/module/onecode/shopflix/order/manual_sync
 ```
 
-## Integrate with your tools
+### 2.2. Accept Order
+To Accept an order you must press the `green button` *Accept* on order row
 
-- [ ] [Set up project integrations](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://gitlab.com/techmindgr/onecode/opencart/shopflix/-/settings/integrations)
+`Admin > OneCode > Shopflix > Order `
 
-## Collaborate with your team
+### 2.3. Reject Order
+To Reject an order you must press the `red button` *Reject* on order row
 
-- [ ] [Invite team members and collaborators](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+`Admin > OneCode > Shopflix > Order `
 
-## Test and Deploy
+### 2.4. Fetch Shipment
+To Fetch Shipments an order you must press the `blue button` *Shipment* on order row
 
-Use the built-in continuous integration in GitLab.
+`Admin > OneCode > Shopflix > Order `
 
-- [ ] [Get started with GitLab CI/CD](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://gitlab.com/-/experiment/new_project_readme_content:4b5940f7ec846b454e83d5e471e54dd7?https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### 2.5. Voucher
+To Print voucher we have two ways:
 
-***
+* Under `Admin > OneCode > Shopflix > Order ` using `print button`  on order row
+* Under `Admin > OneCode > Shopflix > Shipment ` using `print button`  on shipment row, Also you 
+  can print voucher for multiple shipments.
 
-# Editing this README
+### 2.6. Manifest
+To Print manifest:
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!).  Thank you to [makeareadme.com](https://www.makeareadme.com) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
-
+* Under `Admin > OneCode > Shopflix > Shipment ` using `print button`  on shipment row, Also you
+  can print voucher for multiple shipments.

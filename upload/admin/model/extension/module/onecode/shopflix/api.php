@@ -45,7 +45,8 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             $body = json_decode($res->getBody()->getContents(), true);
             if ($res->getStatusCode() != 200 || ! isset($body['api_token']))
             {
-                throw new \RuntimeException('Error on login');
+                error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, json_encode($body)));
+                throw new \RuntimeException('Error on OC API login');
             }
             return $body['api_token'];
         }

@@ -275,6 +275,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
                 {
                     error_log(sprintf('Class: %s, method: %s, warning: %s', __CLASS__, __METHOD__, 'Conversion is disabled'));
                     $this->connector->picking($order['reference_id']);
+                    $this->updateStatusPicking($id);
                 }
                 $this->db->query('COMMIT;');
             }
