@@ -32,42 +32,50 @@ class Configuration extends \Model
 
     public function isEnabled(): bool
     {
-        return $this->loadData()['status'] == '1';
+        $data = $this->loadData();
+        return isset($data['status']) && $data['status'] == '1';
     }
 
     public function convertOrders(): bool
     {
-        return $this->isEnabled() && $this->loadData()['convert_to_order'] == '1';
+        $data = $this->isEnabled();
+        return isset($data['convert_to_order']) && $data['convert_to_order'] == '1';
     }
 
     public function autoAcceptOrder(): bool
     {
-        return $this->isEnabled() && $this->loadData()['auto_accept_order'] == '1';
+        $data = $this->isEnabled();
+        return isset($data['auto_accept_order']) && $data['auto_accept_order'] == '1';
     }
 
     public function apiUrl(): string
     {
-        return $this->loadData()['api_url'];
+        $data = $this->loadData();
+        return $data['api_url'] ?? '';
     }
 
     public function apiUsername(): string
     {
-        return $this->loadData()['api_username'];
+        $data = $this->loadData();
+        return $data['api_username'] ?? '';
     }
 
     public function apiPassword(): string
     {
-        return $this->loadData()['api_password'];
+        $data = $this->loadData();
+        return $data['api_password'] ?? '';
     }
 
     public function customerGroup(): int
     {
-        return (int) $this->loadData()['customer_group'] ?? 1;
+        $data = $this->loadData();
+        return (int) ($data['customer_group'] ?? 1);
     }
 
     public function shippingMethod(): string
     {
-        $rs = $this->loadData()['shipping_method'] ?? '';
+        $data = $this->loadData();
+        $rs = $data['shipping_method'] ?? '';
         if (count(explode('.', $rs)) < 2)
         {
             $rs = implode('.', [$rs, $rs]);
@@ -77,6 +85,7 @@ class Configuration extends \Model
 
     public function paymentMethod(): string
     {
-        return $this->loadData()['payment_method'] ?? '';
+        $data = $this->loadData();
+        return $data['payment_method'] ?? '';
     }
 }

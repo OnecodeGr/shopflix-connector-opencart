@@ -35,12 +35,12 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
         $this->load->model('catalog/filter');
         $this->load->helper('onecode/shopflix/BasicHelper');
         $this->basicHelper = new Helper\BasicHelper($registry);
-        $this->load->language($this->getLink());
+        $this->load->language('extension/module/onecode_shopflix_product');
     }
 
     protected function getLink()
     {
-        return Helper\BasicHelper::getMainLink() . '_product';
+        return 'extension/module/onecode/shopflix/product';
     }
 
     public function validate()

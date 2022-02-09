@@ -6,12 +6,12 @@
                 <button type="button" form="form-shipment" formaction="{{ print }}"
                         data-toggle="tooltip" title="{{ button_print_voucher }}" class="btn
                         btn-primary"
-                        onclick="confirm('{{ text_confirm }}') ? $('#shipment').attr('action', $(this).attr('formaction')).submit() : false;">
+                        onclick="confirm('{{ text_confirm }}') ? $('#form-shipment').attr('action', $(this).attr('formaction')).submit() : false;">
                     <i class="fa fa-print"></i></button>
                 <button type="button" form="form-shipment" formaction="{{ manifest }}"
                         data-toggle="tooltip" title="{{ button_print_manifest }}" class="btn
                         btn-default"
-                        onclick="confirm('{{ text_confirm }}') ? $('#shipment').attr('action', $(this).attr('formaction')).submit() : false;">
+                        onclick="confirm('{{ text_confirm }}') ? $('#form-shipment').attr('action', $(this).attr('formaction')).submit() : false;">
                     <i class="fa fa-print"></i></button>
             </div>
             <h1>{{ heading_title }}</h1>
@@ -180,7 +180,7 @@
                 url += '&filter_order=' + filter_order;
             }
 
-            location = 'index.php?route=extension/module/onecode_shopflix_shipment&user_token={{
+            location = 'index.php?route=extension/module/onecode/shopflix/shipment&user_token={{
             user_token }}' + url;
         });
     </script>
@@ -201,7 +201,7 @@
         $('input[name=\'filter_reference_id\']').autocomplete({
             'source': function (request, response) {
                 $.ajax({
-                    url: 'index.php?route=extension/module/onecode_shopflix_shipment/autocomplete' +
+                    url: 'index.php?route=extension/module/onecode/shopflix/shipment/autocomplete' +
                         '&user_token={{ user_token }}&filter_reference_id=' + encodeURIComponent
                         (request),
                     dataType: 'json',

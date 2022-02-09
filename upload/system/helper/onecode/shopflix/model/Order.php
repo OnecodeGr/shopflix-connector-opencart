@@ -1,8 +1,6 @@
 <?php
 namespace Onecode\Shopflix\Helper\Model;
 
-use Onecode\ShopFlixConnector\Library\Connector;
-
 class Order extends \Model
 {
     public static function getTableName()

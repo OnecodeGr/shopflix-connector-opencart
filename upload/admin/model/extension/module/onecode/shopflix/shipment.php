@@ -1,12 +1,12 @@
 <?php
 
-use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ServerException;
 use Onecode\Shopflix\Helper;
 use Onecode\ShopFlixConnector\Library\Connector;
 use Onecode\ShopFlixConnector\Library\Interfaces\OrderInterface;
 use Onecode\ShopFlixConnector\Library\Interfaces\ShipmentInterface;
 
+require_once DIR_SYSTEM . 'library/onecode/vendor/autoload.php';
 require_once DIR_SYSTEM . 'helper/onecode/shopflix/model/Shipment.php';
 
 /**
@@ -31,11 +31,14 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
         $this->load->helper('onecode/shopflix/model/Order');
         $this->load->model('extension/module/onecode/shopflix/config');
         $this->load->model('extension/module/onecode/shopflix/order');
-        $this->connector = new Connector(
-            $this->model_extension_module_onecode_shopflix_config->apiUsername(),
-            $this->model_extension_module_onecode_shopflix_config->apiPassword(),
-            $this->model_extension_module_onecode_shopflix_config->apiUrl()
-        );
+        if ($this->model_extension_module_onecode_shopflix_config->apiUrl() != '')
+        {
+            $this->connector = new Connector(
+                $this->model_extension_module_onecode_shopflix_config->apiUsername(),
+                $this->model_extension_module_onecode_shopflix_config->apiPassword(),
+                $this->model_extension_module_onecode_shopflix_config->apiUrl()
+            );
+        }
     }
 
     protected function createShipmentTable()
@@ -331,7 +334,7 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
         try
         {
             $voucher = $this->connector->createVoucher($reference_id);
-            $voucher = $voucher['voucher']['ShipmentNumber'];
+            $voucher = $voucher['voucher']['ShipmentNumber'] ?? null;
         }
         catch (ServerException $e)
         {
@@ -431,22 +434,6 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
         }
         try
         {
-            //$client = new \GuzzleHttp\Client();
-            //$client = new Client([
-            //    "base_uri" => $this->model_extension_module_onecode_shopflix_config->apiUrl().'/',
-            //    "timeout" => 90,
-            //    'auth' => [$this->model_extension_module_onecode_shopflix_config->apiUsername(),
-            //        $this->model_extension_module_onecode_shopflix_config->apiPassword()]]
-            //);
-            //$response = $client->get(
-            //    'courier',[
-            //    "query" => [
-            //        "custom_manifest" => 1,
-            //        "shipments" => implode(",", $list)
-            //    ]
-            //]);
-            //$content = $response->getBody()->getContents();
-            //print_r([$content]);
             $manifest = $this->connector->printManifest($list);
             if (isset($manifest['status']) && $manifest['status'] == "error")
             {

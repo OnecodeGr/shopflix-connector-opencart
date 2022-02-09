@@ -33,12 +33,12 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
         $this->shipment_model = new ModelExtensionModuleOnecodeShopflixShipment($registry);
         $this->order_model = new ModelExtensionModuleOnecodeShopflixOrder($registry);
 
-        $this->load->language($this->getLink());
+        $this->load->language('extension/module/onecode_shopflix_shipment');
     }
 
     protected function getLink()
     {
-        return Helper\BasicHelper::getMainLink() . '_shipment';
+        return 'extension/module/onecode/shopflix/shipment';
     }
 
     public function index()
@@ -298,7 +298,6 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
                 throw new \LogicException('No shipment available for manifest');
             }
             $contents = $this->shipment_model->printManifest($ids);
-            //print_r(['manifest' => $contents]);
             if ($contents == null)
             {
                 throw new \LogicException('No voucher Content');
@@ -308,7 +307,7 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
             $this->response->addHeader('Cache-Control: must-revalidate, post-check=0, pre-check=0');
             $this->response->addHeader('Pragma: public');
             $this->response->addHeader('Content-Length: ' . strlen($contents));
-            $this->response->addHeader('Content-Disposition: attachment; filename="voucher.pdf"');
+            $this->response->addHeader('Content-Disposition: attachment; filename="manifest.pdf"');
             $this->response->setOutput($contents);
             return;
         }

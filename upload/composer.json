@@ -4,10 +4,11 @@
   "description": "Shopflix plugin from onecode",
   "keywords": ["opencart", "onecode", "shopflix"],
   "config": {
-    "vendor-dir": "./system/storage/vendor/"
+    "vendor-dir": "./system/library/onecode/vendor/"
   },
   "require": {
     "php": ">=7.3",
-    "onecode/shopflix-connector-library": "*"
+    "onecode/shopflix-connector-library": "*",
+    "ext-json": "*"
   }
 }

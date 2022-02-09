@@ -5,6 +5,7 @@ use Onecode\Shopflix\Helper;
 use Onecode\ShopFlixConnector\Library\Connector;
 use Onecode\ShopFlixConnector\Library\Interfaces\OrderInterface;
 
+require_once DIR_SYSTEM . 'library/onecode/vendor/autoload.php';
 require_once DIR_SYSTEM . 'helper/onecode/shopflix/model/Order.php';
 
 /**
@@ -58,11 +59,14 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         $catalog = $this->request->server['HTTPS'] ? HTTPS_CATALOG : HTTP_CATALOG;
         $catalog = parse_url($catalog, \PHP_URL_HOST) == 'opencart.test' ? 'http://apache/' : $catalog;
         $this->client = new Client(['base_uri' => $catalog . 'index.php']);
-        $this->connector = new Connector(
-            $this->config_model->apiUsername(),
-            $this->config_model->apiPassword(),
-            $this->config_model->apiUrl()
-        );
+        if ($this->model_extension_module_onecode_shopflix_config->apiUrl() != '')
+        {
+            $this->connector = new Connector(
+                $this->config_model->apiUsername(),
+                $this->config_model->apiPassword(),
+                $this->config_model->apiUrl()
+            );
+        }
     }
 
     protected function createOrderTable()

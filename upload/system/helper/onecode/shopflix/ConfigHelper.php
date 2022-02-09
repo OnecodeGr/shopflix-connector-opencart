@@ -24,7 +24,7 @@ class ConfigHelper extends \Model
     {
         $data = current($this->getModuleList());
         $data = $data['setting'] ?? [];
-        return json_decode($data, true);
+        return is_array($data) ? $data : json_decode($data, true);
     }
 
     protected function getModuleList(): array

@@ -3,10 +3,6 @@
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
-use Onecode\Shopflix\Helper;
-use Onecode\ShopFlixConnector\Library\Connector;
-use Onecode\ShopFlixConnector\Library\Interfaces\OrderInterface;
-
 /**
  * @property-read \Config $config
  * @property-read \Request $request

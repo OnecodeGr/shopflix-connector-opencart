@@ -5,6 +5,8 @@ use Onecode\ShopFlixConnector\Library\Interfaces\AddressInterface;
 use Onecode\ShopFlixConnector\Library\Interfaces\ItemInterface;
 use Onecode\ShopFlixConnector\Library\Interfaces\OrderInterface;
 
+require_once DIR_SYSTEM . 'library/onecode/vendor/autoload.php';
+
 /**
  * @property-read \Document $document
  * @property-read \Request $request
@@ -40,12 +42,12 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         $this->order_model = new ModelExtensionModuleOnecodeShopflixOrder($registry);
         $this->shipment_model = new ModelExtensionModuleOnecodeShopflixShipment($registry);
         $this->basicHelper = new Helper\BasicHelper($registry);
-        $this->load->language($this->getLink());
+        $this->load->language('extension/module/onecode_shopflix_order');
     }
 
     protected function getLink()
     {
-        return Helper\BasicHelper::getMainLink() . '_order';
+        return  'extension/module/onecode/shopflix/order';
     }
 
     protected function getShipmentLink()

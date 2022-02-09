@@ -248,7 +248,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             $shopflix_menu[] = [
                 'name' => $this->language->get('text_Products'),
                 'href' => $this->url->link(
-                    Helper\BasicHelper::getMainLink().'_product',
+                    'extension/module/onecode/shopflix/product',
                     $url_params,
                     true
                 )
@@ -256,7 +256,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             $shopflix_menu[] = [
                 'name' => $this->language->get('text_Orders'),
                 'href' => $this->url->link(
-                    Helper\BasicHelper::getMainLink().'_order',
+                    'extension/module/onecode/shopflix/order',
                     $url_params,
                     true
                 )
@@ -264,7 +264,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             $shopflix_menu[] = [
                 'name' => $this->language->get('text_Shipments'),
                 'href' => $this->url->link(
-                    Helper\BasicHelper::getMainLink().'_shipment',
+                    'extension/module/onecode/shopflix/shipment',
                     $url_params,
                     true
                 )
