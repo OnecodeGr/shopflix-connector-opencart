@@ -376,44 +376,58 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
     public function loadFromCatalogProduct(array $product): self
     {
         $this->setProductId($product['product_id']);
-        $this->setSku($product['sku']);
+        $this->setSku($product['sku'] ?? '');
         $this->setPrice($product['price']);
         $this->setProductUrl($this->url->link('product/product', 'product_id=' . $product['product_id']));
         $this->setCategory($product['categories']);
         $this->setQuantity($product['quantity']);
-        $this->setImage($this->model_tool_image->resize($product['image'], $this->config->get('theme_' .
+        $image_url = $this->model_tool_image->resize($product['image'], $this->config->get('theme_' .
             $this->config->get('config_theme') . '_image_thumb_width'), $this->config->get('theme_' .
-            $this->config->get('config_theme') . '_image_thumb_height')));
+            $this->config->get('config_theme') . '_image_thumb_height'));
+        /*print_r(json_encode(
+                [
+                    $product,
+                    $this->config->get('theme_' . $this->config->get('config_theme') . '_image_thumb_width'),
+                    $this->config->get('theme_' . $this->config->get('config_theme') . '_image_thumb_height'),
+                    $this->model_tool_image->resize($product['image'], $this->config->get('theme_' .
+                        $this->config->get('config_theme') . '_image_thumb_width'), $this->config->get('theme_' .
+                        $this->config->get('config_theme') . '_image_thumb_height'))
+                ]
+        ));
+        print"--------\r\n";*/
+        $this->setImage($image_url ?? '');
 
         $attr = $this->model_extension_module_onecode_shopflix_xml->mpnAttribute();
         $attr = key_exists($attr, $product) ? $attr : 'mpn';
-        $this->setMpn($product[$attr]);
+        $this->setMpn($product[$attr] ?? '');
 
         $attr = $this->model_extension_module_onecode_shopflix_xml->eanAttribute();
         $attr = key_exists($attr, $product) ? $attr : 'ean';
-        $this->setEan($product[$attr]);
+        $this->setEan($product[$attr] ?? '');
 
         $attr = $this->model_extension_module_onecode_shopflix_xml->nameAttribute();
         $attr = key_exists($attr, $product) ? $attr : 'title';
-        $this->setName($product[$attr]);
+        $this->setName($product[$attr] ?? '');
 
         $attr = $this->model_extension_module_onecode_shopflix_xml->descriptionAttribute();
         $attr = key_exists($attr, $product) ? $attr : 'description';
-        $this->setDescription($product[$attr]);
+        $this->setDescription($product[$attr] ?? '');
 
         $attr = $this->model_extension_module_onecode_shopflix_xml->brandAttribute();
         $attr = key_exists($attr, $product) ? $attr : 'manufacturer';
-        $this->setManufacturer($product[$attr]);
+        $this->setManufacturer($product[$attr] ?? '');
 
         $attr = $this->model_extension_module_onecode_shopflix_xml->weightAttribute();
         $attr = key_exists($attr, $product) ? $attr : 'weight';
-        $this->setWeight($product[$attr]);
+        $this->setWeight($product[$attr] ?? 0);
 
-        if(count($product['attributes'])){
+        if (isset($product['attributes']) && count($product['attributes']))
+        {
             $attr = $this->model_extension_module_onecode_shopflix_xml->listPriceAttr();
             $list_price = 0.0;
             array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-                if($item['attribute_id'] == $attr){
+                if ($item['attribute_id'] == $attr)
+                {
                     $list_price = floatval($item['name']);
                 }
             });

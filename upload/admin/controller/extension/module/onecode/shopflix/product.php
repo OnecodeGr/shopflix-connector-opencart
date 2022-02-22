@@ -121,6 +121,7 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
 
     protected function getList()
     {
+        $per_page = $this->config->get('config_limit_admin');
         $filter_name = (isset($this->request->get['filter_name'])) ? $this->request->get['filter_name'] : '';
         $filter_model = (isset($this->request->get['filter_model'])) ? $this->request->get['filter_model'] : '';
         $filter_status = (isset($this->request->get['filter_status'])) ? $this->request->get['filter_status'] : '';
@@ -204,8 +205,8 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
             'filter_enabled' => $filter_enabled,
             'sort' => $sort,
             'order' => $order,
-            'start' => ($page - 1) * $this->config->get('config_limit_admin'),
-            'limit' => $this->config->get('config_limit_admin'),
+            'start' => ($page - 1) * $per_page,
+            'limit' => $per_page,
         ];
 
         $product_total = $this->model_extension_module_onecode_shopflix_product->getTotalProducts($filter_data);
@@ -322,12 +323,12 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
         $pagination = new Pagination();
         $pagination->total = $product_total;
         $pagination->page = $page;
-        $pagination->limit = $this->config->get('config_limit_admin');
+        $pagination->limit = $per_page;
         $pagination->url = $this->url->link($this->getLink(), 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}', true);
 
         $data['pagination'] = $pagination->render();
 
-        $data['results'] = sprintf($this->language->get('text_pagination'), ($product_total) ? (($page - 1) * $this->config->get('config_limit_admin')) + 1 : 0, ((($page - 1) * $this->config->get('config_limit_admin')) > ($product_total - $this->config->get('config_limit_admin'))) ? $product_total : ((($page - 1) * $this->config->get('config_limit_admin')) + $this->config->get('config_limit_admin')), $product_total, ceil($product_total / $this->config->get('config_limit_admin')));
+        $data['results'] = sprintf($this->language->get('text_pagination'), ($product_total) ? (($page - 1) * $per_page) + 1 : 0, ((($page - 1) * $per_page) > ($product_total - $per_page)) ? $product_total : ((($page - 1) * $per_page) + $per_page), $product_total, ceil($product_total / $per_page));
 
         $data['filter_name'] = $filter_name;
         $data['filter_model'] = $filter_model;
