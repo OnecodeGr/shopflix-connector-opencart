@@ -158,7 +158,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
     /**
      * @return float
      */
-    public function getListPrice(): float
+    public function getListPrice(): ?float
     {
         return $this->list_price;
     }
@@ -174,7 +174,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
     /**
      * @return string
      */
-    public function getProductUrl(): string
+    public function getProductUrl(): ?string
     {
         return $this->product_url;
     }
@@ -216,7 +216,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
     /**
      * @return int
      */
-    public function getOfferFrom(): int
+    public function getOfferFrom(): ?int
     {
         return $this->offer_from;
     }
@@ -232,7 +232,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
     /**
      * @return int
      */
-    public function getOfferTo(): int
+    public function getOfferTo(): ?int
     {
         return $this->offer_to;
     }
@@ -248,7 +248,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
     /**
      * @return float
      */
-    public function getOfferPrice(): float
+    public function getOfferPrice(): ?float
     {
         return $this->offer_price;
     }
@@ -264,7 +264,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
     /**
      * @return int
      */
-    public function getOfferQuantity(): int
+    public function getOfferQuantity(): ?int
     {
         return $this->offer_quantity;
     }
