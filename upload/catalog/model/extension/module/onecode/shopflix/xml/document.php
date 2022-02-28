@@ -11,6 +11,7 @@
  * @property-read \ModelExtensionModuleOnecodeShopflixXmlMeta $meta
  * @property-read \ModelExtensionModuleOnecodeShopflixXmlProduct $model_extension_module_onecode_shopflix_xml_product
  * @property-read \ModelExtensionModuleOnecodeShopflixXmlProduct $product
+ * @property-read \ModelExtensionModuleOnecodeShopflixXmlProduct[] $products
  */
 class ModelExtensionModuleOnecodeShopflixXmlDocument extends Model
 {
@@ -60,7 +61,7 @@ class ModelExtensionModuleOnecodeShopflixXmlDocument extends Model
         return $this;
     }
 
-    public function getXML(): string
+    public function getXML(array $products): string
     {
         $dom_doc = new \DOMDocument('1,0', 'UTF-8');
         $storeElement = $dom_doc->createElement('store');
@@ -79,8 +80,13 @@ class ModelExtensionModuleOnecodeShopflixXmlDocument extends Model
         $storeElement->appendChild($metaElement);
 
         $productsElement = $dom_doc->createElement('products');
-        foreach ($this->products as $product)
+        $this->clearProducts();
+        foreach ($products as $product)
         {
+            $this->addProduct($product);
+            $r = $this->getProducts();
+            $product = end($r);
+
             $productElement = $dom_doc->createElement('product');
             $productElement->appendChild($dom_doc->createElement('product_id', $product->getProductId()));
             $productElement->appendChild($dom_doc->createElement('sku', $product->getSku()));
@@ -110,7 +116,7 @@ class ModelExtensionModuleOnecodeShopflixXmlDocument extends Model
             $categoryElement->appendChild($dom_doc->createCDATASection
             (implode($product->getCategory(), ',')));
             $productElement->appendChild($categoryElement);
-            $productsElement->appendChild($productElement);
+            $productsElement->appendChild(clone $productElement);
         }
         $storeElement->appendChild($productsElement);
 

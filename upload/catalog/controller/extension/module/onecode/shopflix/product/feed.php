@@ -90,7 +90,7 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
             $this->xmlDocument->addProduct($product);
         }
         $this->response->addHeader('Content-Type: text/xml');
-        $this->response->setOutput($this->xmlDocument->getXML());
+        $this->response->setOutput($this->xmlDocument->getXML($products));
     }
 
     function minimal()
@@ -106,7 +106,7 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
             $this->xmlMinimal->addProduct($product);
         }
         $this->response->addHeader('Content-Type: text/xml');
-        $this->response->setOutput($this->xmlMinimal->getXML());
+        $this->response->setOutput($this->xmlMinimal->getXML($products));
     }
 
     /**

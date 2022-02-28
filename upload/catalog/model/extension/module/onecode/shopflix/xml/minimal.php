@@ -16,7 +16,7 @@ require_once(dirname(__FILE__) . '/document.php');
  */
 class ModelExtensionModuleOnecodeShopflixXmlMinimal extends ModelExtensionModuleOnecodeShopflixXmlDocument
 {
-    public function getXML(): string
+    public function getXML(array $products): string
     {
         $dom_doc = new \DOMDocument('1,0', 'UTF-8');
         $storeElement = $dom_doc->createElement('store');
@@ -35,16 +35,19 @@ class ModelExtensionModuleOnecodeShopflixXmlMinimal extends ModelExtensionModule
         $storeElement->appendChild($metaElement);
 
         $productsElement = $dom_doc->createElement('products');
-        foreach ($this->products as $product)
+        $this->clearProducts();
+        foreach ($products as $product)
         {
+            $this->addProduct($product);
+            $r = $this->getProducts();
+            $product = end($r);
             $productElement = $dom_doc->createElement('product');
             $productElement->appendChild($dom_doc->createElement('product_id', $product->getProductId()));
             $productElement->appendChild($dom_doc->createElement('sku', $product->getSku()));
             $productElement->appendChild($dom_doc->createElement('mpn', $product->getMpn()));
             $productElement->appendChild($dom_doc->createElement('ean', $product->getEan()));
             $nameElement = $dom_doc->createElement('name');
-            $nameElement->appendChild($dom_doc->createCDATASection
-            ($product->getName()));
+            $nameElement->appendChild($dom_doc->createCDATASection($product->getName()));
             $productElement->appendChild($nameElement);
             $productElement->appendChild($dom_doc->createElement('price', $product->getPrice()));
             $productElement->appendChild($dom_doc->createElement('list_price', $product->getListPrice()));
@@ -56,9 +59,9 @@ class ModelExtensionModuleOnecodeShopflixXmlMinimal extends ModelExtensionModule
             $productElement->appendChild($dom_doc->createElement('offer_quantity', $product->getOfferQuantity()));
             $productElement->appendChild($dom_doc->createElement('quantity', $product->getQuantity()));
             $productElement->appendChild($dom_doc->createElement('image', $product->getImage()));
-            $productsElement->appendChild($productElement);
+            $productsElement->appendChild(clone $productElement);
         }
-        $storeElement->appendChild($productsElement);
+        $storeElement->appendChild(clone $productsElement);
 
         return $dom_doc->saveXML($storeElement);
     }
