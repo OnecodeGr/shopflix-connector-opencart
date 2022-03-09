@@ -29,9 +29,9 @@ require_once DIR_SYSTEM . 'helper/onecode/shopflix/model/Order.php';
  * @property-read \ModelExtensionModuleOnecodeShopflixShipment $model_extension_module_onecode_shopflix_shipment
  * @property-read \GuzzleHttp\Client $client
  * @property-read \Onecode\ShopFlixConnector\Library\Connector $connector
- * @property-read  \ModelExtensionModuleOnecodeShopflixShipment $shipment_model
- * @property-read  \ModelExtensionModuleOnecodeShopflixApi $api_model
- * @property-read  \ModelExtensionModuleOnecodeShopflixConfig $config_model
+ * @property-read \ModelExtensionModuleOnecodeShopflixShipment $shipment_model
+ * @property-read \ModelExtensionModuleOnecodeShopflixApi $api_model
+ * @property-read \ModelExtensionModuleOnecodeShopflixConfig $config_model
  */
 class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
 {
@@ -44,7 +44,6 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         $this->load->model('sale/order');
         $this->load->model('setting/store');
         $this->load->model('setting/store');
-        $this->load->model('setting/extension');
         $this->load->model('setting/extension');
         $this->load->model('localisation/currency');
         $this->load->model('user/api');
@@ -76,8 +75,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
  `reference_id` varchar(255),
  `state` varchar(255),
  `status` varchar(255),
- `sub_total` decimal(10,3
-                    ),
+ `sub_total` decimal(10,3),
  `discount_amount` decimal(10,3),
  `total_paid` decimal(10,3),
  `customer_email` varchar(255),
@@ -89,6 +87,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
  `update_at` timestamp default current_timestamp not null,
  PRIMARY KEY (`id`),
  UNIQUE INDEX (`reference_id`)
+ DEFAULT CHARSET=utf8 COLLATE utf8_bin
 )", self::getTableName()));
     }
 
@@ -99,7 +98,8 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
  `oc_id` INT(11) UNSIGNED NOT NULL,
  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
  PRIMARY KEY (`shopflix_id`,`oc_id`),
-    FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE CASCADE ON DELETE RESTRICT
+FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE CASCADE ON DELETE RESTRICT
+DEFAULT CHARSET=utf8 COLLATE utf8_bin
 )");
     }
 
@@ -120,6 +120,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
  PRIMARY KEY (`id`),
  UNIQUE INDEX (`order_id`,`type`),
     FOREIGN KEY (order_id) REFERENCES %s(id) ON DELETE CASCADE ON UPDATE CASCADE
+    DEFAULT CHARSET=utf8 COLLATE utf8_bin
 )", self::getAddressTableName(), self::getTableName()));
     }
 
@@ -133,6 +134,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
  `quantity` SMALLINT UNSIGNED,
  PRIMARY KEY (`id`),
     FOREIGN KEY (order_id) REFERENCES %s(id) ON DELETE CASCADE ON UPDATE CASCADE
+    DEFAULT CHARSET=utf8 COLLATE utf8_bin
 )", self::getItemTableName(), self::getTableName()));
     }
 
@@ -142,6 +144,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         $this->createOrderRelationTable();
         $this->createOrderAddressTable();
         $this->createOrderItemTable();
+        $this->update1_2_3();
     }
 
     public function uninstall()
@@ -150,6 +153,14 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         $this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getItemTableName()));
         $this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getAddressTableName()));
         $this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getTableName()));
+    }
+
+    public function update1_2_3()
+    {
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getRelationTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getItemTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getAddressTableName()));
     }
 
     public function getOrderById($order_id): array

@@ -86,6 +86,7 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
         $this->createShipmentTable();
         $this->createTrackingTable();
         $this->createItemTable();
+        $this->update1_2_3();
     }
 
     public function uninstall()
@@ -93,6 +94,13 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
         $this->db->query(sprintf('DROP TABLE IF EXISTS %s', Helper\Model\Shipment::getItemTableName()));
         $this->db->query(sprintf('DROP TABLE IF EXISTS %s', Helper\Model\Shipment::getTrackingTableName()));
         $this->db->query(sprintf('DROP TABLE IF EXISTS %s', Helper\Model\Shipment::getTableName()));
+    }
+
+    public function update1_2_3()
+    {
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getTrackingTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getItemTableName()));
     }
 
     public function getById($id): array

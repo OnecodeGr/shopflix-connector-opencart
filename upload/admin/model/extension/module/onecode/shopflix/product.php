@@ -21,6 +21,7 @@ class ModelExtensionModuleOnecodeShopflixProduct extends Helper\Model\Product
     public function install()
     {
         $this->createTable();
+        $this->update1_2_3();
         $products = $this->model_catalog_product->getProducts(['filter_status' => 1]);
         if (count($products))
         {
@@ -31,6 +32,11 @@ class ModelExtensionModuleOnecodeShopflixProduct extends Helper\Model\Product
     public function uninstall()
     {
         $this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getTableName()));
+    }
+
+    public function update1_2_3()
+    {
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getTableName()));
     }
 
     public function clearAll()

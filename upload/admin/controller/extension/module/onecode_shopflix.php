@@ -18,8 +18,7 @@ require_once DIR_SYSTEM . 'library/onecode/EventGroup.php';
  * @property-read \ModelSettingExtension $model_setting_extension
  * @property-read \ModelCustomerCustomerGroup $model_customer_customer_group
  * @property-read \ModelExtensionModuleOnecodeShopflixOrder $model_extension_module_onecode_shopflix_order
- * @property-read \ModelExtensionModuleOnecodeShopflixProductAttributes
- * $model_extension_module_onecode_shopflix_product_attributes
+ * @property-read \ModelExtensionModuleOnecodeShopflixProductAttributes $model_extension_module_onecode_shopflix_product_attributes
  * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
  * @property-read \ModelExtensionModuleOnecodeShopflixShipment $model_extension_module_onecode_shopflix_shipment
  * @property-read \ModelExtensionModuleOnecodeShopflixEvent $model_extension_module_onecode_shopflix_event
@@ -55,6 +54,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $moduleId = $this->request->get['module_id'] ?? null;
         if ($moduleId)
         {
+            $this->patch_1_2_3();
             $this->moduleConfigure($moduleId);
         }
         else
@@ -79,6 +79,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->model_extension_module_onecode_shopflix_product->install();
         $this->model_extension_module_onecode_shopflix_order->install();
         $this->model_extension_module_onecode_shopflix_shipment->install();
+        $this->patch_1_2_3();
     }
 
     public function uninstall()
@@ -89,6 +90,24 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->model_extension_module_onecode_shopflix_shipment->uninstall();
         $this->model_extension_module_onecode_shopflix_product->uninstall();
         $this->model_extension_module_onecode_shopflix_order->uninstall();
+    }
+
+    private function patch_1_2_3()
+    {
+        $latest_patch = $this->configHelper->getLatestPatch();
+        $need_to_run = is_null($latest_patch);
+        if (! $need_to_run)
+        {
+            $latest_patch = explode('_', $latest_patch);
+            $need_to_run = ($latest_patch[0] <= 1 && $latest_patch[1] <= 2 && $latest_patch[2] < 3);
+        }
+        if ($need_to_run)
+        {
+            $this->model_extension_module_onecode_shopflix_product->update1_2_3();
+            $this->model_extension_module_onecode_shopflix_order->update1_2_3();
+            $this->model_extension_module_onecode_shopflix_shipment->update1_2_3();
+            $this->configHelper->updateLatestPatch('1_2_3');
+        }
     }
 
     public function validate()

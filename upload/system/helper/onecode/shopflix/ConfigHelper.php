@@ -50,9 +50,41 @@ class ConfigHelper extends \Model
         return current($modules);
     }
 
-    protected function getModulesByCode($code) {
+    protected function getModulesByCode($code)
+    {
         $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "module` WHERE `code` = '" . $this->db->escape($code) . "' ORDER BY `name`");
 
         return $query->rows;
+    }
+
+    protected function loadExtraSettings(string $key, $store = 0): ?string
+    {
+        return $this->model_setting_setting->getSettingValue(
+            sprintf('%s_%s', BasicHelper::getModuleId(), $key, $store)
+        );
+    }
+
+    protected function updateExtraSettings(string $key, string $value = '', $store = 0): void
+    {
+        $key = sprintf('%s_%s', BasicHelper::getModuleId(), $key);
+        $existing = $this->loadExtraSettings($key, $store);
+        if (! is_null($existing))
+        {
+            $this->model_setting_setting->editSettingValue(BasicHelper::getModuleId(), $key, $value);
+        }
+        else
+        {
+            $settings = $this->model_setting_setting->getSetting(BasicHelper::getModuleId());
+            $settings[$key] = $value;
+            $this->model_setting_setting->editSetting(BasicHelper::getModuleId(), $settings, $store);
+        }
+    }
+
+    public function getLatestPatch():?string{
+        return $this->loadExtraSettings('patch');
+    }
+
+    public function updateLatestPatch(string $value):void{
+        $this->updateExtraSettings('patch', $value);
     }
 }
