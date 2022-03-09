@@ -1,7 +1,7 @@
 {
   "name": "onecode/shopflix-oc",
   "type": "project",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Shopflix plugin from onecode",
   "keywords": ["opencart", "onecode", "shopflix"],
   "config": {
