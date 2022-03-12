@@ -98,9 +98,9 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
 
     public function update1_2_3()
     {
-        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getTableName()));
-        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getTrackingTableName()));
-        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getItemTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getTrackingTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getItemTableName()));
     }
 
     public function getById($id): array

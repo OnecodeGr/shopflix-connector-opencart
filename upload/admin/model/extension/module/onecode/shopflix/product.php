@@ -36,7 +36,7 @@ class ModelExtensionModuleOnecodeShopflixProduct extends Helper\Model\Product
 
     public function update1_2_3()
     {
-        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getTableName()));
     }
 
     public function clearAll()

@@ -87,7 +87,6 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
  `update_at` timestamp default current_timestamp not null,
  PRIMARY KEY (`id`),
  UNIQUE INDEX (`reference_id`)
- DEFAULT CHARSET=utf8 COLLATE utf8_bin
 )", self::getTableName()));
     }
 
@@ -98,9 +97,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
  `oc_id` INT(11) UNSIGNED NOT NULL,
  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
  PRIMARY KEY (`shopflix_id`,`oc_id`),
-FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE CASCADE ON DELETE RESTRICT
-DEFAULT CHARSET=utf8 COLLATE utf8_bin
-)");
+FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE CASCADE ON DELETE RESTRICT)");
     }
 
     protected function createOrderAddressTable()
@@ -120,7 +117,6 @@ DEFAULT CHARSET=utf8 COLLATE utf8_bin
  PRIMARY KEY (`id`),
  UNIQUE INDEX (`order_id`,`type`),
     FOREIGN KEY (order_id) REFERENCES %s(id) ON DELETE CASCADE ON UPDATE CASCADE
-    DEFAULT CHARSET=utf8 COLLATE utf8_bin
 )", self::getAddressTableName(), self::getTableName()));
     }
 
@@ -134,7 +130,6 @@ DEFAULT CHARSET=utf8 COLLATE utf8_bin
  `quantity` SMALLINT UNSIGNED,
  PRIMARY KEY (`id`),
     FOREIGN KEY (order_id) REFERENCES %s(id) ON DELETE CASCADE ON UPDATE CASCADE
-    DEFAULT CHARSET=utf8 COLLATE utf8_bin
 )", self::getItemTableName(), self::getTableName()));
     }
 
@@ -157,10 +152,10 @@ DEFAULT CHARSET=utf8 COLLATE utf8_bin
 
     public function update1_2_3()
     {
-        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getTableName()));
-        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getRelationTableName()));
-        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getItemTableName()));
-        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci', self::getAddressTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getRelationTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getItemTableName()));
+        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getAddressTableName()));
     }
 
     public function getOrderById($order_id): array
