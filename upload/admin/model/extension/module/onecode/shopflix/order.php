@@ -197,6 +197,7 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
         {
             $sql .= " AND o.total_paid = " . floatval($data['filter_total_paid']);
         }
+
         $query = $this->db->query($sql);
         return (int) $query->row['total'];
     }
@@ -219,6 +220,29 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
         if (! empty($data['filter_total_paid']))
         {
             $sql .= " AND o.total_paid = " . floatval($data['filter_total_paid']);
+        }
+
+        $sort_data = [
+            'o.reference_id',
+            'o.sub_total',
+            'o.discount_amount',
+            'o.total_paid',
+            'o.status',
+            'o.customer_email',
+            'o.id',
+        ];
+
+        $sql .= (isset($data['sort']) && in_array($data['sort'], $sort_data))
+            ? " ORDER BY " . $data['sort']
+            : " ORDER BY pd.name";
+
+        $sql .= isset($data['order']) && ($data['order'] == 'DESC') ? " DESC" : " ASC";
+
+        if (isset($data['start']) || isset($data['limit']))
+        {
+            $data['start'] = max($data['start'], 0);
+            $data['limit'] = $data['limit'] < 1 ? 20 : $data['limit'];
+            $sql .= " LIMIT " . (int) $data['start'] . "," . (int) $data['limit'];
         }
 
         $query = $this->db->query($sql);

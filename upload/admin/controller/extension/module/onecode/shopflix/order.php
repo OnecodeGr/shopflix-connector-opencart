@@ -450,34 +450,36 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
 
     protected function getList()
     {
+        $per_page = $this->config->get('config_limit_admin');
         $filter_reference_id = (isset($this->request->get['filter_reference_id'])) ? $this->request->get['filter_reference_id'] : '';
         $filter_sub_total = (isset($this->request->get['filter_sub_total'])) ? $this->request->get['filter_sub_total'] : '';
         $filter_total_paid = (isset($this->request->get['filter_total_paid'])) ? $this->request->get['filter_total_paid'] : '';
         $filter_customer_email = (isset($this->request->get['filter_customer_email'])) ? $this->request->get['filter_customer_email'] : '';
         $sort = (isset($this->request->get['sort'])) ? $this->request->get['sort'] : 'o.id';
         $order = (isset($this->request->get['order'])) ? $this->request->get['order'] : 'DESC';
-        $page = (isset($this->request->get['page'])) ? (int) $this->request->get['page'] : 1;
+        $page = max((isset($this->request->get['page'])) ? (int) $this->request->get['page'] : 1,1);
         $user_token = $this->session->data['user_token'];
-        $url = '';
+        $url_params = [];
+        $url_params['user_token'] = $user_token;
+        $url_params['order'] = $order;
+        $url_params['page'] = $page;
+
         if ($filter_reference_id != '')
         {
-            $url .= '&filter_reference_id=' . urlencode(html_entity_decode($filter_reference_id, ENT_QUOTES, 'UTF-8'));
+            $url_params['filter_reference_id'] = urlencode(html_entity_decode($filter_reference_id, ENT_QUOTES, 'UTF-8'));
         }
         if ($filter_sub_total != '')
         {
-            $url .= '&filter_sub_total=' . floatval($filter_sub_total);
+            $url_params['filter_sub_total'] = floatval($filter_sub_total);
         }
         if ($filter_total_paid != '')
         {
-            $url .= '&filter_total_paid=' . floatval($filter_total_paid);
+            $url_params['filter_total_paid'] = floatval($filter_total_paid);
         }
         if ($filter_customer_email != '')
         {
-            $url .= '&filter_customer_email=' . urlencode(html_entity_decode($filter_customer_email, ENT_QUOTES, 'UTF-8'));
+            $url_params['filter_customer_email'] = urlencode(html_entity_decode($filter_customer_email, ENT_QUOTES, 'UTF-8'));
         }
-
-        $url .= '&order=' . $order;
-        $url .= '&page=' . $page;
 
         $data['breadcrumbs'] = [];
         $data['breadcrumbs'][] = [
@@ -486,11 +488,11 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         ];
         $data['breadcrumbs'][] = [
             'text' => $this->language->get('heading_orders'),
-            'href' => $this->url->link($this->getLink(), 'user_token=' . $user_token . $url, true),
+            'href' => $this->url->link($this->getLink(), http_build_query($url_params), true),
         ];
-        $data['manual_sync'] = $this->url->link($this->getLink() . '/manual_sync', 'user_token=' . $user_token . $url, true);
+        $data['manual_sync'] = $this->url->link($this->getLink() . '/manual_sync', http_build_query($url_params), true);
         $data['accept'] = ($this->model_extension_module_onecode_shopflix_config->convertOrders())
-            ? $this->url->link($this->getLink() . '/accept', 'user_token=' . $user_token . $url, true)
+            ? $this->url->link($this->getLink() . '/accept', http_build_query($url_params), true)
             : false;
 
         $data['orders'] = [];
@@ -502,8 +504,8 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             'filter_customer_email' => $filter_customer_email,
             'sort' => $sort,
             'order' => $order,
-            'start' => ($page - 1) * $this->config->get('config_limit_admin'),
-            'limit' => $this->config->get('config_limit_admin'),
+            'start' => ($page - 1) * $per_page,
+            'limit' => $per_page,
         ];
 
         $order_total = $this->order_model->getTotalOrders($filter_data);
@@ -511,6 +513,7 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
 
         foreach ($results as $result)
         {
+            $order_url_params = http_build_query(array_merge($url_params, ['order_id' => $result['id']]));
             $shipments = $this->shipment_model->getByOrderId($result['id']);
             $data['orders'][] = [
                 'order_id' => $result['id'],
@@ -524,23 +527,18 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
                 'customer_firstname' => $result['customer_firstname'],
                 'customer_lastname' => $result['customer_lastname'],
                 'customer_remote_ip' => $result['customer_remote_ip'],
-                'view' => $this->url->link($this->getLink() . '/view', 'user_token=' .
-                    $user_token . '&order_id=' . $result['id'] . $url, true),
+                'view' => $this->url->link($this->getLink() . '/view', $order_url_params, true),
                 'voucher' => (count($shipments) && $result['status'] != 'cancelled')
-                    ? $this->url->link($this->getShipmentLink() . '/print_voucher_order', 'user_token=' .
-                        $user_token . '&order_id=' . $result['id'] . $url, true)
+                    ? $this->url->link($this->getShipmentLink() . '/print_voucher_order', $order_url_params, true)
                     : false,
                 'shipment' => ($result['status'] == OrderInterface::STATUS_PICKING)
-                    ? $this->url->link($this->getLink() . '/syncShipments', 'user_token=' .
-                        $user_token . '&order_id=' . $result['id'] . $url, true)
+                    ? $this->url->link($this->getLink() . '/syncShipments', $order_url_params, true)
                     : false,
                 'accept' => ($result['status'] == OrderInterface::STATUS_PENDING_ACCEPTANCE)
-                    ? $this->url->link($this->getLink() . '/accept', 'user_token=' .
-                        $user_token . '&order_id=' . $result['id'] . $url, true)
+                    ? $this->url->link($this->getLink() . '/accept', $order_url_params, true)
                     : false,
                 'decline' => ($result['status'] == OrderInterface::STATUS_PENDING_ACCEPTANCE)
-                    ? $this->url->link($this->getLink() . '/decline', 'user_token=' .
-                        $user_token . '&order_id=' . $result['id'] . $url, true)
+                    ? $this->url->link($this->getLink() . '/decline', $order_url_params, true)
                     : false,
             ];
         }
@@ -564,36 +562,27 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         }
         $data['selected'] = isset($this->request->post['selected']) ? (array) $this->request->post['selected'] : [];
 
-        if (isset($this->request->get['page']))
-        {
-            $url .= '&page=' . $this->request->get['page'];
-        }
+        $data['sort_id'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.id'])), true);
+        $data['sort_reference_id'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.reference_id'])), true);
+        $data['sort_sub_total'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.sub_total'])), true);
+        $data['sort_discount_amount'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.discount_amount'])), true);
+        $data['sort_total_paid'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.total_paid'])), true);
+        $data['sort_status'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.status'])), true);
+        $data['sort_customer_email'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.customer_email'])), true);
 
-        $data['sort_id'] = $this->url->link($this->getLink(), 'user_token=' . $user_token . '&sort=o.id' . $url, true);
-        $data['sort_reference_id'] = $this->url->link($this->getLink(), 'user_token=' . $user_token . '&sort=o.reference_id' .
-            $url, true);
-        $data['sort_sub_total'] = $this->url->link($this->getLink(), 'user_token=' . $user_token . '&sort=o.sub_total' .
-            $url, true);
-        $data['sort_discount_amount'] = $this->url->link($this->getLink(), 'user_token=' . $user_token . '&sort=o.discount_amount' .
-            $url, true);
-        $data['sort_total_paid'] = $this->url->link($this->getLink(), 'user_token=' . $user_token . '&sort=o.total_paid' .
-            $url, true);
-        $data['sort_status'] = $this->url->link($this->getLink(), 'user_token=' . $user_token . '&sort=o.status' .
-            $url, true);
-        $data['sort_customer_email'] = $this->url->link($this->getLink(), 'user_token=' . $user_token . '&sort=o.customer_email' . $url, true);
-
+        $pagination_params = array_merge($url_params, ['page'=>'{page}']);
         $pagination = new Pagination();
         $pagination->total = $order_total;
         $pagination->page = $page;
-        $pagination->limit = $filter_data['limit'];
-        $pagination->url = $this->url->link($this->getLink(), 'user_token=' . $user_token . $url . '&page={page}', true);
+        $pagination->limit = $per_page;
+        $pagination->url = $this->url->link($this->getLink(), http_build_query($pagination_params), true);
 
         $data['pagination'] = $pagination->render();
 
         $data['results'] = sprintf($this->language->get('text_pagination'), ($order_total) ? (($page - 1) *
-                $filter_data['limit']) + 1 : 0, ((($page - 1) * $filter_data['limit']) > ($order_total -
-                $filter_data['limit'])) ? $order_total : ((($page - 1) * $filter_data['limit']) +
-            $filter_data['limit']), $order_total, ceil($order_total / $filter_data['limit']));
+                $per_page) + 1 : 0, ((($page - 1) * $per_page) > ($order_total -
+                $per_page)) ? $order_total : ((($page - 1) * $per_page) +
+            $per_page), $order_total, ceil($order_total / $per_page));
 
         $data['filter_reference_id'] = $filter_reference_id;
         $data['filter_sub_total'] = $filter_sub_total;
