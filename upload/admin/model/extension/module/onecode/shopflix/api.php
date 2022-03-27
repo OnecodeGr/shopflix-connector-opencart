@@ -9,6 +9,7 @@ use GuzzleHttp\RequestOptions;
  * @property-read \ModelUserApi $model_user_api
  * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
  * @property-read \ModelExtensionModuleOnecodeShopflixConfig $model_extension_module_onecode_shopflix_config
+ * @property-read \ModelLocalisationCountry $model_localisation_country
  * @property-read \GuzzleHttp\Client $client
  */
 class ModelExtensionModuleOnecodeShopflixApi extends Model
@@ -19,6 +20,7 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
         $this->load->model('user/api');
         $this->load->model('extension/module/onecode/shopflix/product');
         $this->load->model('extension/module/onecode/shopflix/config');
+        $this->load->model('localisation/country');
         $catalog = $this->request->server['HTTPS'] ? HTTPS_CATALOG : HTTP_CATALOG;
         $catalog = parse_url($catalog, \PHP_URL_HOST) == 'opencart.test' ? 'http://apache/' : $catalog;
         $this->client = new Client(['base_uri' => $catalog . 'index.php']);
@@ -141,12 +143,19 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
         try
         {
             $record = [];
+            $countries = $this->model_localisation_country->getCountries();
             foreach ($items as $row)
             {
                 if ($row['type'] != $type)
                 {
                     continue;
                 }
+
+                $s_c = array_filter($countries, function ($item) use($row){
+                    return $item['iso_code_2'] == $row['country_id'];
+                });
+                $s_c = current($s_c);
+                $country_id = count($s_c) > 0 && isset($s_c['country_id'])? $s_c['country_id'] : 0;
                 $record = [
                     'firstname' => $row['firstname'],
                     'lastname' => $row['lastname'],
@@ -154,7 +163,7 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
                     'postcode' => $row['postcode'],
                     'city' => $row['city'],
                     'zone_id' => 0,
-                    'country_id' => $row['country_id'],
+                    'country_id' => $country_id,
                     'custom_field' => [
                         'phone' => $row['telephone'],
                         'email' => $row['email'],
@@ -191,12 +200,18 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
         try
         {
             $record = [];
+            $countries = $this->model_localisation_country->getCountries();
             foreach ($items as $row)
             {
                 if ($row['type'] != $type)
                 {
                     continue;
                 }
+                $s_c = array_filter($countries, function ($item) use($row){
+                    return $item['iso_code_2'] == $row['country_id'];
+                });
+                $s_c = current($s_c);
+                $country_id = count($s_c) > 0 && isset($s_c['country_id'])? $s_c['country_id'] : 0;
                 $record = [
                     'firstname' => $row['firstname'],
                     'lastname' => $row['lastname'],
@@ -204,7 +219,7 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
                     'postcode' => $row['postcode'],
                     'city' => $row['city'],
                     'zone_id' => 0,
-                    'country_id' => $row['country_id'],
+                    'country_id' => $country_id,
                     'custom_field' => [
                         'phone' => $row['telephone'],
                         'email' => $row['email'],

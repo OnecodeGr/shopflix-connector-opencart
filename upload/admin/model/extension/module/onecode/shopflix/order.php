@@ -345,6 +345,9 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
     {
         $this->db->query('UPDATE ' . DB_PREFIX . "order SET `total` = " . $total
             . " WHERE `order_id` = " . $order_id . ";");
+        $this->db->query('UPDATE ' . DB_PREFIX . "order_product SET `tax` = 0.00 WHERE `order_id` = " . $order_id . ";");
+        $this->db->query("DELETE FROM ". DB_PREFIX . "order_total WHERE `order_id` = ". $order_id
+            . " AND `code` = 'tax';" );
         $this->db->query('UPDATE ' . DB_PREFIX . "order_total SET `value` = " . $sub_total
             . " WHERE `order_id` = " . $order_id . " AND `code` = 'sub_total';");
         $this->db->query('UPDATE ' . DB_PREFIX . "order_total SET `value` = " . $total

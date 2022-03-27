@@ -1,1 +1,4 @@
 .idea/
+/upload/system/library/onecode/vendor/*
+/upload/composer.lock
+/upload/composer.phar
