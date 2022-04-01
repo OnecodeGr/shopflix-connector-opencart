@@ -1,10 +1,12 @@
 <?php
 namespace Onecode\Shopflix\Helper;
 
+use Model;
+
 /**
  * @property-read \ModelSettingModule $model_setting_module
  */
-class BasicHelper extends \Model
+class BasicHelper extends Model
 {
     public function __construct($registry)
     {

@@ -1,6 +1,7 @@
 <?php
 namespace Onecode\Shopflix\Helper\Model\Config;
 
+use Model;
 use Onecode\Shopflix\Helper;
 
 /**
@@ -11,7 +12,7 @@ use Onecode\Shopflix\Helper;
  * @property-read \Onecode\Shopflix\Helper\BasicHelper $basicHelper
  * @property-read \Onecode\Shopflix\Helper\ConfigHelper $configHelper
  */
-class Xml extends \Model
+class Xml extends Model
 {
     public function __construct($registry)
     {
@@ -33,7 +34,7 @@ class Xml extends \Model
     private function loadDataValue(string $key)
     {
         $data = $this->loadData();
-        return isset($data[$key]) ? $data[$key] : null;
+        return $data[$key] ?? null;
     }
 
     public function isEnabled(): bool

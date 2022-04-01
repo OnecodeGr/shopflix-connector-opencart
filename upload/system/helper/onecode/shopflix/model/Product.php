@@ -1,11 +1,14 @@
 <?php
 namespace Onecode\Shopflix\Helper\Model;
 
+use Model;
+use const DB_PREFIX;
+
 /**
  * @property-read \Config $config
  * @property-read \DB $db
  */
-class Product extends \Model
+class Product extends Model
 {
     protected function createTable()
     {
@@ -16,17 +19,17 @@ class Product extends \Model
 )", self::getTableName()));
     }
 
-    public static function getTableName()
+    public static function getTableName(): string
     {
-        return \DB_PREFIX . 'onecode_shopflix_product_xml';
+        return DB_PREFIX . 'onecode_shopflix_product_xml';
     }
 
     public function getTotalProducts(array $data = []): int
     {
         $sql = [
             sprintf("SELECT COUNT(DISTINCT op.product_id) AS total FROM %s AS op", self::getTableName()),
-            sprintf("INNER JOIN %s%s AS p ON p.product_id = op.product_id", \DB_PREFIX, 'product'),
-            sprintf("LEFT JOIN %s%s AS pd ON p.product_id = pd.product_id", \DB_PREFIX, 'product_description'),
+            sprintf("INNER JOIN %s%s AS p ON p.product_id = op.product_id", DB_PREFIX, 'product'),
+            sprintf("LEFT JOIN %s%s AS pd ON p.product_id = pd.product_id", DB_PREFIX, 'product_description'),
             sprintf("WHERE pd.language_id = '%d'", (int) $this->config->get('config_language_id')),
         ];
 
@@ -52,7 +55,7 @@ class Product extends \Model
     }
 
     /**
-     * @param array $filters
+     * @param array $data
      *
      * @return array
      */
@@ -66,9 +69,9 @@ class Product extends \Model
        p.*,
        (CASE WHEN op.status IS NOT NULL THEN op.status ELSE 0 END) AS enabled
 FROM %s%s AS p",
-                \DB_PREFIX, 'product'),
-            sprintf("LEFT JOIN %s%s AS pd ON p.product_id = pd.product_id", \DB_PREFIX, 'product_description'),
-            sprintf("LEFT JOIN %s%s AS mp ON p.manufacturer_id = mp.manufacturer_id", \DB_PREFIX, 'manufacturer'),
+                DB_PREFIX, 'product'),
+            sprintf("LEFT JOIN %s%s AS pd ON p.product_id = pd.product_id", DB_PREFIX, 'product_description'),
+            sprintf("LEFT JOIN %s%s AS mp ON p.manufacturer_id = mp.manufacturer_id", DB_PREFIX, 'manufacturer'),
             sprintf("LEFT JOIN %s AS op ON p.product_id = op.product_id", self::getTableName()),
             sprintf("WHERE pd.language_id = '%d'", (int) $this->config->get('config_language_id')),
         ];
@@ -125,7 +128,7 @@ FROM %s%s AS p",
         {
             $products = array_map(function ($product) {
                 $attrs = $this->db->query(sprintf('SELECT * FROM %s%s WHERE product_id = %d and language_id = %d',
-                    \DB_PREFIX, 'product_attribute', $product['product_id'], (int) $this->config->get('config_language_id')));
+                    DB_PREFIX, 'product_attribute', $product['product_id'], (int) $this->config->get('config_language_id')));
                 if (count($attrs->rows))
                 {
                     $items = $attrs->rows;

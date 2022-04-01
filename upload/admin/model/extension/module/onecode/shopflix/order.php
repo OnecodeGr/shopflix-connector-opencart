@@ -56,7 +56,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         $this->api_model = new ModelExtensionModuleOnecodeShopflixApi($registry);
         $this->config_model = new ModelExtensionModuleOnecodeShopflixConfig($registry);
         $catalog = $this->request->server['HTTPS'] ? HTTPS_CATALOG : HTTP_CATALOG;
-        $catalog = parse_url($catalog, \PHP_URL_HOST) == 'opencart.test' ? 'http://apache/' : $catalog;
+        $catalog = parse_url($catalog, PHP_URL_HOST) == 'opencart.test' ? 'http://apache/' : $catalog;
         $this->client = new Client(['base_uri' => $catalog . 'index.php']);
         if ($this->model_extension_module_onecode_shopflix_config->apiUrl() != '')
         {
@@ -309,7 +309,7 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
                 }
                 $this->db->query('COMMIT;');
             }
-            catch (\RuntimeException $exception)
+            catch (RuntimeException $exception)
             {
                 $this->db->query('ROLLBACK;');
                 //Error during shopflix communication (manual rollback for no innodb)
@@ -320,7 +320,7 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
                     {
                         $this->api_model->apiOrderDelete($oc_id, $token);
                     }
-                    catch (\Exception $exception)
+                    catch (Exception $exception)
                     {
                         error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $exception->getMessage()));
                     }
@@ -328,12 +328,12 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
                 }
                 throw new RuntimeException($exception->getMessage());
             }
-            catch (\LogicException $exception)
+            catch (LogicException $exception)
             {
                 $this->db->query('ROLLBACK;');
                 throw new LogicException($exception->getMessage());
             }
-            catch (\Exception $exception)
+            catch (Exception $exception)
             {
                 $this->db->query('ROLLBACK;');
                 throw new Exception($exception->getMessage());
@@ -457,7 +457,7 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
             //]);
             return true;
         }
-        catch (\Exception $e)
+        catch (Exception $e)
         {
             error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $e->getMessage()));
             return false;
@@ -522,7 +522,7 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
             $this->db->query("COMMIT;");
             return $data;
         }
-        catch (\Exception $e)
+        catch (Exception $e)
         {
             error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $e->getMessage()));
             $this->db->query('ROLLBACK;');

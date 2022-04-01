@@ -1,6 +1,7 @@
 <?php
 namespace Onecode\Shopflix\Helper\Model;
 
+use Model;
 use Onecode\Shopflix\Helper;
 
 /**
@@ -11,7 +12,7 @@ use Onecode\Shopflix\Helper;
  * @property-read \Onecode\Shopflix\Helper\BasicHelper $basicHelper
  * @property-read \Onecode\Shopflix\Helper\ConfigHelper $configHelper
  */
-class Configuration extends \Model
+class Configuration extends Model
 {
     public function __construct($registry)
     {
