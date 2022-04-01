@@ -110,7 +110,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         }
     }
 
-    public function validate()
+    public function validate(): bool
     {
         if (! $this->user->hasPermission('modify', 'extension/module/onecode/shopflix/onecode_shopflix'))
         {

@@ -36,7 +36,7 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
         $this->load->language('extension/module/onecode_shopflix_shipment');
     }
 
-    protected function getLink()
+    protected function getLink(): string
     {
         return 'extension/module/onecode/shopflix/shipment';
     }
@@ -209,15 +209,15 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
                     : $this->language->get('success_orders_accepted');
             }
         }
-        catch (\LogicException $exception)
+        catch (LogicException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
-        catch (\RuntimeException $exception)
+        catch (RuntimeException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
-        catch (\Exception $exception)
+        catch (Exception $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
@@ -250,24 +250,24 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
         {
             if (count($ids) == 0)
             {
-                throw new \LogicException($this->language->get('error_no_available_shipments'));
+                throw new LogicException($this->language->get('error_no_available_shipments'));
             }
             if(count($ids) > 20){
-                throw new \LogicException(sprintf($this->language->get('error_maximum_number_of_selected_shipments'),
+                throw new LogicException(sprintf($this->language->get('error_maximum_number_of_selected_shipments'),
                     20));
             }
             $this->download_voucher_pdf($ids);
             return;
         }
-        catch (\LogicException $exception)
+        catch (LogicException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
-        catch (\RuntimeException $exception)
+        catch (RuntimeException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
-        catch (\Exception $exception)
+        catch (Exception $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
@@ -299,16 +299,16 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
         {
             if (count($ids) == 0)
             {
-                throw new \LogicException($this->language->get('error_no_available_shipments'));
+                throw new LogicException($this->language->get('error_no_available_shipments'));
             }
             if(count($ids) > 20){
-                throw new \LogicException(sprintf($this->language->get('error_maximum_number_of_selected_shipments'),
+                throw new LogicException(sprintf($this->language->get('error_maximum_number_of_selected_shipments'),
                 20));
             }
             $contents = $this->shipment_model->printManifest($ids);
             if ($contents == null)
             {
-                throw new \LogicException('No voucher Content');
+                throw new LogicException('No voucher Content');
             }
             $date = (new DateTime())->format('Y-m-d_H-i-s');
             $this->response->addHeader('Content-Type: application/pdf');
@@ -320,15 +320,15 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
             $this->response->setOutput($contents);
             return;
         }
-        catch (\LogicException $exception)
+        catch (LogicException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
-        catch (\RuntimeException $exception)
+        catch (RuntimeException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
-        catch (\Exception $exception)
+        catch (Exception $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
@@ -363,18 +363,18 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
         {
             if (count($ids) == 0)
             {
-                throw new \LogicException($this->language->get('error_no_available_shipments'));
+                throw new LogicException($this->language->get('error_no_available_shipments'));
             }
         }
-        catch (\LogicException $exception)
+        catch (LogicException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
-        catch (\RuntimeException $exception)
+        catch (RuntimeException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
-        catch (\Exception $exception)
+        catch (Exception $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
@@ -392,7 +392,7 @@ class ControllerExtensionModuleOnecodeShopflixShipment extends Controller
         $contents = $this->shipment_model->printVoucherByShipments($ids);
         if ($contents == null)
         {
-            throw new \LogicException($this->language->get('error_no_manifest_contents'));
+            throw new LogicException($this->language->get('error_no_manifest_contents'));
         }
         $date = (new DateTime())->format('Y-m-d_H-i-s');
 

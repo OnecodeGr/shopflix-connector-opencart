@@ -142,7 +142,7 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
             $existing = $this->getByReferenceId($data['reference_id']);
             $response = (count($existing)) ? $this->update($existing['id'], $data) : $this->insert($data);
         }
-        catch (\Exception $e)
+        catch (Exception $e)
         {
             error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $e->getMessage()));
             $this->db->query('ROLLBACK;');
@@ -319,17 +319,17 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
                     $this->db->query('COMMIT;');
                 }
             }
-            catch (\RuntimeException $exception)
+            catch (RuntimeException $exception)
             {
                 $this->db->query('ROLLBACK;');
                 throw new RuntimeException($exception->getMessage());
             }
-            catch (\LogicException $exception)
+            catch (LogicException $exception)
             {
                 $this->db->query('ROLLBACK;');
                 throw new LogicException($exception->getMessage());
             }
-            catch (\Exception $exception)
+            catch (Exception $exception)
             {
                 $this->db->query('ROLLBACK;');
                 throw new Exception($exception->getMessage());
@@ -406,17 +406,17 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
             }
             return $fileContent;
         }
-        catch (\RuntimeException $exception)
+        catch (RuntimeException $exception)
         {
             $this->db->query('ROLLBACK;');
             throw new RuntimeException($exception->getMessage());
         }
-        catch (\LogicException $exception)
+        catch (LogicException $exception)
         {
             $this->db->query('ROLLBACK;');
             throw new LogicException($exception->getMessage());
         }
-        catch (\Exception $exception)
+        catch (Exception $exception)
         {
             $this->db->query('ROLLBACK;');
             throw new Exception($exception->getMessage());
@@ -445,21 +445,21 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
             $manifest = $this->connector->printManifest($list);
             if (isset($manifest['status']) && $manifest['status'] == "error")
             {
-                throw new \LogicException($manifest['message']);
+                throw new LogicException($manifest['message']);
             }
             return base64_decode($manifest['manifest']);
         }
-        catch (\RuntimeException $exception)
+        catch (RuntimeException $exception)
         {
             $this->db->query('ROLLBACK;');
             throw new RuntimeException($exception->getMessage());
         }
-        catch (\LogicException $exception)
+        catch (LogicException $exception)
         {
             $this->db->query('ROLLBACK;');
             throw new LogicException($exception->getMessage());
         }
-        catch (\Exception $exception)
+        catch (Exception $exception)
         {
             $this->db->query('ROLLBACK;');
             throw new Exception($exception->getMessage());
@@ -480,7 +480,6 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
             $tracks_data = $row['tracks'];
             $items_row = $row['items'];
 
-            //print_r($shipment_data);
             $o_s = [
                 'order_id' => $id,
                 'reference_id' => $shipment_data[ShipmentInterface::INCREMENT_ID],
@@ -543,17 +542,17 @@ class ModelExtensionModuleOnecodeShopflixShipment extends Helper\Model\Shipment
                 $shipments = array_merge($shipments, $this->storeShipment($order['id'], $ship));
                 $this->db->query('COMMIT;');
             }
-            catch (\RuntimeException $exception)
+            catch (RuntimeException $exception)
             {
                 $this->db->query('ROLLBACK;');
                 throw new RuntimeException($exception->getMessage());
             }
-            catch (\LogicException $exception)
+            catch (LogicException $exception)
             {
                 $this->db->query('ROLLBACK;');
                 throw new LogicException($exception->getMessage());
             }
-            catch (\Exception $exception)
+            catch (Exception $exception)
             {
                 $this->db->query('ROLLBACK;');
                 throw new Exception($exception->getMessage());

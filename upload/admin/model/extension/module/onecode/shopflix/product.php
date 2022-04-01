@@ -67,7 +67,7 @@ class ModelExtensionModuleOnecodeShopflixProduct extends Helper\Model\Product
     public function getCatalogProductBySku($sku): array
     {
         $sku = trim(preg_replace('/\s+/', ' ', $sku));
-        $query = $this->db->query('SELECT * FROM ' . \DB_PREFIX . 'product WHERE sku = \'' . $this->db->escape($sku) . '\'');
+        $query = $this->db->query('SELECT * FROM ' . DB_PREFIX . 'product WHERE sku = \'' . $this->db->escape($sku) . '\'');
         if (! empty($query->row))
         {
             $product = $this->model_catalog_product->getProduct($query->row['product_id']);

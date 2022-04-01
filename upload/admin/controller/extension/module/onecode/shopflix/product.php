@@ -38,12 +38,12 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
         $this->load->language('extension/module/onecode_shopflix_product');
     }
 
-    protected function getLink()
+    protected function getLink(): string
     {
         return 'extension/module/onecode/shopflix/product';
     }
 
-    public function validate()
+    public function validate(): bool
     {
         if (! $this->user->hasPermission('modify', 'extension/module/onecode/shopflix/product'))
         {

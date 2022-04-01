@@ -8,8 +8,8 @@
     "vendor-dir": "./system/library/onecode/vendor/"
   },
   "require": {
-    "php": ">=7.3",
-    "onecode/shopflix-connector-library": "*",
+    "php": ">=7.1",
+    "onecode/shopflix-connector-library": "0.0.1",
     "ext-json": "*"
   }
 }

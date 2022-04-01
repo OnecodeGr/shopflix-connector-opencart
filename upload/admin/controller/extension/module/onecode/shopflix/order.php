@@ -45,12 +45,12 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         $this->load->language('extension/module/onecode_shopflix_order');
     }
 
-    protected function getLink()
+    protected function getLink(): string
     {
         return  'extension/module/onecode/shopflix/order';
     }
 
-    protected function getShipmentLink()
+    protected function getShipmentLink(): string
     {
         return 'extension/module/onecode/shopflix/shipment';
     }
@@ -206,11 +206,11 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
                     : $this->language->get('success_orders_accepted');
             }
         }
-        catch (\LogicException $exception)
+        catch (LogicException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
-        catch (\RuntimeException $exception)
+        catch (RuntimeException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
@@ -255,7 +255,7 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
                 }
             }
         }
-        catch (\LogicException $e)
+        catch (LogicException $e)
         {
             $this->session->data['errors'] = [$e->getMessage()];
         }
@@ -278,11 +278,11 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             $this->geOnTheWayOrders();
             $this->session->data['success'] = $this->language->get('text_success_sync');
         }
-        catch (\LogicException $exception)
+        catch (LogicException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
-        catch (\Exception $exception)
+        catch (Exception $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
@@ -307,15 +307,15 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             }
             $this->order_model->shipment([$order['id']]);
         }
-        catch (\LogicException $exception)
+        catch (LogicException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
-        catch (\RuntimeException $exception)
+        catch (RuntimeException $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
-        catch (\Exception $exception)
+        catch (Exception $exception)
         {
             $this->session->data['errors'] = [$exception->getMessage()];
         }
@@ -404,7 +404,7 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             {
                 $this->order_model->accept($orders_to_accept);
             }
-            catch (\Exception $exception)
+            catch (Exception $exception)
             {
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $exception->getMessage()));
             }

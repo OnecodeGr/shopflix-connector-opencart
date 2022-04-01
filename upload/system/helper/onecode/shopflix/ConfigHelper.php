@@ -60,7 +60,7 @@ class ConfigHelper extends \Model
     protected function loadExtraSettings(string $key, $store = 0): ?string
     {
         return $this->model_setting_setting->getSettingValue(
-            sprintf('%s_%s', BasicHelper::getModuleId(), $key, $store)
+            sprintf('%s_%s', BasicHelper::getModuleId(), $key), $store
         );
     }
 

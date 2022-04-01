@@ -22,7 +22,7 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
         $this->load->model('extension/module/onecode/shopflix/config');
         $this->load->model('localisation/country');
         $catalog = $this->request->server['HTTPS'] ? HTTPS_CATALOG : HTTP_CATALOG;
-        $catalog = parse_url($catalog, \PHP_URL_HOST) == 'opencart.test' ? 'http://apache/' : $catalog;
+        $catalog = parse_url($catalog, PHP_URL_HOST) == 'opencart.test' ? 'http://apache/' : $catalog;
         $this->client = new Client(['base_uri' => $catalog . 'index.php']);
     }
 
@@ -48,7 +48,7 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             if ($res->getStatusCode() != 200 || ! isset($body['api_token']))
             {
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, json_encode($body)));
-                throw new \RuntimeException('Error on OC API login');
+                throw new RuntimeException('Error on OC API login');
             }
             return $body['api_token'];
         }
@@ -82,7 +82,7 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             {
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__,
                     $body['error']));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on customer');
+                throw new RuntimeException($body['error'] ?? 'Error on customer');
             }
             return true;
         }
@@ -90,7 +90,7 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
         {
             error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__,
                 $e->getMessage()));
-            throw new \RuntimeException($e->getMessage());
+            throw new RuntimeException($e->getMessage());
         }
     }
 
@@ -126,7 +126,7 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             if ($res->getStatusCode() != 200 || isset($body['error']))
             {
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $body['error']));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on products');
+                throw new RuntimeException($body['error'] ?? 'Error on products');
             }
             return true;
         }
@@ -134,7 +134,7 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
         {
             error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__,
                 $e->getMessage()));
-            throw new \RuntimeException($e->getMessage());
+            throw new RuntimeException($e->getMessage());
         }
     }
 
@@ -184,14 +184,14 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             if ($res->getStatusCode() != 200 || isset($body['error']))
             {
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $body['error']));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on payment address');
+                throw new RuntimeException($body['error'] ?? 'Error on payment address');
             }
             return true;
         }
         catch (GuzzleException $e)
         {
             error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $e->getMessage()));
-            throw new \RuntimeException($e->getMessage());
+            throw new RuntimeException($e->getMessage());
         }
     }
 
@@ -240,14 +240,14 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             if ($res->getStatusCode() != 200 || isset($body['error']))
             {
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $body['error']));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on shipping address');
+                throw new RuntimeException($body['error'] ?? 'Error on shipping address');
             }
             return true;
         }
         catch (GuzzleException $e)
         {
             error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $e->getMessage()));
-            throw new \RuntimeException($e->getMessage());
+            throw new RuntimeException($e->getMessage());
         }
     }
 
@@ -276,14 +276,14 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             if ($res->getStatusCode() != 200 || isset($body['error']))
             {
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $body['error']));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on shipping method');
+                throw new RuntimeException($body['error'] ?? 'Error on shipping method');
             }
             return true;
         }
         catch (GuzzleException $e)
         {
             error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $e->getMessage()));
-            throw new \RuntimeException($e->getMessage());
+            throw new RuntimeException($e->getMessage());
         }
     }
 
@@ -312,14 +312,14 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             if ($res->getStatusCode() != 200 || isset($body['error']))
             {
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $body['error']));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on payment method');
+                throw new RuntimeException($body['error'] ?? 'Error on payment method');
             }
             return true;
         }
         catch (GuzzleException $e)
         {
             error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $e->getMessage()));
-            throw new \RuntimeException($e->getMessage());
+            throw new RuntimeException($e->getMessage());
         }
     }
 
@@ -343,14 +343,14 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             if ($res->getStatusCode() != 200 || isset($body['error']) || ! isset($body['order_id']))
             {
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $body['error']));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on order add');
+                throw new RuntimeException($body['error'] ?? 'Error on order add');
             }
             return intval($body['order_id']);
         }
         catch (GuzzleException $e)
         {
             error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $e->getMessage()));
-            throw new \RuntimeException($e->getMessage());
+            throw new RuntimeException($e->getMessage());
         }
     }
 
@@ -370,14 +370,14 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             if ($res->getStatusCode() != 200 || isset($body['error']) )
             {
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $body['error']));
-                throw new \RuntimeException(isset($body['error']) ? $body['error'] : 'Error on order delete');
+                throw new RuntimeException($body['error'] ?? 'Error on order delete');
             }
             return true;
         }
         catch (GuzzleException $e)
         {
             error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $e->getMessage()));
-            throw new \RuntimeException($e->getMessage());
+            throw new RuntimeException($e->getMessage());
         }
     }
 

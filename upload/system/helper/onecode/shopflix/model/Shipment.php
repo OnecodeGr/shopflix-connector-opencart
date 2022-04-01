@@ -1,21 +1,24 @@
 <?php
 namespace Onecode\Shopflix\Helper\Model;
 
-class Shipment extends \Model
+use Model;
+use const DB_PREFIX;
+
+class Shipment extends Model
 {
-    public static function getTableName()
+    public static function getTableName(): string
     {
-        return \DB_PREFIX . 'onecode_shopflix_shipment';
+        return DB_PREFIX . 'onecode_shopflix_shipment';
     }
 
-    public static function getTrackingTableName()
+    public static function getTrackingTableName(): string
     {
-        return \DB_PREFIX . 'onecode_shopflix_shipment_tracking';
+        return DB_PREFIX . 'onecode_shopflix_shipment_tracking';
     }
 
-    public static function getItemTableName()
+    public static function getItemTableName(): string
     {
-        return \DB_PREFIX . 'onecode_shopflix_shipment_items';
+        return DB_PREFIX . 'onecode_shopflix_shipment_items';
     }
 
 }

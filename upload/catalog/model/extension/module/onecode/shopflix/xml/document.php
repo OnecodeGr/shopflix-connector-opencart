@@ -63,7 +63,7 @@ class ModelExtensionModuleOnecodeShopflixXmlDocument extends Model
 
     public function getXML(array $products): string
     {
-        $dom_doc = new \DOMDocument('1,0', 'UTF-8');
+        $dom_doc = new DOMDocument('1,0', 'UTF-8');
         $storeElement = $dom_doc->createElement('store');
         $storeElement->setAttribute('name', $this->meta->getStoreName());
         $storeElement->setAttribute('url', $this->config->get('config_ssl') ?? $this->config->get('config_url'));
