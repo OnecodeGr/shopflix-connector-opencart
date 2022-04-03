@@ -5,7 +5,7 @@ This extension is connecting your OpenCart v3.0.3.x with [SHOPFLIX](https://SHOP
 ##  1. How to install
 
 ### 1.1. Requirements
-* PHP >= 7.4
+* PHP >= 7.1
 * [Fix OC 3.x Extension Installer](https://www.opencart.com/index.php?route=marketplace/extension/info&member_token=396ed49ec2c97aab514825fbe62b1b9b&extension_id=33410&filter_category_id=5&filter_license=0&filter_download_id=56&sort=date_added )  
   * Download and install the plugin in order to fix the permissions on `system` directory
 
