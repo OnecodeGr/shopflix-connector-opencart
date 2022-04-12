@@ -24,6 +24,8 @@ require_once DIR_SYSTEM . 'helper/onecode/shopflix/model/Order.php';
  * @property-read \ModelSettingStore $model_setting_store
  * @property-read \ModelLocalisationCurrency $model_localisation_currency
  * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
+ * @property-read \ModelExtensionModuleOnecodeShopflixOrderInvoice $model_extension_module_onecode_shopflix_order_invoice
+ * @property-read \ModelExtensionModuleOnecodeShopflixOrderInvoice $order_invoice_model
  * @property-read \ModelExtensionModuleOnecodeShopflixConfig $model_extension_module_onecode_shopflix_config
  * @property-read \ModelExtensionModuleOnecodeShopflixApi $model_extension_module_onecode_shopflix_api
  * @property-read \ModelExtensionModuleOnecodeShopflixShipment $model_extension_module_onecode_shopflix_shipment
@@ -49,12 +51,14 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         $this->load->model('user/api');
         $this->load->model('catalog/product');
         $this->load->model('extension/module/onecode/shopflix/api');
+        $this->load->model('extension/module/onecode/shopflix/order_invoice');
         $this->load->model('extension/module/onecode/shopflix/product');
         $this->load->model('extension/module/onecode/shopflix/config');
         $this->load->model('extension/module/onecode/shopflix/shipment');
         $this->shipment_model = new ModelExtensionModuleOnecodeShopflixShipment($registry);
         $this->api_model = new ModelExtensionModuleOnecodeShopflixApi($registry);
         $this->config_model = new ModelExtensionModuleOnecodeShopflixConfig($registry);
+        $this->order_invoice_model = new ModelExtensionModuleOnecodeShopflixOrderInvoice($registry);
         $catalog = $this->request->server['HTTPS'] ? HTTPS_CATALOG : HTTP_CATALOG;
         $catalog = parse_url($catalog, PHP_URL_HOST) == 'opencart.test' ? 'http://apache/' : $catalog;
         $this->client = new Client(['base_uri' => $catalog . 'index.php']);
@@ -255,6 +259,11 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
         return $this->db->query($sql)->rows;
     }
 
+    public function getOrderInvoiceData($order_id): array
+    {
+        return $this->order_invoice_model->getByOrder($order_id);
+    }
+
     public function getOrderAddress($order_id): array
     {
         $sql = "SELECT * FROM " . self::getAddressTableName() . " WHERE order_id = " . intval($order_id);
@@ -375,6 +384,7 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
     protected function createOpenCartOrder($id): int
     {
         $order = $this->getOrderById($id);
+        $invoice_data = $this->getOrderInvoiceData($id);
         $items = $this->getOrderItems($id);
         $address = $this->getOrderAddress($id);
         $api_token = $this->api_model->apiLogin();
@@ -490,6 +500,12 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
             {
                 throw new Exception('No order saved');
             }
+            if(isset($data['invoice_data']) && count($data['invoice_data'])){
+                $invoice_data = $data['invoice_data'];
+                $invoice_data['order_id'] = $order_id;
+                $this->order_invoice_model->save($invoice_data);
+            }
+            //Store Address
             array_walk($data['address'], function ($item) use ($order_id) {
                 $query = "INSERT INTO " . self::getAddressTableName() .
                     "(`order_id`,`firstname`,`lastname`,`postcode`,`telephone`,`street`,`type`,`city`,`email`,`country_id`)" .
@@ -501,6 +517,7 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
                 //print_r([$item, $query]);
                 $this->db->query($query);
             });
+            //Store Items
             array_walk($data['items'], function ($item) use ($order_id) {
                 $this->db->query("INSERT INTO " . self::getItemTableName() .
                     "(`sku`,`order_id`,`price`,`quantity`)" .

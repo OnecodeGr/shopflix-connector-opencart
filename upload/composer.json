@@ -1,7 +1,7 @@
 {
   "name": "onecode/shopflix-oc",
   "type": "project",
-  "version": "1.2.9",
+  "version": "1.3.0",
   "description": "Shopflix plugin from onecode",
   "keywords": ["opencart", "onecode", "shopflix"],
   "config": {
@@ -9,7 +9,7 @@
   },
   "require": {
     "php": ">=7.3",
-    "onecode/shopflix-connector-library": "*",
+    "onecode/shopflix-connector-library": "1.0.8",
     "ext-json": "*"
   }
 }

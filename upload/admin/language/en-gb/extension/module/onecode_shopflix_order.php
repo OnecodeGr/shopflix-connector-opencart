@@ -56,6 +56,12 @@ $_['entry_postcode'] = 'Postcode';
 $_['entry_country'] = 'Country';
 $_['entry_telephone'] = 'Telephone';
 $_['entry_email'] = 'e-mail';
+$_['entry_is_invoice'] = 'Is Invoice';
+$_['entry_invoice_name'] = 'Company Name';
+$_['entry_invoice_address'] = 'Company Address';
+$_['entry_invoice_owner'] = 'Company Owner';
+$_['entry_invoice_vat'] = 'Vat';
+$_['entry_invoice_tax_office'] = 'Tax Office';
 
 //Error
 $_['error_permission'] = 'Warning: You do not have permission to modify `OneCodeGr - ShopFlix` module!';
