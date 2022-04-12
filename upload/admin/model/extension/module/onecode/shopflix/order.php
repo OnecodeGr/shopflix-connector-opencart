@@ -24,7 +24,8 @@ require_once DIR_SYSTEM . 'helper/onecode/shopflix/model/Order.php';
  * @property-read \ModelSettingStore $model_setting_store
  * @property-read \ModelLocalisationCurrency $model_localisation_currency
  * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
- * @property-read \ModelExtensionModuleOnecodeShopflixOrderInvoice $model_extension_module_onecode_shopflix_order_invoice
+ * @property-read \ModelExtensionModuleOnecodeShopflixOrderInvoice
+ *     $model_extension_module_onecode_shopflix_order_invoice
  * @property-read \ModelExtensionModuleOnecodeShopflixOrderInvoice $order_invoice_model
  * @property-read \ModelExtensionModuleOnecodeShopflixConfig $model_extension_module_onecode_shopflix_config
  * @property-read \ModelExtensionModuleOnecodeShopflixApi $model_extension_module_onecode_shopflix_api
@@ -355,8 +356,8 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
         $this->db->query('UPDATE ' . DB_PREFIX . "order SET `total` = " . $total
             . " WHERE `order_id` = " . $order_id . ";");
         $this->db->query('UPDATE ' . DB_PREFIX . "order_product SET `tax` = 0.00 WHERE `order_id` = " . $order_id . ";");
-        $this->db->query("DELETE FROM ". DB_PREFIX . "order_total WHERE `order_id` = ". $order_id
-            . " AND `code` = 'tax';" );
+        $this->db->query("DELETE FROM " . DB_PREFIX . "order_total WHERE `order_id` = " . $order_id
+            . " AND `code` = 'tax';");
         $this->db->query('UPDATE ' . DB_PREFIX . "order_total SET `value` = " . $sub_total
             . " WHERE `order_id` = " . $order_id . " AND `code` = 'sub_total';");
         $this->db->query('UPDATE ' . DB_PREFIX . "order_total SET `value` = " . $total
@@ -394,7 +395,7 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
         $this->api_model->apiAddressShipping($address, $api_token, self::ADDRESS_TYPE_SHIPPING);
         $this->api_model->apiPaymentMethod($api_token);
         $this->api_model->apiShippingMethod($api_token);
-        $order_id = $this->api_model->apiOrderAdd($order, $api_token);
+        $order_id = $this->api_model->apiOrderAdd($order, $invoice_data, $api_token);
         $this->api_model->apiLogout($api_token);
         $this->fineTuneTotals($order_id, (float) $order['sub_total'], (float) $order['total_paid']);
         $this->fineTuneProductTotals($items, $order_id);
@@ -406,7 +407,7 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
         //update database
         $this->updateStatusPicking($order_id);
         $this->db->query('DELETE FROM `' . self::getRelationTableName() . '` WHERE `shopflix_id` = ' . $order_id . ' and  `oc_id`=' . $oc_id . ';');
-        $this->db->query('INSERT INTO `' . self::getRelationTableName() . '` (`shopflix_id`, `oc_id`)  VALUES (' .$order_id . ', ' . $oc_id .');');
+        $this->db->query('INSERT INTO `' . self::getRelationTableName() . '` (`shopflix_id`, `oc_id`)  VALUES (' . $order_id . ', ' . $oc_id . ');');
     }
 
     public function cancel($id, bool $force = false): array
@@ -500,7 +501,8 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
             {
                 throw new Exception('No order saved');
             }
-            if(isset($data['invoice_data']) && count($data['invoice_data'])){
+            if (isset($data['invoice_data']) && count($data['invoice_data']))
+            {
                 $invoice_data = $data['invoice_data'];
                 $invoice_data['order_id'] = $order_id;
                 $this->order_invoice_model->save($invoice_data);
