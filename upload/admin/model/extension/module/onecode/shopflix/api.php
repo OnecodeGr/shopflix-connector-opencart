@@ -72,8 +72,8 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
                     'api_token' => $api_token,
                 ],
                 RequestOptions::FORM_PARAMS => [
-                    'firstname' => $order['customer_firstname'],
-                    'lastname' => $order['customer_lastname'],
+                    'firstname' => strlen($order['customer_firstname']) ? $order['customer_firstname'] : 'unknown',
+                    'lastname' => strlen($order['customer_lastname']) ? $order['customer_lastname'] : 'unknown',
                     'email' => $order['customer_email'],
                     'telephone' => '000',
                 ],
@@ -82,9 +82,10 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             $body = json_decode($raw, true);
             if ($res->getStatusCode() != 200 || isset($body['error']))
             {
+                $error = is_array($body['error']) ? implode(', ', $body['error']) : $body['error'];
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__,
-                    $body['error']));
-                throw new RuntimeException($body['error'] ?? 'Error on customer');
+                    $error));
+                throw new RuntimeException($error ?? 'Error on customer');
             }
             return true;
         }
@@ -159,8 +160,8 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
                 $s_c = current($s_c);
                 $country_id = count($s_c) > 0 && isset($s_c['country_id']) ? $s_c['country_id'] : 0;
                 $record = [
-                    'firstname' => $row['firstname'],
-                    'lastname' => $row['lastname'],
+                    'firstname' => strlen($row['firstname']) ? $row['firstname'] : 'unknown',
+                    'lastname' => strlen($row['lastname']) ? $row['lastname'] : 'unknown',
                     'address_1' => $row['street'],
                     'postcode' => $row['postcode'],
                     'city' => $row['city'],
@@ -215,8 +216,8 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
                 $s_c = current($s_c);
                 $country_id = count($s_c) > 0 && isset($s_c['country_id']) ? $s_c['country_id'] : 0;
                 $record = [
-                    'firstname' => $row['firstname'],
-                    'lastname' => $row['lastname'],
+                    'firstname' => strlen($row['firstname']) ? $row['firstname'] : 'unknown',
+                    'lastname' => strlen($row['lastname']) ? $row['lastname'] : 'unknown',
                     'address_1' => $row['street'],
                     'postcode' => $row['postcode'],
                     'city' => $row['city'],
@@ -329,18 +330,19 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
     {
         try
         {
-            $rows = [sprintf('%s: %s', $this->language->get('Customer Comment'), $order_data['customer_note'])];
+            $rows = [sprintf('%s: %s', $this->language->get('text_customer_comment'), $order_data['customer_note'])];
             if (! empty($invoice_data))
             {
+                $rows[] = sprintf("%s:",$this->language->get('text_invoice_info'));
                 $rows[] = '-------------------------';
-                $rows[] = sprintf('%s: %s', $this->language->get('Invoice Customer Name'), $invoice_data['name']);
-                $rows[] = sprintf('%s: %s', $this->language->get('Invoice Customer Owner'), $invoice_data['owner']);
-                $rows[] = sprintf('%s: %s', $this->language->get('Invoice Customer Vat'), $invoice_data['vat']);
-                $rows[] = sprintf('%s: %s', $this->language->get('Invoice Customer Tax Office'), $invoice_data['tax_office']);
-                $rows[] = sprintf('%s: %s', $this->language->get('Invoice Customer Address'), $invoice_data['address']);
+                $rows[] = sprintf('%s: %s', $this->language->get('text_invoice_customer_name'), $invoice_data['name']);
+                $rows[] = sprintf('%s: %s', $this->language->get('text_invoice_customer_owner'), $invoice_data['owner']);
+                $rows[] = sprintf('%s: %s', $this->language->get('text_invoice_customer_vat'), $invoice_data['vat']);
+                $rows[] = sprintf('%s: %s', $this->language->get('text_invoice_customer_tax_office'), $invoice_data['tax_office']);
+                $rows[] = sprintf('%s: %s', $this->language->get('text_invoice_customer_address'), $invoice_data['address']);
                 $rows[] = '-------------------------';
             }
-            $rows = implode('<br/>', $rows);
+            $rows = implode("\r\n", $rows);
 
             $res = $this->client->post('', [
                 RequestOptions::QUERY => [

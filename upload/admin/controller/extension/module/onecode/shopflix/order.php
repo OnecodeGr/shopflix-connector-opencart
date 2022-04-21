@@ -411,13 +411,11 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             });
             $to_save[] = $o_d;
         });
-
         if (count($to_save))
         {
             foreach ($to_save as $order)
             {
                 $order_stored = $this->order_model->save($order);
-                //print_r($order_stored);
                 if (is_null($order_stored))
                 {
                     throw new LogicException(sprintf($this->language->get
