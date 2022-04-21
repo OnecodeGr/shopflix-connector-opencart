@@ -184,6 +184,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             'error_api_username' => $this->error['error_api_username'] ?? '',
             'error_api_password' => $this->error['error_api_password'] ?? '',
             'error_xml_status' => $this->error['error_xml_status'] ?? '',
+            'error_xml_mode' => $this->error['error_xml_mode'] ?? '',
             'error_xml_export_category_tree' => $this->error['error_xml_export_category_tree'] ?? '',
             'error_xml_mpn_attr' => $this->error['error_xml_mpn_attr'] ?? '',
             'error_xml_ean_attr' => $this->error['error_xml_ean_attr'] ?? '',

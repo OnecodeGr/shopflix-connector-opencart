@@ -31,7 +31,17 @@ This extension is connecting your OpenCart v3.0.3.x with [SHOPFLIX](https://SHOP
 
 ##  2. Usage
 ### 2.1. Product XML
-The product XML has two variants (simple/detailed) each one has its own url.
+For Xml process we have two (2) options, an on-line (produce the XML on each request), & an 
+off-line (serve always the latest created XML).
+More over the XML has two variants (simple/detailed).
+
+For the **on-line** case the urls are:
+1. simple/minimal => **{proto}://{open-cart-domain}/index.php?
+  route=extension/module/onecode/shopflix/product/feed/createMinimal&token={token-hash}**
+2. full/detailed => **{proto}://{open-cart-domain}/index.php?
+  route=extension/module/onecode/shopflix/product/feed/createDetailed&token={token-hash}**
+
+For the **off-line** case the urls are:
 * simple/minimal => **{proto}://{open-cart-domain}/index.php?
   route=extension/module/onecode/shopflix/product/feed/minimal&token={token-hash}**
 * full/detailed => **{proto}://{open-cart-domain}/index.php?

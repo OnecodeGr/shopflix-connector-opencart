@@ -426,7 +426,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
             $attr = $this->model_extension_module_onecode_shopflix_xml->listPriceAttr();
             $list_price = 0.0;
             array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-                if ($item['attribute_id'] == $attr)
+                if (array_key_exists('attribute_id', $item) && $item['attribute_id'] == $attr)
                 {
                     $list_price = floatval($item['name']);
                 }
@@ -436,7 +436,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
             $attr = $this->model_extension_module_onecode_shopflix_xml->shippingTimeAttr();
             $shipping_time = 0;
             array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-                if($item['attribute_id'] == $attr){
+                if(array_key_exists('attribute_id', $item) && $item['attribute_id'] == $attr){
                     $list_price = intval($item['name']);
                 }
             });
@@ -445,7 +445,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
             $attr = $this->model_extension_module_onecode_shopflix_xml->offerFromAttr();
             $offer_from = 0;
             array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-                if($item['attribute_id'] == $attr){
+                if(array_key_exists('attribute_id', $item) && $item['attribute_id'] == $attr){
                     $list_price = intval($item['name']);
                 }
             });
@@ -454,7 +454,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
             $attr = $this->model_extension_module_onecode_shopflix_xml->offerToAttr();
             $offer_to = 0;
             array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-                if($item['attribute_id'] == $attr){
+                if(array_key_exists('attribute_id', $item) && $item['attribute_id'] == $attr){
                     $list_price = intval($item['name']);
                 }
             });
@@ -463,7 +463,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
             $attr = $this->model_extension_module_onecode_shopflix_xml->offerPriceAttr();
             $offer_price = 0;
             array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-                if($item['attribute_id'] == $attr){
+                if(array_key_exists('attribute_id', $item) && $item['attribute_id'] == $attr){
                     $list_price = floatval($item['name']);
                 }
             });
@@ -472,7 +472,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
             $attr = $this->model_extension_module_onecode_shopflix_xml->offerQuantityAttr();
             $offer_quantity = 0;
             array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-                if($item['attribute_id'] == $attr){
+                if(array_key_exists('attribute_id', $item) && $item['attribute_id'] == $attr){
                     $list_price = floatval($item['name']);
                 }
             });
