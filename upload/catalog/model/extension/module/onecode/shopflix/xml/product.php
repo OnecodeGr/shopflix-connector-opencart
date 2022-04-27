@@ -37,6 +37,7 @@
  * @property-read \Config $config
  * @property-read \Url $url
  * @property-read \Loader $load
+ * @property-read \Cart\Tax $tax
  * @property-read \Language $language
  * @property-read \ModelToolImage $model_tool_image
  * @property-read \ModelExtensionModuleOnecodeShopflixXml $model_extension_module_onecode_shopflix_xml
@@ -377,24 +378,15 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
     {
         $this->setProductId($product['product_id']);
         $this->setSku($product['sku'] ?? '');
-        $this->setPrice($product['price']);
+        $price = $this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax'));
+        $this->setPrice($price);
         $this->setProductUrl($this->url->link('product/product', 'product_id=' . $product['product_id']));
         $this->setCategory($product['categories']);
         $this->setQuantity($product['quantity']);
         $image_url = $this->model_tool_image->resize($product['image'], $this->config->get('theme_' .
             $this->config->get('config_theme') . '_image_thumb_width'), $this->config->get('theme_' .
             $this->config->get('config_theme') . '_image_thumb_height'));
-        /*print_r(json_encode(
-                [
-                    $product,
-                    $this->config->get('theme_' . $this->config->get('config_theme') . '_image_thumb_width'),
-                    $this->config->get('theme_' . $this->config->get('config_theme') . '_image_thumb_height'),
-                    $this->model_tool_image->resize($product['image'], $this->config->get('theme_' .
-                        $this->config->get('config_theme') . '_image_thumb_width'), $this->config->get('theme_' .
-                        $this->config->get('config_theme') . '_image_thumb_height'))
-                ]
-        ));
-        print"--------\r\n";*/
+
         $this->setImage($image_url ?? '');
 
         $attr = $this->model_extension_module_onecode_shopflix_xml->mpnAttribute();
