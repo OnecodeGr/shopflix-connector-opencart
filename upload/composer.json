@@ -9,7 +9,8 @@
   },
   "require": {
     "php": ">=7.1",
-    "onecode/shopflix-connector-library": "1.0.8",
-    "ext-json": "*"
+    "onecode/shopflix-connector-library": "1.0.9",
+    "ext-json": "*",
+    "larapack/dd": "^1.1"
   }
 }

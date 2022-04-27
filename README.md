@@ -2,52 +2,52 @@
 
 This extension is connecting your OpenCart v3.0.3.x with [SHOPFLIX](https://SHOPFLIX.gr)
 
-##  1. How to install
-
-### 1.1. Requirements
+## Requirements
 * PHP >= 7.4
-* [Fix OC 3.x Extension Installer](https://www.opencart.com/index.php?route=marketplace/extension/info&member_token=396ed49ec2c97aab514825fbe62b1b9b&extension_id=33410&filter_category_id=5&filter_license=0&filter_download_id=56&sort=date_added )  
+* [Fix OC 3.x Extension Installer](https://www.opencart.com/index.php?route=marketplace/extension/info&member_token=396ed49ec2c97aab514825fbe62b1b9b&extension_id=33410&filter_category_id=5&filter_license=0&filter_download_id=56&sort=date_added )
   * Download and install the plugin in order to fix the permissions on `system` directory
-
-### 1.2. Installation
+## Installation
 * Upload [onecode-shopflix.ocmod.zip](https://github.com/OnecodeGr/shopflix-connector-opencart/raw/main/onecode-shopflix.ocmod.zip) to your system using **Admin > Extension > Installer**
 * Open `Admin > Extensions > Extensions `
 * Select `Modules`, and scroll until you find the module name **OneCodeGr - ShopFLix**
 * Press install button for the plugin
+  ### Grand administration
+  * Open **Admin > System > Users > User Groups**
+  * Edit `Administrator`
+  * Add to `Access Permission` & `Modify Permission` all the choices which contain 
+    `extension/module/onecode/*`
+  * Add Server IP on `Admin > System > Users > APi ` under default Api Username
 
-### 1.3. Grand administration
-* Open **Admin > System > Users > User Groups**
-* Edit `Administrator`
-* Add to `Access Permission` & `Modify Permission` all the choices which contain 
-  `extension/module/onecode/*`
-* Add Server IP on `Admin > System > Users > APi ` under default Api Username
-
-### 1.3. Configure
+## Configuration
 * As you have the access on the plugin , you will have a new Left side menu option `OneCode`
 * Select `Admin > OneCode > Shopflix > Configuration`
 * On configuration screen you will have the ability to enable / disable the plugin, set 
   configuration for shopflix integration, and XML exportation
 * As you set your values press *Save*.
 
-##  2. Usage
-### 2.1. Product XML
-For Xml process we have two (2) options, an on-line (produce the XML on each request), & an 
-off-line (serve always the latest created XML).
-More over the XML has two variants (simple/detailed).
+## Usage
+### Product XML
+For Xml process we have two (2) options, an online (produce the XML on each request), & an offline (serve always the latest created XML or created if not exists). More over the XML has two variants (simple/detailed).
 
-For the **on-line** case the urls are:
+For the **_online_** case the urls are:
 1. simple/minimal => **{proto}://{open-cart-domain}/index.php?
   route=extension/module/onecode/shopflix/product/feed/createMinimal&token={token-hash}**
 2. full/detailed => **{proto}://{open-cart-domain}/index.php?
   route=extension/module/onecode/shopflix/product/feed/createDetailed&token={token-hash}**
 
-For the **off-line** case the urls are:
+For the **_offline_** case the urls are:
 * simple/minimal => **{proto}://{open-cart-domain}/index.php?
   route=extension/module/onecode/shopflix/product/feed/minimal&token={token-hash}**
 * full/detailed => **{proto}://{open-cart-domain}/index.php?
   route=extension/module/onecode/shopflix/product/feed/detailed&token={token-hash}**
 
-### 2.2. Sync Orders
+Hints:
+  - If you have many products, in order to reduce the execution and synchronization time to the minimum, you can combine both versions (online & offline). You can use the `online` URL
+    on your cron engine, and provide to shopflix the `offline` URL.
+  - On the other hand, if you want always to provide a fresh product list you can provide it to
+      shopflix only `online` URL, without to required from your side to maintain any cron engine.
+
+### Sync Orders
 In order to fetch your orders from shopflix you can press the `sync` button under 
 `Admin > OneCode > Shopflix > Order `
 
@@ -59,29 +59,29 @@ An example call should be :
 php ./oc_cli.php admin extension/module/onecode/shopflix/order/manual_sync
 ```
 
-### 2.2. Accept Order
+#### Accept Order
 To Accept an order you must press the `green button` *Accept* on order row
 
 `Admin > OneCode > Shopflix > Order `
 
-### 2.3. Reject Order
+#### Reject Order
 To Reject an order you must press the `red button` *Reject* on order row
 
 `Admin > OneCode > Shopflix > Order `
 
-### 2.4. Fetch Shipment
+#### Fetch Shipment
 To Fetch Shipments an order you must press the `blue button` *Shipment* on order row
 
 `Admin > OneCode > Shopflix > Order `
 
-### 2.5. Voucher
+#### Voucher
 To Print voucher we have two ways:
 
 * Under `Admin > OneCode > Shopflix > Order ` using `print button`  on order row
 * Under `Admin > OneCode > Shopflix > Shipment ` using `print button`  on shipment row, Also you 
   can print voucher for multiple shipments.
 
-### 2.6. Manifest
+#### Manifest
 To Print manifest:
 
 * Under `Admin > OneCode > Shopflix > Shipment ` using `print button`  on shipment row, Also you
