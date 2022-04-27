@@ -156,6 +156,73 @@
                                     >{{ order.customer_note }}</textarea>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label class="col-sm-1 control-label"
+                                       for="input-order_is_invoice">{{ entry_is_invoice }}</label>
+                                <div class="col-sm-11">
+                                    {% if is_invoice %}
+                                    <span id="input-order_is_invoice" class="success"><strong>{{
+                                        text_yes }}</strong></span>
+                                    {% else %}
+                                        <span id="input-order_is_invoice">{{  text_no }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if is_invoice %}
+                                <div class="form-group">
+                                    <label class="col-sm-1 control-label"
+                                           for="input-order_invoice_name">{{ entry_invoice_name
+                                        }}</label>
+                                    <div class="col-sm-11">
+                                        <input type="text" readonly
+                                               class="form-control-plaintext form-control"
+                                               id="input-order_invoice_name"
+                                               value="{{ invoice_data.name }}">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-1 control-label"
+                                           for="input-order_invoice_address">{{ entry_invoice_address
+                                        }}</label>
+                                    <div class="col-sm-11">
+                                        <input type="text" readonly
+                                               class="form-control-plaintext form-control"
+                                               id="input-order_invoice_address"
+                                               value="{{ invoice_data.address }}">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-1 control-label"
+                                           for="input-order_invoice_owner">{{ entry_invoice_owner
+                                        }}</label>
+                                    <div class="col-sm-11">
+                                        <input type="text" readonly
+                                               class="form-control-plaintext form-control"
+                                               id="input-order_invoice_owner"
+                                               value="{{ invoice_data.owner }}">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-1 control-label"
+                                           for="input-order_invoice_vat">{{ entry_invoice_vat
+                                        }}</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" readonly
+                                               class="form-control-plaintext form-control"
+                                               id="input-order_invoice_vat"
+                                               value="{{ invoice_data.vat }}">
+                                    </div>
+                                    <label class="col-sm-1 control-label"
+                                           for="input-order_invoice_tax_office">{{ entry_invoice_tax_office
+                                        }}</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" readonly
+                                               class="form-control-plaintext form-control"
+                                               id="input-order_invoice_tax_office"
+                                               value="{{ invoice_data.tax_office }}">
+                                    </div>
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="tab-pane" id="tab-address">
                             {% for item in addresses %}

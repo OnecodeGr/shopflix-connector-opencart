@@ -18,6 +18,7 @@ require_once DIR_SYSTEM . 'library/onecode/EventGroup.php';
  * @property-read \ModelSettingExtension $model_setting_extension
  * @property-read \ModelCustomerCustomerGroup $model_customer_customer_group
  * @property-read \ModelExtensionModuleOnecodeShopflixOrder $model_extension_module_onecode_shopflix_order
+ * @property-read \ModelExtensionModuleOnecodeShopflixOrderInvoice $model_extension_module_onecode_shopflix_order_invoice
  * @property-read \ModelExtensionModuleOnecodeShopflixProductAttributes $model_extension_module_onecode_shopflix_product_attributes
  * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
  * @property-read \ModelExtensionModuleOnecodeShopflixShipment $model_extension_module_onecode_shopflix_shipment
@@ -37,6 +38,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->load->model('setting/extension');
         $this->load->model('user/api');
         $this->load->model('extension/module/onecode/shopflix/order');
+        $this->load->model('extension/module/onecode/shopflix/order_invoice');
         $this->load->model('extension/module/onecode/shopflix/product');
         $this->load->model('extension/module/onecode/shopflix/product_attributes');
         $this->load->model('extension/module/onecode/shopflix/shipment');
@@ -55,6 +57,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         if ($moduleId)
         {
             $this->patch_1_2_3();
+            $this->patch_1_3_0();
             $this->moduleConfigure($moduleId);
         }
         else
@@ -80,6 +83,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->model_extension_module_onecode_shopflix_order->install();
         $this->model_extension_module_onecode_shopflix_shipment->install();
         $this->patch_1_2_3();
+        $this->patch_1_3_0();
     }
 
     public function uninstall()
@@ -89,6 +93,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->model_extension_module_onecode_shopflix_event->uninstall();
         $this->model_extension_module_onecode_shopflix_shipment->uninstall();
         $this->model_extension_module_onecode_shopflix_product->uninstall();
+        $this->model_extension_module_onecode_shopflix_order_invoice->uninstall();
         $this->model_extension_module_onecode_shopflix_order->uninstall();
     }
 
@@ -107,6 +112,22 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             $this->model_extension_module_onecode_shopflix_order->update1_2_3();
             $this->model_extension_module_onecode_shopflix_shipment->update1_2_3();
             $this->configHelper->updateLatestPatch('1_2_3');
+        }
+    }
+
+    private function patch_1_3_0(){
+        $latest_patch = $this->configHelper->getLatestPatch();
+        $need_to_run = is_null($latest_patch);
+
+        if (! $need_to_run)
+        {
+            $latest_patch = explode('_', $latest_patch);
+            $need_to_run = ($latest_patch[0] <= 1 && $latest_patch[1] <= 3);
+        }
+        if ($need_to_run)
+        {
+            $this->model_extension_module_onecode_shopflix_order_invoice->install();
+            $this->configHelper->updateLatestPatch('1_3_0');
         }
     }
 
@@ -163,6 +184,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             'error_api_username' => $this->error['error_api_username'] ?? '',
             'error_api_password' => $this->error['error_api_password'] ?? '',
             'error_xml_status' => $this->error['error_xml_status'] ?? '',
+            'error_xml_mode' => $this->error['error_xml_mode'] ?? '',
             'error_xml_export_category_tree' => $this->error['error_xml_export_category_tree'] ?? '',
             'error_xml_mpn_attr' => $this->error['error_xml_mpn_attr'] ?? '',
             'error_xml_ean_attr' => $this->error['error_xml_ean_attr'] ?? '',

@@ -3,9 +3,11 @@
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
+
 /**
  * @property-read \Config $config
  * @property-read \Request $request
+ * @property-read \Language $language
  * @property-read \ModelUserApi $model_user_api
  * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
  * @property-read \ModelExtensionModuleOnecodeShopflixConfig $model_extension_module_onecode_shopflix_config
@@ -70,8 +72,8 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
                     'api_token' => $api_token,
                 ],
                 RequestOptions::FORM_PARAMS => [
-                    'firstname' => $order['customer_firstname'],
-                    'lastname' => $order['customer_lastname'],
+                    'firstname' => strlen($order['customer_firstname']) ? $order['customer_firstname'] : 'unknown',
+                    'lastname' => strlen($order['customer_lastname']) ? $order['customer_lastname'] : 'unknown',
                     'email' => $order['customer_email'],
                     'telephone' => '000',
                 ],
@@ -80,9 +82,10 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             $body = json_decode($raw, true);
             if ($res->getStatusCode() != 200 || isset($body['error']))
             {
+                $error = is_array($body['error']) ? implode(', ', $body['error']) : $body['error'];
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__,
-                    $body['error']));
-                throw new RuntimeException($body['error'] ?? 'Error on customer');
+                    $error));
+                throw new RuntimeException($error ?? 'Error on customer');
             }
             return true;
         }
@@ -151,14 +154,14 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
                     continue;
                 }
 
-                $s_c = array_filter($countries, function ($item) use($row){
+                $s_c = array_filter($countries, function ($item) use ($row) {
                     return $item['iso_code_2'] == $row['country_id'];
                 });
                 $s_c = current($s_c);
-                $country_id = count($s_c) > 0 && isset($s_c['country_id'])? $s_c['country_id'] : 0;
+                $country_id = count($s_c) > 0 && isset($s_c['country_id']) ? $s_c['country_id'] : 0;
                 $record = [
-                    'firstname' => $row['firstname'],
-                    'lastname' => $row['lastname'],
+                    'firstname' => strlen($row['firstname']) ? $row['firstname'] : 'unknown',
+                    'lastname' => strlen($row['lastname']) ? $row['lastname'] : 'unknown',
                     'address_1' => $row['street'],
                     'postcode' => $row['postcode'],
                     'city' => $row['city'],
@@ -207,14 +210,14 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
                 {
                     continue;
                 }
-                $s_c = array_filter($countries, function ($item) use($row){
+                $s_c = array_filter($countries, function ($item) use ($row) {
                     return $item['iso_code_2'] == $row['country_id'];
                 });
                 $s_c = current($s_c);
-                $country_id = count($s_c) > 0 && isset($s_c['country_id'])? $s_c['country_id'] : 0;
+                $country_id = count($s_c) > 0 && isset($s_c['country_id']) ? $s_c['country_id'] : 0;
                 $record = [
-                    'firstname' => $row['firstname'],
-                    'lastname' => $row['lastname'],
+                    'firstname' => strlen($row['firstname']) ? $row['firstname'] : 'unknown',
+                    'lastname' => strlen($row['lastname']) ? $row['lastname'] : 'unknown',
                     'address_1' => $row['street'],
                     'postcode' => $row['postcode'],
                     'city' => $row['city'],
@@ -323,10 +326,24 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
         }
     }
 
-    public function apiOrderAdd(array $order_data, string $api_token): int
+    public function apiOrderAdd(array $order_data, array $invoice_data, string $api_token): int
     {
         try
         {
+            $rows = [sprintf('%s: %s', $this->language->get('text_customer_comment'), $order_data['customer_note'])];
+            if (! empty($invoice_data))
+            {
+                $rows[] = sprintf("%s:",$this->language->get('text_invoice_info'));
+                $rows[] = '-------------------------';
+                $rows[] = sprintf('%s: %s', $this->language->get('text_invoice_customer_name'), $invoice_data['name']);
+                $rows[] = sprintf('%s: %s', $this->language->get('text_invoice_customer_owner'), $invoice_data['owner']);
+                $rows[] = sprintf('%s: %s', $this->language->get('text_invoice_customer_vat'), $invoice_data['vat']);
+                $rows[] = sprintf('%s: %s', $this->language->get('text_invoice_customer_tax_office'), $invoice_data['tax_office']);
+                $rows[] = sprintf('%s: %s', $this->language->get('text_invoice_customer_address'), $invoice_data['address']);
+                $rows[] = '-------------------------';
+            }
+            $rows = implode("\r\n", $rows);
+
             $res = $this->client->post('', [
                 RequestOptions::QUERY => [
                     'route' => 'api/order/add',
@@ -334,9 +351,8 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
                 ],
                 RequestOptions::FORM_PARAMS => [
                     'order_status_id' => 1,
-                    'comment' => $order_data['customer_note'],
+                    'comment' => $rows,
                 ],
-
             ]);
             $raw = $res->getBody()->getContents();
             $body = json_decode($raw, true);
@@ -367,7 +383,7 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             ]);
             $raw = $res->getBody()->getContents();
             $body = json_decode($raw, true);
-            if ($res->getStatusCode() != 200 || isset($body['error']) )
+            if ($res->getStatusCode() != 200 || isset($body['error']))
             {
                 error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $body['error']));
                 throw new RuntimeException($body['error'] ?? 'Error on order delete');
@@ -380,5 +396,4 @@ class ModelExtensionModuleOnecodeShopflixApi extends Model
             throw new RuntimeException($e->getMessage());
         }
     }
-
 }

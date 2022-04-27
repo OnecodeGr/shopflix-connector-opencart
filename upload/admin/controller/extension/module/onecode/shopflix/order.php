@@ -20,6 +20,8 @@ require_once DIR_SYSTEM . 'library/onecode/vendor/autoload.php';
  * @property-read \Onecode\Shopflix\Helper\BasicHelper $basicHelper
  * @property-read \ModelExtensionModuleOnecodeShopflixOrder $model_extension_module_onecode_shopflix_order
  * @property-read \ModelExtensionModuleOnecodeShopflixOrder $order_model
+ * @property-read \ModelExtensionModuleOnecodeShopflixOrderInvoice $model_extension_module_onecode_shopflix_order_invoice
+ * @property-read \ModelExtensionModuleOnecodeShopflixOrderInvoice $order_model_invoice
  * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
  * @property-read \ModelExtensionModuleOnecodeShopflixConfig $model_extension_module_onecode_shopflix_config
  * @property-read \ModelExtensionModuleOnecodeShopflixShipment $model_extension_module_onecode_shopflix_shipment
@@ -35,11 +37,13 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
         $this->load->model('localisation/language');
         $this->load->model('setting/store');
         $this->load->model('extension/module/onecode/shopflix/order');
+        $this->load->model('extension/module/onecode/shopflix/order_invoice');
         $this->load->model('extension/module/onecode/shopflix/product');
         $this->load->model('extension/module/onecode/shopflix/config');
         $this->load->model('extension/module/onecode/shopflix/shipment');
         $this->load->helper('onecode/shopflix/BasicHelper');
         $this->order_model = new ModelExtensionModuleOnecodeShopflixOrder($registry);
+        $this->order_model_invoice = new ModelExtensionModuleOnecodeShopflixOrderInvoice($registry);
         $this->shipment_model = new ModelExtensionModuleOnecodeShopflixShipment($registry);
         $this->basicHelper = new Helper\BasicHelper($registry);
         $this->load->language('extension/module/onecode_shopflix_order');
@@ -173,6 +177,18 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
                 $user_token . '&shipment_id=' . $item['id'], true);
             return $item;
         }, $data['shipments']);
+
+        $invoice_data = $this->order_model_invoice->getByOrder($filter_order_id);
+        $data['is_invoice'] = count($invoice_data);
+        if ($data['is_invoice']){
+            $data['invoice_data'] = [
+                'name' => isset($invoice_data['name']) ? $invoice_data['name'] : '-',
+                'address' => isset($invoice_data['address']) ? $invoice_data['address'] : '-',
+                'owner' => isset($invoice_data['owner']) ? $invoice_data['owner'] : '-',
+                'vat' => isset($invoice_data['vat']) ? $invoice_data['vat'] : '-',
+                'tax_office' => isset($invoice_data['tax_office']) ? $invoice_data['tax_office'] : '-',
+            ];
+        }
 
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
@@ -341,6 +357,8 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             $orders_data = $row['order'];
             $addresses_data = $row['addresses'];
             $items_row = $row['items'];
+            $is_invoice = !!$row[OrderInterface::IS_INVOICE];
+            $invoice_data = $is_invoice ? $row["invoice"] : [];
 
             $o_d = [
                 'reference_id' => $orders_data[OrderInterface::SHOPFLIX_ORDER_ID],
@@ -354,7 +372,17 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
                 'customer_lastname' => $orders_data[OrderInterface::CUSTOMER_LASTNAME],
                 'customer_remote_ip' => $orders_data[OrderInterface::CUSTOMER_REMOTE_IP],
                 'customer_note' => $orders_data[OrderInterface::CUSTOMER_NOTE],
+                'invoice_data' => [],
             ];
+            if($is_invoice){
+                $o_d['invoice_data'] = [
+                    'name' => $invoice_data[OrderInterface::COMPANY_NAME],
+                    'address' => $invoice_data[OrderInterface::COMPANY_ADDRESS],
+                    'owner' => $invoice_data[OrderInterface::COMPANY_OWNER],
+                    'vat' => $invoice_data[OrderInterface::COMPANY_VAT_NUMBER],
+                    'tax_office' => $invoice_data[OrderInterface::TAX_OFFICE],
+                ];
+            }
             array_walk($addresses_data, function ($address_row) use (&$o_d) {
                 $o_d['address'][] = [
                     'firstname' => $address_row[AddressInterface::FIRSTNAME],
@@ -383,13 +411,11 @@ class ControllerExtensionModuleOnecodeShopflixOrder extends Controller
             });
             $to_save[] = $o_d;
         });
-
         if (count($to_save))
         {
             foreach ($to_save as $order)
             {
                 $order_stored = $this->order_model->save($order);
-                //print_r($order_stored);
                 if (is_null($order_stored))
                 {
                     throw new LogicException(sprintf($this->language->get

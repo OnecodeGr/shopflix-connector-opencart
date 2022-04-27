@@ -77,7 +77,7 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
         $this->response->setOutput($this->load->view('error/not_found', $data));
     }
 
-    function detailed()
+    public function createDetailed()
     {
         if (! $this->validation())
         {
@@ -90,10 +90,12 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
             $this->xmlDocument->addProduct($product);
         }
         $this->response->addHeader('Content-Type: text/xml');
-        $this->response->setOutput($this->xmlDocument->getXML($products));
+        $xml = $this->xmlDocument->getXML($products);
+        $this->storeXml($xml, 'detailed');
+        $this->response->setOutput($xml);
     }
 
-    function minimal()
+    public function createMinimal()
     {
         if (! $this->validation())
         {
@@ -106,7 +108,43 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
             $this->xmlMinimal->addProduct($product);
         }
         $this->response->addHeader('Content-Type: text/xml');
-        $this->response->setOutput($this->xmlMinimal->getXML($products));
+        $xml = $this->xmlDocument->getXML($products);
+        $this->storeXml($xml, 'minimal');
+        $this->response->setOutput($xml);
+    }
+
+    public function detailed()
+    {
+        if (! $this->validation())
+        {
+            $this->response404();
+            return;
+        }
+        $content = $this->loadXml('detailed');
+        if ($content === false)
+        {
+            $this->createDetailed();
+            return;
+        }
+        $this->response->addHeader('Content-Type: text/xml');
+        $this->response->setOutput($content);
+    }
+
+    public function minimal()
+    {
+        if (! $this->validation())
+        {
+            $this->response404();
+            return;
+        }
+        $content = $this->loadXml('detailed');
+        if ($content === false)
+        {
+            $this->createMinimal();
+            return;
+        }
+        $this->response->addHeader('Content-Type: text/xml');
+        $this->response->setOutput($content);
     }
 
     /**
@@ -139,5 +177,27 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
             }
         }
         return $products;
+    }
+
+    protected function storeXml($xmlContents, $type)
+    {
+        $filePath = DIR_STORAGE.'shopflix';
+        $fileName = 'shopflix_product_list_' . $type . '.xml';
+
+        if (!is_dir($filePath)){
+            mkdir($filePath);
+        }
+
+        file_put_contents($filePath.'/'.$fileName, $xmlContents);
+    }
+
+    protected function loadXml($type)
+    {
+        $filename = DIR_STORAGE.'shopflix/shopflix_product_list_' . $type . '.xml';
+        if (file_exists($filename))
+        {
+            return file_get_contents($filename);
+        }
+        return false;
     }
 }
