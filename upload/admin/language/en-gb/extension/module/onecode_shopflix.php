@@ -7,6 +7,7 @@ $_['text_success'] = 'Success: You have modified `OneCodeGr - ShopFlix` module!'
 $_['text_edit'] = 'Edit';
 $_['text_Configuration'] = 'Configuration';
 $_['text_Orders'] = 'Orders';
+$_['text_Return_Orders'] = 'Return Orders';
 $_['text_Products'] = 'Products';
 $_['text_Shipments'] = 'Shipments';
 $_['text_enabled'] = 'Enabled';

@@ -1,0 +1,310 @@
+{{ header }}{{ column_left }}
+<div id="content">
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="pull-right">
+                <button type="button" form="form-order" formaction="{{ manual_sync }}"
+                        data-toggle="tooltip" title="{{ button_sync }}" class="btn
+                        btn-primary"
+                        onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
+                    <i class="fa fa-cloud-download"></i></button>
+            </div>
+            <h1>{{ heading_title }}</h1>
+            <ul class="breadcrumb">
+                {% for breadcrumb in breadcrumbs %}
+                    <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="container-fluid">{% if error_warning %}
+            <div class="alert alert-danger alert-dismissible"><i
+                        class="fa fa-exclamation-circle"></i> {{ error_warning }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        {% endif %}
+        {% if success %}
+            <div class="alert alert-success alert-dismissible"><i
+                        class="fa fa-check-circle"></i> {{ success }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        {% endif %}
+        <div class="row">
+            <div id="filter-order" class="col-md-3 col-md-push-9 col-sm-12 hidden-sm hidden-xs">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="fa fa-filter"></i> {{ text_filter }}</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="control-label"
+                                   for="input-reference_id">{{ column_reference_id }}</label>
+                            <input type="text" name="filter_reference_id"
+                                   value="{{ filter_reference_id }}"
+                                   placeholder="{{ entry_reference_id }}" id="input-reference_id"
+                                   class="form-control"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label"
+                                   for="input-customer_email">{{ column_customer_email }}</label>
+                            <input type="text" name="filter_customer_email"
+                                   value="{{ filter_customer_email }}"
+                                   placeholder="{{ entry_customer_email }}"
+                                   id="input-customer_email"
+                                   class="form-control"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label"
+                                   for="input-sub_total">{{ column_sub_total }}</label>
+                            <input type="text" name="filter_sub_total"
+                                   value="{{ filter_sub_total }}"
+                                   placeholder="{{ entry_sub_total }}" id="input-sub_total"
+                                   class="form-control"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label"
+                                   for="input-total_paid">{{ column_total_paid }}</label>
+                            <input type="text" name="filter_total_paid" value="{{ filter_total_paid }}"
+                                   placeholder="{{ entry_sub_total }}" id="input-total_paid"
+                                   class="form-control"/>
+                        </div>
+                        <div class="form-group text-right">
+                            <button type="button" id="button-filter" class="btn btn-default"><i
+                                        class="fa fa-filter"></i> {{ button_filter }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9 col-md-pull-3 col-sm-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="fa fa-list"></i> {{ text_list }}</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form action="{{ delete }}" method="post" enctype="multipart/form-data"
+                              id="form-order">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead>
+                                    <tr>
+                                        <td style="width: 1px;" class="text-center"><input
+                                                    type="checkbox"
+                                                    onclick="$('input[name*=\'selected\']').prop('checked', this.checked);"/>
+                                        </td>
+                                        <td class="text-left">{% if sort == 'o.reference_id' %} <a
+                                                    href="{{ sort_reference_id }}"
+                                                    class="{{ order|lower }}">{{ column_reference_id }}</a> {% else %}
+                                                <a href="{{ sort_reference_id }}">{{ column_reference_id }}</a> {% endif %}
+                                        </td>
+                                        <td class="text-left">{% if sort == 'o.customer_email' %} <a
+                                                    href="{{ sort_customer_email }}"
+                                                    class="{{ order|lower }}">{{ column_customer_email }}</a> {% else %}
+                                                <a href="{{ sort_customer_email }}">{{ column_customer_email }}</a> {% endif %}
+                                        </td>
+                                        <td class="text-left">{% if sort == 'o.sub_total' %} <a
+                                                    href="{{ sort_sub_total }}"
+                                                    class="{{ order|lower }}">{{ column_sub_total }}</a> {% else %}
+                                        <a href="{{ sort_sub_total }}">{{ column_sub_total }}</a> {% endif %}
+                                        </td>
+                                        <td class="text-left">{% if sort == 'o.discount_amount' %} <a
+                                                    href="{{ sort_discount_amount }}"
+                                                    class="{{ order|lower }}">{{ column_discount_amount }}</a> {% else %}
+                                        <a href="{{ sort_discount_amount }}">{{ column_discount_amount }}</a> {% endif %}
+                                        </td>
+                                        <td class="text-left">{% if sort == 'o.total_paid' %} <a
+                                                    href="{{ sort_total_paid }}"
+                                                    class="{{ order|lower }}">{{ column_total_paid }}</a> {% else %}
+                                        <a href="{{ sort_total_paid }}">{{ column_total_paid }}</a> {% endif %}
+                                        </td>
+                                        <td class="text-left">{% if sort == 'o.status' %} <a
+                                                    href="{{ sort_status }}"
+                                                    class="{{ order|lower }}">{{ column_status }}</a> {% else %}
+                                                <a href="{{ sort_status }}">{{ column_status }}</a> {% endif %}
+                                        </td>
+                                        <td class="text-right">{{ column_action }}</td>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% if orders %}
+                                        {% for order in orders %}
+                                            <tr>
+                                                <td class="text-center">{% if order.id in
+                                                        selected %}
+                                                        <input type="checkbox" name="selected[]"
+                                                               value="{{ order.id }}"
+                                                               checked="checked"/>
+                                                    {% else %}
+                                                        <input type="checkbox" name="selected[]"
+                                                               value="{{ order.id }}"/>
+                                                    {% endif %}</td>
+                                                <td class="text-left">{{ order.reference_id }}</td>
+                                                <td class="text-left">{{ order.customer_email }}</td>
+                                                <td class="text-left">{{ order
+                                                    .sub_total|number_format(2) }}</td>
+                                                <td class="text-left">{{ order.discount_amount|number_format(2) }}</td>
+                                                <td class="text-left">{{ order.total_paid|number_format(2) }}</td>
+                                                <td class="text-left">{{ order.status_string }}</td>
+                                                <td class="text-right">
+                                                    {% if order.decline != false %}
+                                                        <a href="#"
+                                                           data-action="{{ order.decline }}"
+                                                           data-toggle="tooltip"
+                                                           title="{{ button_decline }}"
+                                                           class="btn btn-danger decline_btn"
+                                                        ><i class="fa fa-trash-o"></i></a>&nbsp;|&nbsp;
+                                                    {% endif %}
+                                                    {% if order.accept != false %}
+                                                    <a href="#"
+                                                       data-action="{{ order.accept }}"
+                                                       data-toggle="tooltip"
+                                                       title="{{ button_accept }}"
+                                                       class="btn btn-success accept_btn"
+                                                    ><i class="fa fa-check"></i></a>
+                                                    {% endif %}
+                                                    {% if order.shipment != false %}
+                                                        <a href="#"
+                                                           data-action="{{ order.shipment }}"
+                                                           data-toggle="tooltip"
+                                                           title="{{ button_download_shipments }}"
+                                                           class="btn btn-primary shipment_btn"
+                                                        ><i class="fa fa-cloud-download"></i></a>
+                                                    {% endif %}
+                                                    {% if order.voucher != false %}
+                                                        <a href="#"
+                                                           data-action="{{ order.voucher }}"
+                                                           data-toggle="tooltip"
+                                                           title="{{ button_print_voucher }}"
+                                                           class="btn btn-primary voucher_btn"
+                                                        ><i class="fa fa-print"></i></a>
+                                                    {% endif %}
+                                                    <a href="{{ order.view }}"
+                                                       data-toggle="tooltip"
+                                                       title="{{ button_view }}"
+                                                       class="btn btn-primary"
+                                                    ><i class="fa fa-eye"></i></a></td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td class="text-center"
+                                                colspan="8">{{ text_no_results }}</td>
+                                        </tr>
+                                    {% endif %}
+                                    </tbody>
+
+                                </table>
+                            </div>
+                        </form>
+                        <div class="row">
+                            <div class="col-sm-6 text-left">{{ pagination }}</div>
+                            <div class="col-sm-6 text-right">{{ results }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $('#button-filter').on('click', function () {
+            var url = '';
+
+            var filter_reference_id = $('input[name=\'filter_reference_id\']').val();
+
+            if (filter_reference_id)
+            {
+                url += '&filter_reference_id=' + encodeURIComponent(filter_reference_id);
+            }
+
+            var filter_customer_email = $('input[name=\'filter_customer_email\']').val();
+
+            if (filter_customer_email)
+            {
+                url += '&filter_customer_email=' + encodeURIComponent(filter_customer_email);
+            }
+
+            var filter_sub_total = $('input[name=\'filter_sub_total\']').val();
+
+            if (filter_sub_total !== '')
+            {
+                url += '&filter_sub_total=' + filter_sub_total;
+            }
+
+            var filter_total_paid = $('input[name=\'filter_total_paid\']').val();
+
+            if (filter_total_paid !== '')
+            {
+                url += '&filter_total_paid=' + filter_total_paid;
+            }
+
+            location = 'index.php?route=extension/module/onecode/shopflix/order&user_token={{ 
+            user_token }}' + url;
+        });
+    </script>
+    <script type="text/javascript">
+        $('a.decline_btn').on('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            const message = prompt('{{ text_decline_prompt }}');
+            if (message != null)
+            {
+                window.location.href = $(this).data('action') + '&reason=' + message
+            }
+        })
+        $('a.accept_btn, a.shipment_btn, a.voucher_btn').on('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            if (confirm('{{ text_accept_order_ }}'))
+            {
+                window.location.href = $(this).data('action')
+            }
+        })
+        // IE and Edge fix!
+        $('button[form=\'form-order\']').on('click', function (e) {
+            $('#form-order').attr('action', $(this).attr('formaction'));
+        });
+
+        $('input[name=\'filter_reference_id\']').autocomplete({
+            'source': function (request, response) {
+                $.ajax({
+                    url: 'index.php?route=extension/module/onecode/shopflix/order/autocomplete' +
+                        '&user_token={{ user_token }}&filter_reference_id=' + encodeURIComponent
+                        (request),
+                    dataType: 'json',
+                    success: function (json) {
+                        response($.map(json, function (item) {
+                            return {
+                                label: item['reference_id'],
+                                value: item['reference_id']
+                            }
+                        }));
+                    }
+                });
+            },
+            'select': function (item) {
+                $('input[name=\'filter_reference_id\']').val(item['label']);
+            }
+        });
+
+        $('input[name=\'filter_customer_email\']').autocomplete({
+            'source': function (request, response) {
+                $.ajax({
+                    url: 'index.php?route=extension/module/onecode/shopflix/order/autocomplete&user_token={{ user_token }}&filter_customer_email=' + encodeURIComponent(request),
+                    dataType: 'json',
+                    success: function (json) {
+                        response($.map(json, function (item) {
+                            return {
+                                label: item['customer_email'],
+                                value: item['customer_email']
+                            }
+                        }));
+                    }
+                });
+            },
+            'select': function (item) {
+                $('input[name=\'filter_customer_email\']').val(item['label']);
+            }
+        });
+
+    </script>
+</div>
+{{ footer }}
