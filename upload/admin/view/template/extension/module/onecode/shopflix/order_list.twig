@@ -271,12 +271,14 @@
                         (request),
                     dataType: 'json',
                     success: function (json) {
-                        response($.map(json, function (item) {
-                            return {
-                                label: item['reference_id'],
-                                value: item['reference_id']
-                            }
-                        }));
+                        var tmp = [];
+                        $.each(json, function (k, v) {
+                            tmp.push(v['reference_id'])
+                        })
+                        let array = $.map($.unique(tmp), function (item) {
+                            return {label: item, value: item}
+                        })
+                        response(array);
                     }
                 });
             },
@@ -291,12 +293,14 @@
                     url: 'index.php?route=extension/module/onecode/shopflix/order/autocomplete&user_token={{ user_token }}&filter_customer_email=' + encodeURIComponent(request),
                     dataType: 'json',
                     success: function (json) {
-                        response($.map(json, function (item) {
-                            return {
-                                label: item['customer_email'],
-                                value: item['customer_email']
-                            }
-                        }));
+                        var tmp = [];
+                        $.each(json, function (k, v) {
+                            tmp.push(v['customer_email'])
+                        })
+                        let array = $.map($.unique(tmp), function (item) {
+                            return {label: item, value: item}
+                        })
+                        response(array);
                     }
                 });
             },

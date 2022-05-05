@@ -27,6 +27,9 @@ require_once DIR_SYSTEM . 'helper/onecode/shopflix/model/ReturnOrder.php';
  */
 class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\ReturnOrder
 {
+    const ADDRESS_TYPE_BILLING = 'billing';
+    const ADDRESS_TYPE_SHIPPING = 'shipping';
+
     public function __construct($registry)
     {
         parent::__construct($registry);
@@ -175,6 +178,10 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
         {
             $sql .= " AND o.reference_id LIKE '" . $this->db->escape($data['filter_reference_id']) . "%'";
         }
+        if (! empty($data['filter_related_order']))
+        {
+            $sql .= " AND o.vendor_parent_id LIKE '" . $this->db->escape($data['filter_related_order']) . "%'";
+        }
         if (! empty($data['filter_customer_email']))
         {
             $sql .= " AND o.customer_email LIKE '" . $this->db->escape($data['filter_customer_email']) . "%'";
@@ -200,7 +207,7 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
 
         $sql .= (isset($data['sort']) && in_array($data['sort'], $sort_data))
             ? " ORDER BY " . $data['sort']
-            : " ORDER BY pd.name";
+            : " ORDER BY o.reference_id";
 
         $sql .= isset($data['order']) && ($data['order'] == 'DESC') ? " DESC" : " ASC";
 

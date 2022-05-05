@@ -19,18 +19,6 @@
                         onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
                     <i class="fa fa-check"></i></button>
                 {% endif %}
-                {% if shipment != false %}
-                <button type="button" form="form-order" formaction="{{ shipment }}"
-                        data-toggle="tooltip" title="{{ button_download_shipments }}" class="btn btn-primary"
-                        onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
-                    <i class="fa fa-cloud-download"></i></button>
-                {% endif %}
-                {% if voucher != false %}
-                <button type="button" form="form-order" formaction="{{ voucher }}"
-                        data-toggle="tooltip" title="{{ button_print_voucher }}" class="btn btn-primary"
-                        onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
-                    <i class="fa fa-print"></i></button>
-                {% endif %}
             </div>
             <h1>{{ heading_title }}</h1>
             <ul class="breadcrumb">
@@ -64,7 +52,6 @@
                                               data-toggle="tab">{{ tab_order }}</a></li>
                         <li><a href="#tab-address" data-toggle="tab">{{ tab_address }}</a></li>
                         <li><a href="#tab-products" data-toggle="tab">{{ tab_products }}</a></li>
-                        <li><a href="#tab-shipments" data-toggle="tab">{{ tab_shipments }}</a></li>
                     </ul>
                     <div class="tab-content">
                         <div class="tab-pane active" id="tab-general">
@@ -129,14 +116,7 @@
                                            id="input-order_sub_total"
                                            value="{{ order.sub_total }}">
                                 </div>
-                                <label class="col-sm-1 control-label"
-                                       for="input-order_discount">{{ entry_discount }}</label>
-                                <div class="col-sm-3">
-                                    <input type="text" readonly
-                                           class="form-control-plaintext form-control"
-                                           id="input-order_discount"
-                                           value="{{ order.discount_amount }}">
-                                </div>
+                                <div class="col-sm-4">&nbsp;</div>
                                 <label class="col-sm-1 control-label"
                                        for="input-order_total_paid">{{ entry_total_paid }}</label>
                                 <div class="col-sm-3">
@@ -156,73 +136,6 @@
                                     >{{ order.customer_note }}</textarea>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label class="col-sm-1 control-label"
-                                       for="input-order_is_invoice">{{ entry_is_invoice }}</label>
-                                <div class="col-sm-11">
-                                    {% if is_invoice %}
-                                    <span id="input-order_is_invoice" class="success"><strong>{{
-                                        text_yes }}</strong></span>
-                                    {% else %}
-                                        <span id="input-order_is_invoice">{{  text_no }}</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% if is_invoice %}
-                                <div class="form-group">
-                                    <label class="col-sm-1 control-label"
-                                           for="input-order_invoice_name">{{ entry_invoice_name
-                                        }}</label>
-                                    <div class="col-sm-11">
-                                        <input type="text" readonly
-                                               class="form-control-plaintext form-control"
-                                               id="input-order_invoice_name"
-                                               value="{{ invoice_data.name }}">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="col-sm-1 control-label"
-                                           for="input-order_invoice_address">{{ entry_invoice_address
-                                        }}</label>
-                                    <div class="col-sm-11">
-                                        <input type="text" readonly
-                                               class="form-control-plaintext form-control"
-                                               id="input-order_invoice_address"
-                                               value="{{ invoice_data.address }}">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="col-sm-1 control-label"
-                                           for="input-order_invoice_owner">{{ entry_invoice_owner
-                                        }}</label>
-                                    <div class="col-sm-11">
-                                        <input type="text" readonly
-                                               class="form-control-plaintext form-control"
-                                               id="input-order_invoice_owner"
-                                               value="{{ invoice_data.owner }}">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="col-sm-1 control-label"
-                                           for="input-order_invoice_vat">{{ entry_invoice_vat
-                                        }}</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" readonly
-                                               class="form-control-plaintext form-control"
-                                               id="input-order_invoice_vat"
-                                               value="{{ invoice_data.vat }}">
-                                    </div>
-                                    <label class="col-sm-1 control-label"
-                                           for="input-order_invoice_tax_office">{{ entry_invoice_tax_office
-                                        }}</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" readonly
-                                               class="form-control-plaintext form-control"
-                                               id="input-order_invoice_tax_office"
-                                               value="{{ invoice_data.tax_office }}">
-                                    </div>
-                                </div>
-                            {% endif %}
                         </div>
                         <div class="tab-pane" id="tab-address">
                             {% for item in addresses %}
@@ -332,8 +245,7 @@
                                             <td class="text-left">{{ column_name }}</td>
                                             <td class="text-left">{{ column_quantity }}</td>
                                             <td class="text-left">{{ column_price }}</td>
-                                            <td class="text-left">{{ column_shipment }}</td>
-                                            <td class="text-left">{{ column_shipment_url }}</td>
+                                            <td class="text-left">{{ column_reason }}</td>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -344,21 +256,7 @@
                                                     <td class="text-left">{{ item.name }}</td>
                                                     <td class="text-left">{{ item.quantity }}</td>
                                                     <td class="text-left">{{ item.price }}</td>
-                                                    <td class="text-left">
-                                                        <ul>
-                                                        {% for reference in item.shipment.references %}
-                                                            <li>{{ reference }}</li>
-                                                        {% endfor %}
-                                                        </ul>
-                                                    </td>
-                                                    <td class="text-left">
-                                                        <ul>
-                                                            {% for url in item.shipment.urls %}
-                                                                <li><a href="{{ url }}"
-                                                                       target="_blank">{{ url }}</a></li>
-                                                            {% endfor %}
-                                                        </ul>
-                                                    </td>
+                                                    <td class="text-left">{{ item.reason }}</td>
                                                 </tr>
                                             {% endfor %}
                                         {% else %}
@@ -374,52 +272,6 @@
                             <div class="row">
                                 <div class="col-sm-6 text-left">{{ pagination }}</div>
                                 <div class="col-sm-6 text-right">{{ results }}</div>
-                            </div>
-                        </div>
-                        <div class="tab-pane" id="tab-shipments">
-                            <div class="table-responsive">
-                                <fieldset>
-                                    <legend>{{ text_shipments }}</legend>
-                                    <table class="table table-bordered table-hover">
-                                        <thead>
-                                        <tr>
-                                            <td class="text-left">{{ column_reference_id }}</td>
-                                            <td class="text-left">{{ column_created_at }}</td>
-                                            <td class="text-left">{{ column_status }}</td>
-                                            <td class="text-left">{{ column_action }}</td>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        {% if shipments %}
-                                            {% for item in shipments %}
-                                                <tr>
-                                                    <td class="text-left">{{ item.reference_id }}</td>
-                                                    <td class="text-left">{{ item.created_at }}</td>
-                                                    <td class="text-left">{{ item.status_string }}</td>
-                                                    <td class="text-left">
-                                                        <a href="#"
-                                                           data-action="{{ item.voucher }}"
-                                                           data-toggle="tooltip"
-                                                           title="{{ button_print_voucher }}"
-                                                           class="btn btn-primary voucher_btn"
-                                                        ><i class="fa fa-print"></i></a>
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                        {% else %}
-                                            <tr>
-                                                <td class="text-center"
-                                                    colspan="8">{% if shipment %}
-                                                    {{ text_no_results }}
-                                                    {% else %}
-                                                    {{ text_accept_order_first }}
-                                                    {% endif %}
-                                                </td>
-                                            </tr>
-                                        {% endif %}
-                                        </tbody>
-                                    </table>
-                                </fieldset>
                             </div>
                         </div>
                     </div>

@@ -46,6 +46,14 @@
                         </div>
                         <div class="form-group">
                             <label class="control-label"
+                                   for="input-related_order">{{ column_related_order }}</label>
+                            <input type="text" name="filter_related_order"
+                                   value="{{ filter_related_order }}"
+                                   placeholder="{{ entry_related_order }}" id="input-related_order"
+                                   class="form-control"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label"
                                    for="input-customer_email">{{ column_customer_email }}</label>
                             <input type="text" name="filter_customer_email"
                                    value="{{ filter_customer_email }}"
@@ -64,7 +72,8 @@
                         <div class="form-group">
                             <label class="control-label"
                                    for="input-total_paid">{{ column_total_paid }}</label>
-                            <input type="text" name="filter_total_paid" value="{{ filter_total_paid }}"
+                            <input type="text" name="filter_total_paid"
+                                   value="{{ filter_total_paid }}"
                                    placeholder="{{ entry_sub_total }}" id="input-total_paid"
                                    class="form-control"/>
                         </div>
@@ -96,6 +105,14 @@
                                                     class="{{ order|lower }}">{{ column_reference_id }}</a> {% else %}
                                                 <a href="{{ sort_reference_id }}">{{ column_reference_id }}</a> {% endif %}
                                         </td>
+                                        <td class="text-left">{% if sort == 'o.vendor_parent_id'
+                                            %} <a
+                                                    href="{{ sort_related_order }}"
+                                                    class="{{ order|lower }}">{{
+                                                column_related_order }}</a> {% else %}
+                                                <a href="{{ sort_related_order }}">{{
+                                                    column_related_order }}</a> {% endif %}
+                                        </td>
                                         <td class="text-left">{% if sort == 'o.customer_email' %} <a
                                                     href="{{ sort_customer_email }}"
                                                     class="{{ order|lower }}">{{ column_customer_email }}</a> {% else %}
@@ -104,17 +121,12 @@
                                         <td class="text-left">{% if sort == 'o.sub_total' %} <a
                                                     href="{{ sort_sub_total }}"
                                                     class="{{ order|lower }}">{{ column_sub_total }}</a> {% else %}
-                                        <a href="{{ sort_sub_total }}">{{ column_sub_total }}</a> {% endif %}
-                                        </td>
-                                        <td class="text-left">{% if sort == 'o.discount_amount' %} <a
-                                                    href="{{ sort_discount_amount }}"
-                                                    class="{{ order|lower }}">{{ column_discount_amount }}</a> {% else %}
-                                        <a href="{{ sort_discount_amount }}">{{ column_discount_amount }}</a> {% endif %}
+                                                <a href="{{ sort_sub_total }}">{{ column_sub_total }}</a> {% endif %}
                                         </td>
                                         <td class="text-left">{% if sort == 'o.total_paid' %} <a
                                                     href="{{ sort_total_paid }}"
                                                     class="{{ order|lower }}">{{ column_total_paid }}</a> {% else %}
-                                        <a href="{{ sort_total_paid }}">{{ column_total_paid }}</a> {% endif %}
+                                                <a href="{{ sort_total_paid }}">{{ column_total_paid }}</a> {% endif %}
                                         </td>
                                         <td class="text-left">{% if sort == 'o.status' %} <a
                                                     href="{{ sort_status }}"
@@ -138,10 +150,11 @@
                                                                value="{{ order.id }}"/>
                                                     {% endif %}</td>
                                                 <td class="text-left">{{ order.reference_id }}</td>
+                                                <td class="text-left">{{ order.related_order
+                                                    }}</td>
                                                 <td class="text-left">{{ order.customer_email }}</td>
                                                 <td class="text-left">{{ order
                                                     .sub_total|number_format(2) }}</td>
-                                                <td class="text-left">{{ order.discount_amount|number_format(2) }}</td>
                                                 <td class="text-left">{{ order.total_paid|number_format(2) }}</td>
                                                 <td class="text-left">{{ order.status_string }}</td>
                                                 <td class="text-right">
@@ -154,12 +167,12 @@
                                                         ><i class="fa fa-trash-o"></i></a>&nbsp;|&nbsp;
                                                     {% endif %}
                                                     {% if order.accept != false %}
-                                                    <a href="#"
-                                                       data-action="{{ order.accept }}"
-                                                       data-toggle="tooltip"
-                                                       title="{{ button_accept }}"
-                                                       class="btn btn-success accept_btn"
-                                                    ><i class="fa fa-check"></i></a>
+                                                        <a href="#"
+                                                           data-action="{{ order.accept }}"
+                                                           data-toggle="tooltip"
+                                                           title="{{ button_accept }}"
+                                                           class="btn btn-success accept_btn"
+                                                        ><i class="fa fa-check"></i></a>
                                                     {% endif %}
                                                     {% if order.shipment != false %}
                                                         <a href="#"
@@ -215,6 +228,13 @@
                 url += '&filter_reference_id=' + encodeURIComponent(filter_reference_id);
             }
 
+            var filter_related_order = $('input[name=\'filter_related_order\']').val();
+
+            if (filter_related_order)
+            {
+                url += '&filter_related_order=' + encodeURIComponent(filter_related_order);
+            }
+
             var filter_customer_email = $('input[name=\'filter_customer_email\']').val();
 
             if (filter_customer_email)
@@ -236,8 +256,7 @@
                 url += '&filter_total_paid=' + filter_total_paid;
             }
 
-            location = 'index.php?route=extension/module/onecode/shopflix/order&user_token={{ 
-            user_token }}' + url;
+            location = 'index.php?route=extension/module/onecode/shopflix/return_order&user_token={{ user_token }}' + url;
         });
     </script>
     <script type="text/javascript">
@@ -262,21 +281,45 @@
         $('button[form=\'form-order\']').on('click', function (e) {
             $('#form-order').attr('action', $(this).attr('formaction'));
         });
-
+        $('input[name=\'filter_related_order\']').autocomplete({
+            'source': function (request, response) {
+                $.ajax({
+                    url: 'index.php?route=extension/module/onecode/shopflix/return_order/autocomplete' +
+                        '&user_token={{ user_token }}&filter_related_order=' + encodeURIComponent
+                        (request),
+                    dataType: 'json',
+                    success: function (json) {
+                        var tmp = [];
+                        $.each(json, function (k, v) {
+                            tmp.push(v['related_order'])
+                        })
+                        let array = $.map($.unique(tmp), function (item) {
+                            return {label: item, value: item}
+                        })
+                        response(array);
+                    }
+                });
+            },
+            'select': function (item) {
+                $('input[name=\'filter_related_order\']').val(item['label']);
+            }
+        });
         $('input[name=\'filter_reference_id\']').autocomplete({
             'source': function (request, response) {
                 $.ajax({
-                    url: 'index.php?route=extension/module/onecode/shopflix/order/autocomplete' +
+                    url: 'index.php?route=extension/module/onecode/shopflix/return_order/autocomplete' +
                         '&user_token={{ user_token }}&filter_reference_id=' + encodeURIComponent
                         (request),
                     dataType: 'json',
                     success: function (json) {
-                        response($.map(json, function (item) {
-                            return {
-                                label: item['reference_id'],
-                                value: item['reference_id']
-                            }
-                        }));
+                        var tmp = [];
+                        $.each(json, function (k, v) {
+                            tmp.push(v['reference_id'])
+                        })
+                        let array = $.map($.unique(tmp), function (item) {
+                            return {label: item, value: item}
+                        })
+                        response(array);
                     }
                 });
             },
@@ -284,19 +327,20 @@
                 $('input[name=\'filter_reference_id\']').val(item['label']);
             }
         });
-
         $('input[name=\'filter_customer_email\']').autocomplete({
             'source': function (request, response) {
                 $.ajax({
-                    url: 'index.php?route=extension/module/onecode/shopflix/order/autocomplete&user_token={{ user_token }}&filter_customer_email=' + encodeURIComponent(request),
+                    url: 'index.php?route=extension/module/onecode/shopflix/return_order/autocomplete&user_token={{ user_token }}&filter_customer_email=' + encodeURIComponent(request),
                     dataType: 'json',
                     success: function (json) {
-                        response($.map(json, function (item) {
-                            return {
-                                label: item['customer_email'],
-                                value: item['customer_email']
-                            }
-                        }));
+                        var tmp = [];
+                        $.each(json, function (k, v) {
+                            tmp.push(v['customer_email'])
+                        })
+                        let array = $.map($.unique(tmp), function (item) {
+                            return {label: item, value: item}
+                        })
+                        response(array);
                     }
                 });
             },

@@ -239,7 +239,7 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
 
         $sql .= (isset($data['sort']) && in_array($data['sort'], $sort_data))
             ? " ORDER BY " . $data['sort']
-            : " ORDER BY pd.name";
+            : " ORDER BY o.reference_id";
 
         $sql .= isset($data['order']) && ($data['order'] == 'DESC') ? " DESC" : " ASC";
 

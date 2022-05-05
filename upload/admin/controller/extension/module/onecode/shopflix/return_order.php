@@ -121,7 +121,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
         $data['order']['sub_total'] = number_format($data['order']['sub_total'], 2);
         $data['addresses'] = $this->return_order_model->getOrderAddress($filter_order_id);
         $data['addresses'] = array_map(function ($item) {
-            $item['name'] = ($item['type'] == ModelExtensionModuleOnecodeShopflixOrder::ADDRESS_TYPE_BILLING)
+            $item['name'] = ($item['type'] == ModelExtensionModuleOnecodeShopflixReturnOrder::ADDRESS_TYPE_BILLING)
                 ? $this->language->get('text_billing')
                 : $this->language->get('text_shipping');
             return $item;
@@ -343,6 +343,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
     {
         $per_page = $this->config->get('config_limit_admin');
         $filter_reference_id = (isset($this->request->get['filter_reference_id'])) ? $this->request->get['filter_reference_id'] : '';
+        $filter_related_order = (isset($this->request->get['filter_related_order'])) ? $this->request->get['filter_related_order'] : '';
         $filter_sub_total = (isset($this->request->get['filter_sub_total'])) ? $this->request->get['filter_sub_total'] : '';
         $filter_total_paid = (isset($this->request->get['filter_total_paid'])) ? $this->request->get['filter_total_paid'] : '';
         $filter_customer_email = (isset($this->request->get['filter_customer_email'])) ? $this->request->get['filter_customer_email'] : '';
@@ -358,6 +359,10 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
         if ($filter_reference_id != '')
         {
             $url_params['filter_reference_id'] = urlencode(html_entity_decode($filter_reference_id, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($filter_related_order != '')
+        {
+            $url_params['filter_related_order'] = urlencode(html_entity_decode($filter_related_order, ENT_QUOTES, 'UTF-8'));
         }
         if ($filter_sub_total != '')
         {
@@ -390,6 +395,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
 
         $filter_data = [
             'filter_reference_id' => $filter_reference_id,
+            'filter_related_order' => $filter_related_order,
             'filter_sub_total' => $filter_sub_total,
             'filter_total_paid' => $filter_total_paid,
             'filter_customer_email' => $filter_customer_email,
@@ -408,10 +414,10 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
             $data['orders'][] = [
                 'order_id' => $result['id'],
                 'reference_id' => $result['reference_id'],
+                'related_order' => $result['vendor_parent_id'],
                 'status' => $result['status'],
                 'status_string' => $this->language->get('text_status_' . $result['status']),
                 'sub_total' => floatval($result['sub_total']),
-                'discount_amount' => floatval($result['discount_amount']),
                 'total_paid' => floatval($result['total_paid']),
                 'customer_email' => $result['customer_email'],
                 'customer_firstname' => $result['customer_firstname'],
@@ -448,8 +454,8 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
 
         $data['sort_id'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.id'])), true);
         $data['sort_reference_id'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.reference_id'])), true);
+        $data['sort_related_order'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.vendor_parent_id'])), true);
         $data['sort_sub_total'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.sub_total'])), true);
-        $data['sort_discount_amount'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.discount_amount'])), true);
         $data['sort_total_paid'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.total_paid'])), true);
         $data['sort_status'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.status'])), true);
         $data['sort_customer_email'] = $this->url->link($this->getLink(), http_build_query(array_merge($url_params, ['sort=' => 'o.customer_email'])), true);
@@ -469,6 +475,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
             $per_page), $order_total, ceil($order_total / $per_page));
 
         $data['filter_reference_id'] = $filter_reference_id;
+        $data['filter_related_order'] = $filter_related_order;
         $data['filter_sub_total'] = $filter_sub_total;
         $data['filter_total_paid'] = $filter_total_paid;
         $data['filter_customer_email'] = $filter_customer_email;
@@ -487,10 +494,16 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
     {
         $json = [];
 
-        if (isset($this->request->get['filter_reference_id']) || isset($this->request->get['filter_customer_email']))
+        if (isset($this->request->get['filter_reference_id'])
+            || isset($this->request->get['filter_related_order'])
+            || isset($this->request->get['filter_customer_email'])
+        )
         {
             $filter_reference_id = (isset($this->request->get['filter_reference_id']))
                 ? $this->request->get['filter_reference_id']
+                : '';
+            $filter_related_order = (isset($this->request->get['filter_related_order']))
+                ? $this->request->get['filter_related_order']
                 : '';
             $filter_customer_email = (isset($this->request->get['filter_customer_email']))
                 ? $this->request->get['filter_customer_email']
@@ -500,6 +513,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
 
             $filter_data = [
                 'filter_reference_id' => $filter_reference_id,
+                'filter_related_order' => $filter_related_order,
                 'filter_customer_email' => $filter_customer_email,
                 'start' => 0,
                 'limit' => $limit,
@@ -511,6 +525,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
             {
                 $json[] = [
                     'order_id' => $result['id'],
+                    'related_order' => strip_tags(html_entity_decode($result['vendor_parent_id'], ENT_QUOTES, 'UTF-8')),
                     'reference_id' => strip_tags(html_entity_decode($result['reference_id'], ENT_QUOTES, 'UTF-8')),
                     'customer_email' => strip_tags(html_entity_decode($result['customer_email'], ENT_QUOTES, 'UTF-8')),
                 ];
