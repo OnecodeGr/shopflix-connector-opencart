@@ -123,6 +123,8 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
     {
         $per_page = $this->config->get('config_limit_admin');
         $filter_name = (isset($this->request->get['filter_name'])) ? $this->request->get['filter_name'] : '';
+        $filter_category = (isset($this->request->get['filter_category'])) ? $this->request->get['filter_category'] : '';
+        $filter_manufacturer = (isset($this->request->get['filter_manufacturer'])) ? $this->request->get['filter_manufacturer'] : '';
         $filter_model = (isset($this->request->get['filter_model'])) ? $this->request->get['filter_model'] : '';
         $filter_status = (isset($this->request->get['filter_status'])) ? $this->request->get['filter_status'] : '';
         $filter_enabled = (isset($this->request->get['filter_enabled'])) ? $this->request->get['filter_enabled'] : '';
@@ -135,6 +137,16 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
         if (isset($this->request->get['filter_name']))
         {
             $url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
+        }
+
+        if (isset($this->request->get['filter_category']))
+        {
+            $url .= '&filter_category=' . urlencode(html_entity_decode($this->request->get['filter_category'], ENT_QUOTES, 'UTF-8'));
+        }
+
+        if (isset($this->request->get['filter_manufacturer']))
+        {
+            $url .= '&filter_manufacturer=' . urlencode(html_entity_decode($this->request->get['filter_manufacturer'], ENT_QUOTES, 'UTF-8'));
         }
 
         if (isset($this->request->get['filter_model']))
@@ -201,6 +213,8 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
         $filter_data = [
             'filter_name' => $filter_name,
             'filter_model' => $filter_model,
+            'filter_category' => $filter_category,
+            'filter_manufacturer' => $filter_manufacturer,
             'filter_status' => $filter_status,
             'filter_enabled' => $filter_enabled,
             'sort' => $sort,
@@ -249,6 +263,16 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
         if (isset($this->request->get['filter_name']))
         {
             $url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
+        }
+
+        if (isset($this->request->get['filter_category']))
+        {
+            $url .= '&filter_category=' . urlencode(html_entity_decode($this->request->get['filter_category'], ENT_QUOTES, 'UTF-8'));
+        }
+
+        if (isset($this->request->get['filter_manufacturer']))
+        {
+            $url .= '&filter_manufacturer=' . urlencode(html_entity_decode($this->request->get['filter_manufacturer'], ENT_QUOTES, 'UTF-8'));
         }
 
         if (isset($this->request->get['filter_model']))
@@ -300,6 +324,16 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
             $url .= '&filter_model=' . urlencode(html_entity_decode($this->request->get['filter_model'], ENT_QUOTES, 'UTF-8'));
         }
 
+        if (isset($this->request->get['filter_category']))
+        {
+            $url .= '&filter_category=' . urlencode(html_entity_decode($this->request->get['filter_category'], ENT_QUOTES, 'UTF-8'));
+        }
+
+        if (isset($this->request->get['filter_manufacturer']))
+        {
+            $url .= '&filter_manufacturer=' . urlencode(html_entity_decode($this->request->get['filter_manufacturer'], ENT_QUOTES, 'UTF-8'));
+        }
+
         if (isset($this->request->get['filter_status']))
         {
             $url .= '&filter_status=' . $this->request->get['filter_status'];
@@ -331,6 +365,8 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
         $data['results'] = sprintf($this->language->get('text_pagination'), ($product_total) ? (($page - 1) * $per_page) + 1 : 0, ((($page - 1) * $per_page) > ($product_total - $per_page)) ? $product_total : ((($page - 1) * $per_page) + $per_page), $product_total, ceil($product_total / $per_page));
 
         $data['filter_name'] = $filter_name;
+        $data['filter_manufacturer'] = $filter_manufacturer;
+        $data['filter_category'] = $filter_category;
         $data['filter_model'] = $filter_model;
         $data['filter_status'] = $filter_status;
         $data['filter_enabled'] = $filter_enabled;

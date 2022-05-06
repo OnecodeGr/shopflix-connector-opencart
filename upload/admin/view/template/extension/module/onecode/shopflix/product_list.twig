@@ -64,6 +64,19 @@
                                    class="form-control"/>
                         </div>
                         <div class="form-group">
+                            <label class="control-label" for="input-manufacturer">{{ entry_manufacturer
+                                }}</label>
+                            <input type="text" name="filter_manufacturer" value="{{ filter_manufacturer }}"
+                                   placeholder="{{ entry_manufacturer }}" id="input-manufacturer"
+                                   class="form-control"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label" for="input-category">{{ entry_category }}</label>
+                            <input type="text" name="filter_category" value="{{ filter_category }}"
+                                   placeholder="{{ entry_category }}" id="input-category"
+                                   class="form-control"/>
+                        </div>
+                        <div class="form-group">
                             <label class="control-label"
                                    for="input-status">{{ column_status }}</label>
                             <select name="filter_status" id="input-status" class="form-control">
