@@ -1,0 +1,283 @@
+{{ header }}{{ column_left }}
+<div id="content">
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="pull-right">
+                <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_back }}"
+                   class="btn btn-default"><i class="fa fa-reply"></i></a>
+                {% if decline != false %}
+                <button type="button" form="form-order" formaction="{{ decline }}"
+                        data-toggle="tooltip" title="{{ button_decline }}" class="btn
+                        btn-danger"
+                        onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
+                    <i class="fa fa-remove"></i></button>
+                {% endif %}
+                {% if accept != false %}
+                <button type="button" form="form-order" formaction="{{ accept }}"
+                        data-toggle="tooltip" title="{{ button_accept }}" class="btn
+                    btn-success"
+                        onclick="confirm('{{ text_confirm }}') ? $('#form-order').attr('action', $(this).attr('formaction')).submit() : false;">
+                    <i class="fa fa-check"></i></button>
+                {% endif %}
+            </div>
+            <h1>{{ heading_title }}</h1>
+            <ul class="breadcrumb">
+                {% for breadcrumb in breadcrumbs %}
+                    <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="container-fluid">{% if error_warning %}
+            <div class="alert alert-danger alert-dismissible"><i
+                        class="fa fa-exclamation-circle"></i> {{ error_warning }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        {% endif %}
+        {% if success %}
+            <div class="alert alert-success alert-dismissible"><i
+                        class="fa fa-check-circle"></i> {{ success }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        {% endif %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_order_details }}</h3>
+            </div>
+            <div class="panel-body">
+                <form action="{{ action }}" method="post" enctype="multipart/form-data"
+                      id="form-order" class="form-horizontal">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a href="#tab-general"
+                                              data-toggle="tab">{{ tab_order }}</a></li>
+                        <li><a href="#tab-address" data-toggle="tab">{{ tab_address }}</a></li>
+                        <li><a href="#tab-products" data-toggle="tab">{{ tab_products }}</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="tab-general">
+                            <div class="form-group">
+                                <label class="col-sm-1 control-label"
+                                       for="input-order_reference_id">{{ entry_reference_id }}</label>
+                                <div class="col-sm-3">
+                                    <input type="text" readonly
+                                           class="form-control-plaintext form-control"
+                                           id="input-order_reference_id"
+                                           value="{{ order.reference_id }}">
+                                </div>
+                                <label class="col-sm-1 control-label"
+                                       for="input-order_status">{{ entry_status }}</label>
+                                <div class="col-sm-3">
+                                    <input type="text" readonly
+                                           class="form-control-plaintext form-control"
+                                           id="input-order_status"
+                                           value="{{ order.status_string }}">
+                                </div>
+                                <label class="col-sm-1 control-label"
+                                       for="input-order_created_at">{{ entry_created_at }}</label>
+                                <div class="col-sm-3">
+                                    <input type="text" readonly
+                                           class="form-control-plaintext form-control"
+                                           id="input-order_created_at"
+                                           value="{{ order.created_at }}">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-1 control-label"
+                                       for="input-order_customer_email">{{ entry_customer_email }}</label>
+                                <div class="col-sm-3">
+                                    <input type="text" readonly
+                                           class="form-control-plaintext form-control"
+                                           id="input-order_customer_email"
+                                           value="{{ order.customer_email }}">
+                                </div>
+                                <label class="col-sm-1 control-label"
+                                       for="input-order_customer_firstname">{{ entry_customer_firstname }}</label>
+                                <div class="col-sm-3">
+                                    <input type="text" readonly
+                                           class="form-control-plaintext form-control"
+                                           id="input-order_customer_firstname"
+                                           value="{{ order.customer_firstname }}">
+                                </div>
+                                <label class="col-sm-1 control-label"
+                                       for="input-order_customer_lastname">{{ entry_customer_lastname }}</label>
+                                <div class="col-sm-3">
+                                    <input type="text" readonly
+                                           class="form-control-plaintext form-control"
+                                           id="input-order_customer_lastname"
+                                           value="{{ order.customer_lastname }}">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-1 control-label"
+                                       for="input-order_sub_total">{{ entry_sub_total }}</label>
+                                <div class="col-sm-3">
+                                    <input type="text" readonly
+                                           class="form-control-plaintext form-control"
+                                           id="input-order_sub_total"
+                                           value="{{ order.sub_total }}">
+                                </div>
+                                <div class="col-sm-4">&nbsp;</div>
+                                <label class="col-sm-1 control-label"
+                                       for="input-order_total_paid">{{ entry_total_paid }}</label>
+                                <div class="col-sm-3">
+                                    <input type="text" readonly
+                                           class="form-control-plaintext form-control"
+                                           id="input-order_total_paid"
+                                           value="{{ order.total_paid }}">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-1 control-label"
+                                       for="input-order_customer_note">{{ entry_customer_notes }}</label>
+                                <div class="col-sm-11">
+                                    <textarea type="text" readonly
+                                              class="form-control-plaintext form-control"
+                                              id="input-order_customer_note"
+                                    >{{ order.customer_note }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="tab-address">
+                            {% for item in addresses %}
+                                <div class="col-sm-6">
+                                    <fieldset>
+                                        <legend>{{ item.name }}</legend>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"
+                                                   for="input-address_firstname_{{ item.type }}"
+                                            >{{ entry_firstname }}</label>
+                                            <div class="col-sm-10">
+                                                <input type="text" readonly
+                                                       class="form-control-plaintext form-control"
+                                                       id="input-address_firstname_{{ item.type }}"
+                                                       value="{{ item.firstname }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"
+                                                   for="input-address_lastname_{{ item.type }}"
+                                            >{{ entry_lastname }}</label>
+                                            <div class="col-sm-10">
+                                                <input type="text" readonly
+                                                       class="form-control-plaintext form-control"
+                                                       id="input-address_lastname_{{ item.type }}"
+                                                       value="{{ item.lastname }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"
+                                                   for="input-address_city_{{ item.type }}"
+                                            >{{ entry_city }}</label>
+                                            <div class="col-sm-10">
+                                                <input type="text" readonly
+                                                       class="form-control-plaintext form-control"
+                                                       id="input-address_city_{{ item.type }}"
+                                                       value="{{ item.city }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"
+                                                   for="input-address_street_{{ item.type }}"
+                                            >{{ entry_street }}</label>
+                                            <div class="col-sm-10">
+                                                <input type="text" readonly
+                                                       class="form-control-plaintext form-control"
+                                                       id="input-address_street_{{ item.type }}"
+                                                       value="{{ item.street }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"
+                                                   for="input-address_postcode_{{ item.type }}"
+                                            >{{ entry_postcode }}</label>
+                                            <div class="col-sm-10">
+                                                <input type="text" readonly
+                                                       class="form-control-plaintext form-control"
+                                                       id="input-address_postcode_{{ item.type }}"
+                                                       value="{{ item.postcode }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"
+                                                   for="input-address_country_id_{{ item.type }}"
+                                            >{{ entry_country }}</label>
+                                            <div class="col-sm-10">
+                                                <input type="text" readonly
+                                                       class="form-control-plaintext form-control"
+                                                       id="input-address_country_id_{{ item.type }}"
+                                                       value="{{ item.country_id }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"
+                                                   for="input-address_telephone_{{ item.type }}"
+                                            >{{ entry_telephone }}</label>
+                                            <div class="col-sm-10">
+                                                <input type="text" readonly
+                                                       class="form-control-plaintext form-control"
+                                                       id="input-address_telephone_{{ item.type }}"
+                                                       value="{{ item.telephone }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"
+                                                   for="input-address_email_{{ item.type }}"
+                                            >{{ entry_email }}</label>
+                                            <div class="col-sm-10">
+                                                <input type="text" readonly
+                                                       class="form-control-plaintext form-control"
+                                                       id="input-address_email_{{ item.type }}"
+                                                       value="{{ item.email }}">
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="tab-pane" id="tab-products">
+                            <div class="table-responsive">
+                                <fieldset>
+                                    <legend>{{ text_products }}</legend>
+                                    <table class="table table-bordered table-hover">
+                                        <thead>
+                                        <tr>
+                                            <td class="text-left">{{ column_sku }}</td>
+                                            <td class="text-left">{{ column_name }}</td>
+                                            <td class="text-left">{{ column_quantity }}</td>
+                                            <td class="text-left">{{ column_price }}</td>
+                                            <td class="text-left">{{ column_reason }}</td>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% if items %}
+                                            {% for item in items %}
+                                                <tr>
+                                                    <td class="text-left">{{ item.sku }}</td>
+                                                    <td class="text-left">{{ item.name }}</td>
+                                                    <td class="text-left">{{ item.quantity }}</td>
+                                                    <td class="text-left">{{ item.price }}</td>
+                                                    <td class="text-left">{{ item.reason }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td class="text-center"
+                                                    colspan="8">{{ text_no_results }}</td>
+                                            </tr>
+                                        {% endif %}
+                                        </tbody>
+                                    </table>
+                                </fieldset>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-6 text-left">{{ pagination }}</div>
+                                <div class="col-sm-6 text-right">{{ results }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{ footer }}

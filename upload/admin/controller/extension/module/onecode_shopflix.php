@@ -18,6 +18,7 @@ require_once DIR_SYSTEM . 'library/onecode/EventGroup.php';
  * @property-read \ModelSettingExtension $model_setting_extension
  * @property-read \ModelCustomerCustomerGroup $model_customer_customer_group
  * @property-read \ModelExtensionModuleOnecodeShopflixOrder $model_extension_module_onecode_shopflix_order
+ * @property-read \ModelExtensionModuleOnecodeShopflixReturnOrder $model_extension_module_onecode_shopflix_return_order
  * @property-read \ModelExtensionModuleOnecodeShopflixOrderInvoice $model_extension_module_onecode_shopflix_order_invoice
  * @property-read \ModelExtensionModuleOnecodeShopflixProductAttributes $model_extension_module_onecode_shopflix_product_attributes
  * @property-read \ModelExtensionModuleOnecodeShopflixProduct $model_extension_module_onecode_shopflix_product
@@ -38,6 +39,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->load->model('setting/extension');
         $this->load->model('user/api');
         $this->load->model('extension/module/onecode/shopflix/order');
+        $this->load->model('extension/module/onecode/shopflix/return_order');
         $this->load->model('extension/module/onecode/shopflix/order_invoice');
         $this->load->model('extension/module/onecode/shopflix/product');
         $this->load->model('extension/module/onecode/shopflix/product_attributes');
@@ -58,6 +60,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         {
             $this->patch_1_2_3();
             $this->patch_1_3_0();
+            $this->patch_1_3_3();
             $this->moduleConfigure($moduleId);
         }
         else
@@ -84,11 +87,13 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->model_extension_module_onecode_shopflix_shipment->install();
         $this->patch_1_2_3();
         $this->patch_1_3_0();
+        $this->patch_1_3_3();
     }
 
     public function uninstall()
     {
-        $this->model_extension_module_onecode_shopflix_product_attributes->install();
+        $this->model_extension_module_onecode_shopflix_return_order->uninstall();
+        $this->model_extension_module_onecode_shopflix_product_attributes->uninstall();
         $this->model_extension_module_onecode_shopflix_config->uninstall();
         $this->model_extension_module_onecode_shopflix_event->uninstall();
         $this->model_extension_module_onecode_shopflix_shipment->uninstall();
@@ -131,15 +136,28 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         }
     }
 
+    private function patch_1_3_3(){
+        $latest_patch = $this->configHelper->getLatestPatch();
+        $need_to_run = is_null($latest_patch);
+
+        if (! $need_to_run)
+        {
+            $latest_patch = explode('_', $latest_patch);
+            $need_to_run = ($latest_patch[0] <= 1 && $latest_patch[1] <= 3 && $latest_patch[2] < 3);
+        }
+        if ($need_to_run)
+        {
+            $this->model_extension_module_onecode_shopflix_return_order->install();
+            $this->configHelper->updateLatestPatch('1_3_3');
+        }
+    }
+
     public function validate(): bool
     {
         if (! $this->user->hasPermission('modify', 'extension/module/onecode/shopflix/onecode_shopflix'))
         {
             $this->error['warning'] = $this->language->get('error_permission');
         }
-        //if ((utf8_strlen($this->request->post['name']) < 3) || (utf8_strlen($this->request->post['name']) > 64)) {
-        //    $this->error['name'] = $this->language->get('error_name');
-        //}
         return ! $this->error;
     }
 
@@ -302,6 +320,14 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                     true
                 )
             ];
+            //$shopflix_menu[] = [
+            //    'name' => $this->language->get('text_Return_Orders'),
+            //    'href' => $this->url->link(
+            //        'extension/module/onecode/shopflix/return_order',
+            //        $url_params,
+            //        true
+            //    )
+            //];
             $shopflix_menu[] = [
                 'name' => $this->language->get('text_Shipments'),
                 'href' => $this->url->link(

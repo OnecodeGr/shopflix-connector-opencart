@@ -63,7 +63,7 @@ class ModelExtensionModuleOnecodeShopflixOrder extends Helper\Model\Order
         $catalog = $this->request->server['HTTPS'] ? HTTPS_CATALOG : HTTP_CATALOG;
         $catalog = parse_url($catalog, PHP_URL_HOST) == 'opencart.test' ? 'http://apache/' : $catalog;
         $this->client = new Client(['base_uri' => $catalog . 'index.php']);
-        if ($this->model_extension_module_onecode_shopflix_config->apiUrl() != '')
+        if ($this->config_model->apiUrl() != '')
         {
             $this->connector = new Connector(
                 $this->config_model->apiUsername(),
@@ -239,7 +239,7 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
 
         $sql .= (isset($data['sort']) && in_array($data['sort'], $sort_data))
             ? " ORDER BY " . $data['sort']
-            : " ORDER BY pd.name";
+            : " ORDER BY o.reference_id";
 
         $sql .= isset($data['order']) && ($data['order'] == 'DESC') ? " DESC" : " ASC";
 
@@ -462,10 +462,6 @@ FOREIGN KEY (shopflix_id) REFERENCES " . self::getTableName() . "(id) ON UPDATE 
         try
         {
             $this->connector->rejected($order_id, $message);
-            //print_r([
-            //    'message' => $message,
-            //    'order_id' => $order_id
-            //]);
             return true;
         }
         catch (Exception $e)
