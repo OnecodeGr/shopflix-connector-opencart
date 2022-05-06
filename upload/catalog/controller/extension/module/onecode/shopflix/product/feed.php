@@ -181,11 +181,11 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
 
     protected function storeXml($xmlContents, $type)
     {
-        $filePath = DIR_STORAGE.'shopflix';
-        $fileName = 'shopflix_product_list_' . $type . '.xml';
+        $filePath = DIR_STORAGE.'shopflix/feed/'.$type;
+        $fileName = 'shopflix_product_list.xml';
 
         if (!is_dir($filePath)){
-            mkdir($filePath);
+            mkdir($filePath, 0777, true);
         }
 
         file_put_contents($filePath.'/'.$fileName, $xmlContents);
@@ -193,7 +193,7 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
 
     protected function loadXml($type)
     {
-        $filename = DIR_STORAGE.'shopflix/shopflix_product_list_' . $type . '.xml';
+        $filename = DIR_STORAGE.'shopflix/feed/'.$type.'shopflix_product_list.xml';
         if (file_exists($filename))
         {
             return file_get_contents($filename);
