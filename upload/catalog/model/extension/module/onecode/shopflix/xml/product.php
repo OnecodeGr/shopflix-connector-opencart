@@ -363,7 +363,8 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
      */
     public function getCategory(): array
     {
-        return $this->category;
+        $arr = array_unique($this->category);
+        return array_filter($arr);
     }
 
     /**

@@ -108,7 +108,7 @@ class ControllerExtensionModuleOnecodeShopflixProductFeed extends Controller
             $this->xmlMinimal->addProduct($product);
         }
         $this->response->addHeader('Content-Type: text/xml');
-        $xml = $this->xmlDocument->getXML($products);
+        $xml = $this->xmlMinimal->getXML($products);
         $this->storeXml($xml, 'minimal');
         $this->response->setOutput($xml);
     }
