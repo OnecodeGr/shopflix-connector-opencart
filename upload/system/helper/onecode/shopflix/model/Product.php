@@ -66,12 +66,14 @@ class Product extends Model
        pd.name,
        pd.description,
        mp.name as manufacturer,
+       sp.price as special_price,
        p.*,
        (CASE WHEN op.status IS NOT NULL THEN op.status ELSE 0 END) AS enabled
 FROM %s%s AS p",
                 DB_PREFIX, 'product'),
             sprintf("LEFT JOIN %s%s AS pd ON p.product_id = pd.product_id", DB_PREFIX, 'product_description'),
             sprintf("LEFT JOIN %s%s AS mp ON p.manufacturer_id = mp.manufacturer_id", DB_PREFIX, 'manufacturer'),
+            sprintf("LEFT JOIN %s%s AS sp ON p.product_id = sp.product_id AND sp.date_start < CURDATE() AND sp.date_end > CURDATE()", \DB_PREFIX, 'product_special'),
             sprintf("LEFT JOIN %s AS op ON p.product_id = op.product_id", self::getTableName()),
             sprintf("WHERE pd.language_id = '%d'", (int) $this->config->get('config_language_id')),
         ];
