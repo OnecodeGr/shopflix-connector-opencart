@@ -378,8 +378,11 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
     {
         $this->setProductId($product['product_id']);
         $this->setSku($product['sku'] ?? '');
-        $price = $this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax'));
-        $this->setPrice($price);
+
+        $final_price = $product['special_price'] > 0 && isset($product['special_price']) ? $product['special_price'] : $product['price'] ;
+        $this->setPrice($this->tax->calculate($final_price, $product['tax_class_id'], $this->config->get('config_tax')));
+        $this->setListPrice($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax'))); 
+
         $this->setProductUrl($this->url->link('product/product', 'product_id=' . $product['product_id']));
         $this->setCategory($product['categories']);
         $this->setQuantity($product['quantity']);
@@ -415,15 +418,6 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
 
         if (isset($product['attributes']) && count($product['attributes']))
         {
-            $attr = $this->model_extension_module_onecode_shopflix_xml->listPriceAttr();
-            $list_price = 0.0;
-            array_walk($product['attributes'], function ($item) use ($attr, &$list_price) {
-                if (array_key_exists('attribute_id', $item) && $item['attribute_id'] == $attr)
-                {
-                    $list_price = floatval($item['name']);
-                }
-            });
-            $this->setListPrice($list_price);
 
             $attr = $this->model_extension_module_onecode_shopflix_xml->shippingTimeAttr();
             $shipping_time = 0;
