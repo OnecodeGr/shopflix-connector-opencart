@@ -380,6 +380,7 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
         $this->setSku($product['sku'] ?? '');
 
         $final_price = $product['special_price'] > 0 && isset($product['special_price']) ? $product['special_price'] : $product['price'] ;
+       
         $this->setPrice($this->tax->calculate($final_price, $product['tax_class_id'], $this->config->get('config_tax')));
         $this->setListPrice($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax'))); 
 
