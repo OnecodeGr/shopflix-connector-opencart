@@ -108,17 +108,17 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
 
     public function install()
     {
-        $this->createOrderTable();
-        $this->createOrderAddressTable();
-        $this->createOrderItemTable();
-        $this->update_character_collection();
+        //$this->createOrderTable();
+        //$this->createOrderAddressTable();
+        //$this->createOrderItemTable();
+        //$this->update_character_collection();
     }
 
     public function uninstall()
     {
-        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getItemTableName()));
-        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getAddressTableName()));
-        $this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getTableName()));
+        //$this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getItemTableName()));
+        //$this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getAddressTableName()));
+        //$this->db->query(sprintf('DROP TABLE IF EXISTS %s', self::getTableName()));
     }
 
     public function update_character_collection()
