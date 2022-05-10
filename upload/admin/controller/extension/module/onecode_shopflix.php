@@ -100,6 +100,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->model_extension_module_onecode_shopflix_product->uninstall();
         $this->model_extension_module_onecode_shopflix_order_invoice->uninstall();
         $this->model_extension_module_onecode_shopflix_order->uninstall();
+        $this->configHelper->updateLatestPatch('0_0_0');
     }
 
     private function patch_1_2_3()
