@@ -54,10 +54,37 @@ class ModelExtensionModuleOnecodeShopflixXmlDocument extends Model
         return $this;
     }
 
+    /**
+     * @param \ModelExtensionModuleOnecodeShopflixXmlProduct $product
+     *
+     * @return void
+     * @throws \Exception
+     */
+    protected function validateProduct(ModelExtensionModuleOnecodeShopflixXmlProduct $product): void
+    {
+        if ($product->getPrice() <= 0)
+        {
+            throw new Exception('ignore product due to price regulations');
+        }
+        if ($product->getQuantity() <= 0)
+        {
+            throw new Exception('ignore product due to qty regulations');
+        }
+    }
+
     public function addProduct(array $product): self
     {
-        $this->products[] = $this->product->loadFromCatalogProduct($product);
-        $this->updateMeta();
+        try
+        {
+            $product = $this->product->loadFromCatalogProduct($product);
+            $this->validateProduct($product);
+            $this->products[] = $product;
+            $this->updateMeta();
+        }
+        catch (\Exception $e)
+        {
+            return $this;
+        }
         return $this;
     }
 
@@ -112,10 +139,15 @@ class ModelExtensionModuleOnecodeShopflixXmlDocument extends Model
             $productElement->appendChild($dom_doc->createElement('weight', $product->getWeight()));
             $productElement->appendChild($dom_doc->createElement('manufacturer', $product->getManufacturer()));
             $productElement->appendChild($dom_doc->createElement('image', $product->getImage()));
-            $categoryElement = $dom_doc->createElement('category');
-            $categoryElement->appendChild($dom_doc->createCDATASection
-            (implode($product->getCategory(), ',')));
-            $productElement->appendChild($categoryElement);
+
+            $productCategories = $product->getCategory();
+            if(!empty($productCategories)){
+                $categoryElement = $dom_doc->createElement('category');
+                $categoryElement->appendChild($dom_doc->createCDATASection
+                (implode($product->getCategory(), ',')));
+                $productElement->appendChild($categoryElement);
+            }
+
             $productsElement->appendChild(clone $productElement);
         }
         $storeElement->appendChild($productsElement);

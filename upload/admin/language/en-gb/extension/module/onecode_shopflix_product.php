@@ -24,13 +24,13 @@ $_['entry_status'] = 'Status';
 $_['entry_enabled'] = 'Enabled';
 $_['entry_quantity'] = 'Quantity';
 $_['entry_image'] = 'Image';
-
+$_['entry_manufacturer'] = 'Manufacturer';
+$_['entry_category'] = 'Category';
 //Error
 $_['error_permission'] = 'Warning: You do not have permission to modify `OneCodeGr - ShopFlix` module!';
 $_['error_name'] = 'Product Name must be greater than 1 and less than 255 characters!';
 $_['error_meta_title'] = 'Meta Title must be greater than 1 and less than 255 characters!';
 $_['error_model'] = 'Product Model must be greater than 1 and less than 64 characters!';
-
 // Column
 $_['column_name'] = 'Product Name';
 $_['column_model'] = 'Model';
@@ -40,6 +40,8 @@ $_['column_quantity'] = 'Quantity';
 $_['column_status'] = 'Catalog Status';
 $_['column_enabled'] = 'Shopflix Status';
 $_['column_action'] = 'Action';
+$_['column_categories'] = 'Categories';
+$_['column_manufacturer'] = 'Manufacturer';
 
 //Button
 $_['button_enable_all'] = 'Enable All';

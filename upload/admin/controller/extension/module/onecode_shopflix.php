@@ -100,6 +100,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->model_extension_module_onecode_shopflix_product->uninstall();
         $this->model_extension_module_onecode_shopflix_order_invoice->uninstall();
         $this->model_extension_module_onecode_shopflix_order->uninstall();
+        $this->configHelper->updateLatestPatch('0_0_0');
     }
 
     private function patch_1_2_3()
@@ -320,14 +321,14 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                     true
                 )
             ];
-            $shopflix_menu[] = [
+            /*$shopflix_menu[] = [
                 'name' => $this->language->get('text_Return_Orders'),
                 'href' => $this->url->link(
                     'extension/module/onecode/shopflix/return_order',
                     $url_params,
                     true
                 )
-            ];
+            ];*/
             $shopflix_menu[] = [
                 'name' => $this->language->get('text_Shipments'),
                 'href' => $this->url->link(
