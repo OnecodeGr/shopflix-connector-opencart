@@ -8,7 +8,7 @@ This extension is connecting your OpenCart v3.0.3.x with [SHOPFLIX](https://SHOP
   * Download and install the plugin in order to fix the permissions on `system` directory
 ## Version PHP 7.1 - 7.2
 * [onecode-shopflix.ocmod-7.1.zip](https://github.com/OnecodeGr/shopflix-connector-opencart/raw/php-7.1/onecode-shopflix.ocmod.zip)
-## Version 7.4+
+## Version 7.3+
 * [onecode-shopflix.ocmod-7.4.zip](https://github.com/OnecodeGr/shopflix-connector-opencart/raw/main/onecode-shopflix.ocmod.zip)
 ## Installation
 * Upload **onecode-shopflix.ocmod-7.x.zip** to your system using **Admin > Extension > Installer**
