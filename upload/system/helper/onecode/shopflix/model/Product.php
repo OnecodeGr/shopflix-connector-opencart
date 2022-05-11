@@ -66,6 +66,26 @@ class Product extends Model
        pd.name,
        pd.description,
        mp.name as manufacturer,
+       (
+            SELECT price 
+            FROM " . DB_PREFIX . "product_discount pd2 
+            WHERE pd2.product_id = p.product_id 
+            AND pd2.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "'
+            AND pd2.quantity = '1'
+            AND (
+                (pd2.date_start = '0000-00-00' OR pd2.date_start < NOW())
+                AND (pd2.date_end = '0000-00-00' OR pd2.date_end > NOW())
+            ) ORDER BY pd2.priority ASC, pd2.price ASC LIMIT 1
+        ) AS discount,
+       (
+            SELECT price 
+            FROM " . DB_PREFIX . "product_special ps 
+            WHERE ps.product_id = p.product_id 
+            AND ps.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' 
+            AND ((ps.date_start = '0000-00-00' OR ps.date_start < NOW()) 
+            AND (ps.date_end = '0000-00-00' OR ps.date_end > NOW())) 
+            ORDER BY ps.priority ASC, ps.price ASC LIMIT 1
+       ) AS special,
        p.*,
        (CASE WHEN op.status IS NOT NULL THEN op.status ELSE 0 END) AS enabled
 FROM %s%s AS p",
