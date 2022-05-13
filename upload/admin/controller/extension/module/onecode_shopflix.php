@@ -30,6 +30,13 @@ require_once DIR_SYSTEM . 'library/onecode/EventGroup.php';
  */
 class ControllerExtensionModuleOnecodeShopflix extends Controller
 {
+    const VOUCHER_TYPE_PDF = 'pdf';
+    const VOUCHER_TYPE_CLEAN = 'clean';
+    const VOUCHER_TYPE_SINGLE_PDF = 'singlepdf';
+    const VOUCHER_TYPE_SINGLE_CLEAN = 'singleclean';
+    const VOUCHER_TYPE_SINGLE_PDF_150 = 'singlepdf_100x150';
+    const VOUCHER_TYPE_SINGLE_PDF_170 = 'singlepdf_100x170';
+
     private $error = [];
 
     public function __construct($registry)
@@ -198,6 +205,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             'error_keyword' => $this->error['error_keyword'] ?? '',
             'error_status' => $this->error['error_status'] ?? '',
             'error_convert_to_order' => $this->error['error_convert_to_order'] ?? '',
+            'error_shipment_pdf_type' => $this->error['error_shipment_pdf_type'] ?? '',
             'error_customer_group' => $this->error['error_customer_group'] ?? '',
             'error_api_url' => $this->error['error_api_url'] ?? '',
             'error_api_username' => $this->error['error_api_username'] ?? '',
@@ -260,6 +268,14 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             ], true),
             'user_token' => $user_token,
             'payment_methods' => $payment_methods,
+            'voucher_pdf_types' => [
+                ['id' => self::VOUCHER_TYPE_PDF, 'name' => $this->language->get('text_pdf')],
+                ['id' => self::VOUCHER_TYPE_CLEAN, 'name' => $this->language->get('text_clean')],
+                ['id' => self::VOUCHER_TYPE_SINGLE_PDF, 'name' => $this->language->get('text_single_pdf')],
+                ['id' => self::VOUCHER_TYPE_SINGLE_CLEAN, 'name' => $this->language->get('text_single_clean')],
+                ['id' => self::VOUCHER_TYPE_SINGLE_PDF_150, 'name' => $this->language->get('text_single_pdf_150')],
+                ['id' => self::VOUCHER_TYPE_SINGLE_PDF_170, 'name' => $this->language->get('text_single_pdf_170')],
+            ],
             'shipping_methods' => $shipping_methods,
             'customer_groups' => $customer_groups,
             'product_attributes' => $attributes
@@ -321,14 +337,14 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                     true
                 )
             ];
-            /*$shopflix_menu[] = [
+            $shopflix_menu[] = [
                 'name' => $this->language->get('text_Return_Orders'),
                 'href' => $this->url->link(
                     'extension/module/onecode/shopflix/return_order',
                     $url_params,
                     true
                 )
-            ];*/
+            ];
             $shopflix_menu[] = [
                 'name' => $this->language->get('text_Shipments'),
                 'href' => $this->url->link(

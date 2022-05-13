@@ -30,6 +30,12 @@ $_['text_api_configuration'] = 'Api Configuration';
 $_['text_xml_configuration'] = 'XML Configuration';
 $_['text_customer_group'] = 'Customer Group';
 $_['text_order_configuration'] = 'Order Configuration';
+$_['text_pdf'] = 'PDF';
+$_['text_clean'] = 'Clean';
+$_['text_single_pdf'] = 'Single PDF';
+$_['text_single_clean'] = 'Single Clean';
+$_['text_single_pdf_150'] = 'Single PDF 100x150';
+$_['text_single_pdf_170'] = 'Single PDF 100x170';
 //Help
 $_['help_status'] = 'Enable / Disable ';
 $_['help_convert_to_order'] = 'When a shopflix order has been accepted do you want to convert it to OpenCart order';
@@ -79,6 +85,7 @@ $_['entry_customer_group'] = 'Customer Group';
 $_['entry_shipping_method'] = 'Shipping method';
 $_['entry_payment_method'] = 'Payment method';
 $_['entry_api_user'] = 'OC Api User';
+$_['entry_voucher_export_type'] = 'Voucher Type';
 //Error
 $_['error_permission'] = 'Warning: You do not have permission to modify `OneCodeGr - ShopFlix` module!';
 $_['error_status'] = '`Enable` value is not accepted';
