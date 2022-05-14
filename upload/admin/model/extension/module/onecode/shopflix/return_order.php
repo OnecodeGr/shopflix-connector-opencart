@@ -40,7 +40,8 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
             $this->connector = new Connector(
                 $this->config_model->apiUsername(),
                 $this->config_model->apiPassword(),
-                $this->config_model->apiUrl()
+                $this->config_model->apiUrl(),
+                '-7 days'//as maximum windows for accepted/declined orders
             );
         }
     }
@@ -407,48 +408,22 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
         }
     }
 
-    public function updateStatus(array $data, string $status): ?array
+    public function addOrder(array $data, string $status = ReturnOrderInterface::STATUS_RETURN_REQUESTED): ?array
     {
-        switch ($status) {
-            /* ReturnOrderInterface::STATUS_ON_THE_WAY_TO_THE_STORE -> ReturnOrderInterface::STATUS_RETURN_REQUESTED */
-            case ReturnOrderInterface::STATUS_ON_THE_WAY_TO_THE_STORE:
-                if ($data['status'] != ReturnOrderInterface::STATUS_RETURN_REQUESTED) {
-                    return $data;
-                }
-                break;
-            /* ReturnOrderInterface::STATUS_DELIVERED_TO_THE_STORE -> ReturnOrderInterface::STATUS_DELIVERED_TO_THE_STORE */
-            case ReturnOrderInterface::STATUS_DELIVERED_TO_THE_STORE:
-                if ($data['status'] != ReturnOrderInterface::STATUS_ON_THE_WAY_TO_THE_STORE) {
-                    return $data;
-                }
-                break;
-            /* ReturnOrderInterface::STATUS_ON_THE_WAY_TO_THE_STORE -> ReturnOrderInterface::STATUS_RETURN_APPROVED */
-            /* ReturnOrderInterface::STATUS_ON_THE_WAY_TO_THE_STORE -> ReturnOrderInterface::STATUS_RETURN_DECLINED */
-            case ReturnOrderInterface::STATUS_RETURN_APPROVED:
-            case ReturnOrderInterface::STATUS_RETURN_DECLINED:
-                if ($data['status'] != ReturnOrderInterface::STATUS_DELIVERED_TO_THE_STORE) {
-                    return $data;
-                }
-                break;
-            /* ReturnOrderInterface::STATUS_RETURN_APPROVED -> ReturnOrderInterface::STATUS_RETURN_COMPLETED */
-            case ReturnOrderInterface::STATUS_RETURN_COMPLETED:
-                if ($data['status'] != ReturnOrderInterface::STATUS_RETURN_APPROVED) {
-                    return $data;
-                }
-                break;
-            default:
-                return $data;
-        }
-        try {
+        //check if order exists on our system, if exists then update only the status else save the order
+        $existingOrder = $this->getOrderByReferenceId($data['reference_id'] ?? 0);
+        if (isset($existingOrder['id'])) {
             $this->db->query(
                 sprintf(
                     "'UPDATE %s SET `status` = '%s' WHERE id = %d",
                     static::getTableName(),
-                    $status,
-                    $data['id']
+                    $this->db->escape($status) . "','",
+                    $existingOrder['id']
                 )
             );
-        } catch (Exception $e) {
+            $data['status'] = $status;
+            return $data;
         }
+        return $this->save($data);
     }
 }

@@ -283,10 +283,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
                 if (count($catalog_item) == 0) {
                     throw new LogicException(
                         sprintf(
-                            $this->language->get
-                            (
-                                'error_order_reference_contains_invalid_sku'
-                            ),
+                            $this->language->get('error_order_reference_contains_invalid_sku'),
                             $o_d['reference_id'],
                             $item_row[ItemInterface::SKU]
                         )
@@ -313,14 +310,11 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
         $to_save = $this->buildOrderItems($orders);
         if (count($to_save)) {
             foreach ($to_save as $order) {
-                $order_stored = $this->return_order_model->save($order);
+                $order_stored = $this->return_order_model->addOrder($order);
                 if (is_null($order_stored)) {
                     throw new LogicException(
                         sprintf(
-                            $this->language->get
-                            (
-                                'error_unable_to_save_order_with_reference'
-                            ),
+                            $this->language->get('error_unable_to_save_order_with_reference'),
                             $order['reference_id']
                         )
                     );
@@ -339,17 +333,14 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
         $to_save = $this->buildOrderItems($orders);
         if (count($to_save)) {
             foreach ($to_save as $order) {
-                $order_stored = $this->return_order_model->updateStatus(
+                $order_stored = $this->return_order_model->addOrder(
                     $order,
                     ReturnOrderInterface::STATUS_ON_THE_WAY_TO_THE_STORE
                 );
                 if (is_null($order_stored)) {
                     throw new LogicException(
                         sprintf(
-                            $this->language->get
-                            (
-                                'error_unable_to_save_order_with_reference'
-                            ),
+                            $this->language->get('error_unable_to_save_order_with_reference'),
                             $order['reference_id']
                         )
                     );
@@ -368,7 +359,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
         $to_save = $this->buildOrderItems($orders);
         if (count($to_save)) {
             foreach ($to_save as $order) {
-                $order_stored = $this->return_order_model->updateStatus(
+                $order_stored = $this->return_order_model->addOrder(
                     $order,
                     ReturnOrderInterface::STATUS_DELIVERED_TO_THE_STORE
                 );
@@ -376,9 +367,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
                     throw new LogicException(
                         sprintf(
                             $this->language->get
-                            (
-                                'error_unable_to_save_order_with_reference'
-                            ),
+                            ('error_unable_to_save_order_with_reference'),
                             $order['reference_id']
                         )
                     );
@@ -397,7 +386,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
         $to_save = $this->buildOrderItems($orders);
         if (count($to_save)) {
             foreach ($to_save as $order) {
-                $order_stored = $this->return_order_model->updateStatus(
+                $order_stored = $this->return_order_model->addOrder(
                     $order,
                     ReturnOrderInterface::STATUS_RETURN_APPROVED
                 );
@@ -405,9 +394,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
                     throw new LogicException(
                         sprintf(
                             $this->language->get
-                            (
-                                'error_unable_to_save_order_with_reference'
-                            ),
+                            ('error_unable_to_save_order_with_reference'),
                             $order['reference_id']
                         )
                     );
@@ -426,7 +413,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
         $to_save = $this->buildOrderItems($orders);
         if (count($to_save)) {
             foreach ($to_save as $order) {
-                $order_stored = $this->return_order_model->updateStatus(
+                $order_stored = $this->return_order_model->addOrder(
                     $order,
                     ReturnOrderInterface::STATUS_RETURN_DECLINED
                 );
@@ -434,9 +421,7 @@ class ControllerExtensionModuleOnecodeShopflixReturnOrder extends Controller
                     throw new LogicException(
                         sprintf(
                             $this->language->get
-                            (
-                                'error_unable_to_save_order_with_reference'
-                            ),
+                            ('error_unable_to_save_order_with_reference'),
                             $order['reference_id']
                         )
                     );
