@@ -381,20 +381,20 @@ class ModelExtensionModuleOnecodeShopflixXmlProduct extends Model
         $this->setProductId($product['product_id']);
         $this->setSku($product['sku'] ?? '');
 
-        $price = $this->currency->format(
+        $price =
             $this->tax->calculate(
                 $product['price'],
                 $product['tax_class_id'],
                 true
-            ), $this->session->data['currency'],'',false);
+            );
 
 
         if (!is_null($product['special']) && (float)$product['special'] >= 0) {
-            $special = $this->currency->format(
+            $special =
                 $this->tax->calculate($product['special'],
                     $product['tax_class_id'],
                     true
-                ), $this->session->data['currency'],'',false);
+                );
         } else {
             $special = false;
         }
