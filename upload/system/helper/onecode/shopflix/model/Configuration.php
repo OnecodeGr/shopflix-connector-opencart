@@ -121,6 +121,6 @@ class Configuration extends Model
             return '';
         }
         $data = $this->loadData();
-        return $data['voucher_pdf_type'] ?? null;
+        return $data['voucher_pdf_type'] ?? 'pdf';
     }
 }
