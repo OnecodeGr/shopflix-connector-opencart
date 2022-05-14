@@ -113,4 +113,14 @@ class Configuration extends Model
         $data = $this->loadData();
         return $data['payment_method'] ?? '';
     }
+
+
+    public function voucherExportType(): ?string
+    {
+        if (!$this->isEnabled()){
+            return '';
+        }
+        $data = $this->loadData();
+        return $data['voucher_pdf_type'] ?? 'pdf';
+    }
 }
