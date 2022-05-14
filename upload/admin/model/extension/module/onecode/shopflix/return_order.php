@@ -3,7 +3,6 @@
 use GuzzleHttp\Client;
 use Onecode\Shopflix\Helper;
 use Onecode\ShopFlixConnector\Library\Connector;
-use Onecode\ShopFlixConnector\Library\Interfaces\OrderInterface;
 use Onecode\ShopFlixConnector\Library\Interfaces\ReturnOrderInterface;
 
 require_once DIR_SYSTEM . 'library/onecode/vendor/autoload.php';
@@ -37,19 +36,21 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
         $this->load->model('setting/extension');
         $this->load->model('extension/module/onecode/shopflix/config');
         $this->config_model = new ModelExtensionModuleOnecodeShopflixConfig($registry);
-        if ($this->config_model->apiUrl() != '')
-        {
+        if ($this->config_model->apiUrl() != '') {
             $this->connector = new Connector(
                 $this->config_model->apiUsername(),
                 $this->config_model->apiPassword(),
-                $this->config_model->apiUrl()
+                $this->config_model->apiUrl(),
+                '-7 days'//as maximum windows for accepted/declined orders
             );
         }
     }
 
     protected function createOrderTable()
     {
-        $this->db->query(sprintf("CREATE TABLE IF NOT EXISTS %s (
+        $this->db->query(
+            sprintf(
+                "CREATE TABLE IF NOT EXISTS %s (
  `id` INT UNSIGNED AUTO_INCREMENT NOT NULL,
  `order_id` INT UNSIGNED NOT NULL,
  `vendor_parent_id` varchar(255),
@@ -69,12 +70,18 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
  UNIQUE INDEX (`reference_id`),
  INDEX (`order_id`),
  FOREIGN KEY (order_id) REFERENCES %s(id) ON DELETE CASCADE ON UPDATE CASCADE
-)", self::getTableName(), self::getOrderTableName()));
+)",
+                self::getTableName(),
+                self::getOrderTableName()
+            )
+        );
     }
 
     protected function createOrderAddressTable()
     {
-        $this->db->query(sprintf("CREATE TABLE IF NOT EXISTS %s (
+        $this->db->query(
+            sprintf(
+                "CREATE TABLE IF NOT EXISTS %s (
  `id` INT UNSIGNED AUTO_INCREMENT NOT NULL,
  `order_id` INT UNSIGNED NOT NULL,
  `firstname` varchar(255),
@@ -89,12 +96,18 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
  PRIMARY KEY (`id`),
  UNIQUE INDEX (`order_id`,`type`),
     FOREIGN KEY (order_id) REFERENCES %s(id) ON DELETE CASCADE ON UPDATE CASCADE
-)", self::getAddressTableName(), self::getTableName()));
+)",
+                self::getAddressTableName(),
+                self::getTableName()
+            )
+        );
     }
 
     protected function createOrderItemTable()
     {
-        $this->db->query(sprintf("CREATE TABLE IF NOT EXISTS %s (
+        $this->db->query(
+            sprintf(
+                "CREATE TABLE IF NOT EXISTS %s (
  `id` INT UNSIGNED AUTO_INCREMENT NOT NULL,
  `order_id` INT UNSIGNED NOT NULL,
  `sku` varchar(255),
@@ -103,7 +116,11 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
  `reason` TEXT,
  PRIMARY KEY (`id`),
     FOREIGN KEY (order_id) REFERENCES %s(id) ON DELETE CASCADE ON UPDATE CASCADE
-)", self::getItemTableName(), self::getTableName()));
+)",
+                self::getItemTableName(),
+                self::getTableName()
+            )
+        );
     }
 
     public function install()
@@ -123,9 +140,18 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
 
     public function update_character_collection()
     {
-        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getTableName()));
-        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getItemTableName()));
-        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getAddressTableName()));
+        $this->db->query(
+            sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getTableName())
+        );
+        $this->db->query(
+            sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getItemTableName())
+        );
+        $this->db->query(
+            sprintf(
+                'alter table %s convert to character set utf8 collate utf8_general_ci;',
+                self::getAddressTableName()
+            )
+        );
     }
 
     public function getOrderById($order_id): array
@@ -150,55 +176,45 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
     public function getTotalOrders($data = []): int
     {
         $sql = sprintf("SELECT COUNT(DISTINCT o.id) AS total FROM %s AS o WHERE o.id > 0 ", self::getTableName());
-        if (! empty($data['filter_reference_id']))
-        {
+        if (! empty($data['filter_reference_id'])) {
             $sql .= " AND o.reference_id LIKE '" . $this->db->escape($data['filter_reference_id']) . "%'";
         }
-        if (! empty($data['filter_customer_email']))
-        {
+        if (! empty($data['filter_customer_email'])) {
             $sql .= " AND o.customer_email LIKE '" . $this->db->escape($data['filter_customer_email']) . "%'";
         }
-        if (! empty($data['filter_sub_total']))
-        {
+        if (! empty($data['filter_sub_total'])) {
             $sql .= " AND o.sub_total = " . floatval($data['filter_sub_total']);
         }
-        if (! empty($data['filter_total_paid']))
-        {
+        if (! empty($data['filter_total_paid'])) {
             $sql .= " AND o.total_paid = " . floatval($data['filter_total_paid']);
         }
 
         $query = $this->db->query($sql);
-        return (int) $query->row['total'];
+        return (int)$query->row['total'];
     }
 
     public function getAllOrders($data = []): array
     {
         $sql = sprintf("SELECT DISTINCT * FROM %s AS o WHERE o.id > 0  ", self::getTableName());
-        if (! empty($data['filter_reference_id']))
-        {
+        if (! empty($data['filter_reference_id'])) {
             $sql .= " AND o.reference_id LIKE '" . $this->db->escape($data['filter_reference_id']) . "%'";
         }
-        if (! empty($data['filter_related_order']))
-        {
+        if (! empty($data['filter_related_order'])) {
             $sql .= " AND o.vendor_parent_id LIKE '" . $this->db->escape($data['filter_related_order']) . "%'";
         }
-        if (! empty($data['filter_customer_email']))
-        {
+        if (! empty($data['filter_customer_email'])) {
             $sql .= " AND o.customer_email LIKE '" . $this->db->escape($data['filter_customer_email']) . "%'";
         }
-        if (! empty($data['filter_sub_total']))
-        {
+        if (! empty($data['filter_sub_total'])) {
             $sql .= " AND o.sub_total = " . floatval($data['filter_sub_total']);
         }
-        if (! empty($data['filter_total_paid']))
-        {
+        if (! empty($data['filter_total_paid'])) {
             $sql .= " AND o.total_paid = " . floatval($data['filter_total_paid']);
         }
 
         $sort_data = [
             'o.reference_id',
             'o.sub_total',
-            'o.discount_amount',
             'o.total_paid',
             'o.status',
             'o.customer_email',
@@ -211,11 +227,10 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
 
         $sql .= isset($data['order']) && ($data['order'] == 'DESC') ? " DESC" : " ASC";
 
-        if (isset($data['start']) || isset($data['limit']))
-        {
+        if (isset($data['start']) || isset($data['limit'])) {
             $data['start'] = max($data['start'], 0);
             $data['limit'] = $data['limit'] < 1 ? 20 : $data['limit'];
-            $sql .= " LIMIT " . (int) $data['start'] . "," . (int) $data['limit'];
+            $sql .= " LIMIT " . (int)$data['start'] . "," . (int)$data['limit'];
         }
 
         $query = $this->db->query($sql);
@@ -224,32 +239,23 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
 
     public function accept(array $order_ids): void
     {
-        foreach ($order_ids as $id)
-        {
-            try
-            {
+        foreach ($order_ids as $id) {
+            try {
                 $order = $this->getOrderById($id);
-                if ($order['status'] != ReturnOrderInterface::STATUS_ON_THE_WAY_TO_THE_STORE)
-                {
+                if ($order['status'] != ReturnOrderInterface::STATUS_DELIVERED_TO_THE_STORE) {
                     continue;
                 }
                 $this->db->query('START TRANSACTION;');
                 $this->connector->approveReturnedOrder($order['reference_id']);
                 $this->updateStatusAccept($id);
                 $this->db->query('COMMIT;');
-            }
-            catch (RuntimeException $exception)
-            {
+            } catch (RuntimeException $exception) {
                 $this->db->query('ROLLBACK;');
                 throw new RuntimeException($exception->getMessage());
-            }
-            catch (LogicException $exception)
-            {
+            } catch (LogicException $exception) {
                 $this->db->query('ROLLBACK;');
                 throw new LogicException($exception->getMessage());
-            }
-            catch (Exception $exception)
-            {
+            } catch (Exception $exception) {
                 $this->db->query('ROLLBACK;');
                 throw new Exception($exception->getMessage());
             }
@@ -258,11 +264,9 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
 
     public function decline($order_ids, string $decline_message): void
     {
-        foreach ($order_ids as $id)
-        {
+        foreach ($order_ids as $id) {
             $order = $this->getOrderById($id);
-            if ($order['status'] != ReturnOrderInterface::STATUS_ON_THE_WAY_TO_THE_STORE)
-            {
+            if ($order['status'] != ReturnOrderInterface::STATUS_ON_THE_WAY_TO_THE_STORE) {
                 continue;
             }
 
@@ -275,14 +279,18 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
 
     private function updateStatusAccept($order_id)
     {
-        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
-            ReturnOrderInterface::STATUS_RETURN_APPROVED . '\' WHERE `id` = ' . $order_id . ';');
+        $this->db->query(
+            'UPDATE `' . self::getTableName() . '` SET `status`= \'' .
+            ReturnOrderInterface::STATUS_RETURN_APPROVED . '\' WHERE `id` = ' . $order_id . ';'
+        );
     }
 
     private function updateStatusDecline($order_id)
     {
-        $this->db->query('UPDATE `' . self::getTableName() . '` SET `status`= \'' .
-            ReturnOrderInterface::STATUS_RETURN_DECLINED . '\' WHERE `id` = ' . $order_id . ';');
+        $this->db->query(
+            'UPDATE `' . self::getTableName() . '` SET `status`= \'' .
+            ReturnOrderInterface::STATUS_RETURN_DECLINED . '\' WHERE `id` = ' . $order_id . ';'
+        );
     }
 
     public function getOrderByReferenceId($id): array
@@ -300,15 +308,14 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
     public function save(array $data): ?array
     {
         $existing_order = $this->getOrderByReferenceId($data['reference_id']);
-        if (count($existing_order))
-        {
+        if (count($existing_order)) {
             return $existing_order;
         }
         $this->db->query("START TRANSACTION;");
         $parent_order = $this->getParentOrderByReferenceId($data['vendor_parent_id']);
-        try
-        {
-            $this->db->query("INSERT INTO " . self::getTableName() .
+        try {
+            $this->db->query(
+                "INSERT INTO " . self::getTableName() .
                 "(
                 `reference_id`,
                 `vendor_parent_id`,
@@ -316,7 +323,6 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
                 `status`,
                 `state`,
                 `sub_total`,
-                `discount_amount`,
                 `total_paid`,
                 `customer_email`,
                 `customer_firstname`,
@@ -329,11 +335,10 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
                 "('" .
                 $this->db->escape($data['reference_id']) . "','" .
                 $this->db->escape($data['vendor_parent_id']) . "','" .
-                (int) $parent_order['id'] . "','" .
+                (int)$parent_order['id'] . "','" .
                 $data['status'] . "','" .
                 $data['state'] . "'," .
                 $data['sub_total'] . "," .
-                $data['discount_amount'] . "," .
                 $data['total_paid'] . ",'" .
                 $data['customer_email'] . "','" .
                 $this->db->escape($data['customer_firstname']) . "','" .
@@ -343,11 +348,13 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
                 now()
                 )"
             );
-            $query = $this->db->query('SELECT id FROM ' . self::getTableName() . ' WHERE reference_id = \'' . $data['reference_id'] . '\' LIMIT 1;');
+            $query = $this->db->query(
+                'SELECT id FROM ' . self::getTableName(
+                ) . ' WHERE reference_id = \'' . $data['reference_id'] . '\' LIMIT 1;'
+            );
             $order_id = intval(count($query->rows) ? $query->row['id'] : '0');
             $data['id'] = $order_id;
-            if ($data['id'] == 0)
-            {
+            if ($data['id'] == 0) {
                 throw new Exception('No order saved');
             }
             //Store Address
@@ -355,51 +362,68 @@ class ModelExtensionModuleOnecodeShopflixReturnOrder extends Helper\Model\Return
                 $query = "INSERT INTO " . self::getAddressTableName() .
                     "(`order_id`,`firstname`,`lastname`,`postcode`,`telephone`,`street`,`type`,`city`,`email`,`country_id`)" .
                     " VALUES " .
-                    "(" . $order_id . ",'" . $this->db->escape($item['firstname']) . "','" . $this->db->escape($item['lastname']) . "','"
+                    "(" . $order_id . ",'" . $this->db->escape($item['firstname']) . "','" . $this->db->escape(
+                        $item['lastname']
+                    ) . "','"
                     . $this->db->escape($item['postcode']) . "','" . $item['telephone'] . "','"
-                    . $this->db->escape($item['street']) . "','" . $item['type'] . "','" . $this->db->escape($item['city']) .
+                    . $this->db->escape($item['street']) . "','" . $item['type'] . "','" . $this->db->escape(
+                        $item['city']
+                    ) .
                     "','" . $item['email'] . "','" . $this->db->escape($item['country_id']) . "')";
                 $this->db->query($query);
             });
             //Store Items
             array_walk($data['items'], function ($item) use ($order_id) {
-                $this->db->query("INSERT INTO " . self::getItemTableName() .
-                    "(
-                        `sku`,
-                        `order_id`,
-                        `price`,
-                        `quantity`,
-                        `reason`
-                    )" .
+                $query = "INSERT INTO " . self::getItemTableName() .
+                    "(`sku`,`order_id`,`price`,`quantity`,`reason`)" .
                     " VALUES " .
                     "('" .
-                        $this->db->escape($item['sku']) . "'," .
-                        $order_id . "," .
-                        $item['price'] . "," .
-                        $item['quantity'] .
-                        $item['reason'] .
-                    ")"
-                );
+                    $this->db->escape($item['sku']) . "'," .
+                    $order_id . "," .
+                    $item['price'] . "," .
+                    $item['quantity'] . "," .
+                    "'" . $this->db->escape($item['reason']) . "'" .
+                    ")";
+                $this->db->query($query);
             });
 
-            $query = $this->db->query('SELECT COUNT(*) as c FROM ' . self::getAddressTableName() . ' WHERE order_id = ' . $order_id);
-            if (intval(count($query->rows) ? $query->row['c'] : '0') == 0)
-            {
+            $query = $this->db->query(
+                'SELECT COUNT(*) as c FROM ' . self::getAddressTableName() . ' WHERE order_id = ' . $order_id
+            );
+            if (intval(count($query->rows) ? $query->row['c'] : '0') == 0) {
                 throw new Exception('No address saved');
             }
-            $query = $this->db->query('SELECT COUNT(*) as c FROM ' . self::getItemTableName() . ' WHERE order_id = ' . $order_id);
-            if (intval(count($query->rows) ? $query->row['c'] : '0') == 0)
-            {
+            $query = $this->db->query(
+                'SELECT COUNT(*) as c FROM ' . self::getItemTableName() . ' WHERE order_id = ' . $order_id
+            );
+            if (intval(count($query->rows) ? $query->row['c'] : '0') == 0) {
                 throw new Exception('No item saved');
             }
-            $this->db->query("COMMIT;");
+            $this->db->query("COMMIT");
             return $data;
-        }
-        catch (Exception $e)
-        {
+        } catch (Exception $e) {
             error_log(sprintf('Class: %s, method: %s, error: %s', __CLASS__, __METHOD__, $e->getMessage()));
             $this->db->query('ROLLBACK;');
             return null;
         }
+    }
+
+    public function addOrder(array $data, string $status = ReturnOrderInterface::STATUS_RETURN_REQUESTED): ?array
+    {
+        //check if order exists on our system, if exists then update only the status else save the order
+        $existingOrder = $this->getOrderByReferenceId($data['reference_id'] ?? 0);
+        if (isset($existingOrder['id'])) {
+            $this->db->query(
+                sprintf(
+                    "'UPDATE %s SET `status` = '%s' WHERE id = %d",
+                    static::getTableName(),
+                    $this->db->escape($status) . "','",
+                    $existingOrder['id']
+                )
+            );
+            $data['status'] = $status;
+            return $data;
+        }
+        return $this->save($data);
     }
 }

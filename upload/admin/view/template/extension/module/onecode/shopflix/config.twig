@@ -167,6 +167,21 @@
                                     {% endfor %}
                                 </select>
                             </div>
+                            <label class="col-sm-2 control-label"
+                                   for="input-voucher_pdf_type">{{ entry_voucher_export_type }}</label>
+                            <div class="col-sm-4">
+                                <select name="voucher_pdf_type" id="input-voucher_pdf_type"
+                                        class="form-control">
+                                    {% for method in voucher_pdf_types %}
+                                        {% if method.id == voucher_pdf_type %}
+                                            <option value="{{ method.id }}"
+                                                    selected="selected">{{ method.name }}</option>
+                                        {% else %}
+                                            <option value="{{ method.id }}">{{ method.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
                         </div>
                     </fieldset>
                     <fieldset>

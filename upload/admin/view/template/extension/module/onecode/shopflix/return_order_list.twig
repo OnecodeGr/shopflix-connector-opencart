@@ -150,8 +150,16 @@
                                                                value="{{ order.id }}"/>
                                                     {% endif %}</td>
                                                 <td class="text-left">{{ order.reference_id }}</td>
-                                                <td class="text-left">{{ order.related_order
-                                                    }}</td>
+                                                <td class="text-left">
+                                                    {{ order.related_order }}
+                                                    <a href="/admin/index.php?route=extension/module/onecode/shopflix/order/view&order_id={{ order.related_order_id }}&user_token={{ user_token }}"
+                                                       data-toggle="tooltip"
+                                                       target="_blank"
+                                                       title="{{ button_view }}"
+                                                       class="btn btn-info btn-sm"
+                                                    ><i class="fa fa-eye"></i></a>
+
+                                                </td>
                                                 <td class="text-left">{{ order.customer_email }}</td>
                                                 <td class="text-left">{{ order
                                                     .sub_total|number_format(2) }}</td>
