@@ -174,6 +174,11 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->document->setTitle($this->language->get('heading_title_main'));
         if ($this->request->server['REQUEST_METHOD'] == 'POST')
         {
+            $url = $this->request->post['api_url'] ? rtrim($this->request->post['api_url'],"/").'/' : '';
+            $this->request->post['api_url'] = '';
+            if(filter_var($url, FILTER_VALIDATE_URL)){
+                $this->request->post['api_url'] = $url;
+            }
             $this->model_extension_module_onecode_shopflix_config->save($this->request->post, $moduleId);
             $this->session->data['success'] = $this->language->get('text_success');
             $this->response->redirect(

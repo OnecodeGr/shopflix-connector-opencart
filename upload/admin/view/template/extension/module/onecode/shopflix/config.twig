@@ -3,7 +3,7 @@
     <div class="page-header">
         <div class="container-fluid">
             <div class="pull-right">
-                <button type="submit" form="form-module" data-toggle="tooltip"
+                <button type="submit" form="form-module" data-toggle="tooltip" id="form-submit"
                         title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i>
                 </button>
                 <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}"
@@ -34,9 +34,9 @@
                         <legend>{{ entry_api_configuration }}</legend>
                         <div class="form-group">
                             <label class="col-sm-2 control-label"
-                                   for="input-status">{{ entry_status }}</label>
+                                   for="input-status">{{ entry_status }} *</label>
                             <div class="col-sm-10">
-                                <select name="status" id="input-status" class="form-control">
+                                <select name="status" id="input-status" class="form-control" required>
                                     {% if status %}
                                         <option value="1"
                                                 selected="selected">{{ text_enabled }}</option>
@@ -51,10 +51,10 @@
                         </div>
                         <div class="form-group">
                             <label class="col-sm-2 control-label"
-                                   for="input-convert_to_order">{{ entry_convert_to_order }}</label>
+                                   for="input-convert_to_order">{{ entry_convert_to_order }} *</label>
                             <div class="col-sm-4">
                                 <select name="convert_to_order" id="input-convert_to_order"
-                                        class="form-control">
+                                        class="form-control"  required>
                                     {% if convert_to_order %}
                                         <option value="1"
                                                 selected="selected">{{ text_enabled }}</option>
@@ -67,10 +67,10 @@
                                 </select>
                             </div>
                             <label class="col-sm-2 control-label"
-                                   for="input-auto_accept_order">{{ entry_auto_accept_order }}</label>
+                                   for="input-auto_accept_order">{{ entry_auto_accept_order }} *</label>
                             <div class="col-sm-4">
                                 <select name="auto_accept_order" id="input-auto_accept_order"
-                                        class="form-control">
+                                        class="form-control" required>
                                     {% if auto_accept_order %}
                                         <option value="1"
                                                 selected="selected">{{ text_enabled }}</option>
@@ -88,26 +88,26 @@
                         <legend>{{ text_api_configuration }}</legend>
                         <div class="form-group">
                             <label class="col-sm-2 control-label"
-                                   for="input-api_url">{{ entry_api_url }}</label>
+                                   for="input-api_url">{{ entry_api_url }} *</label>
                             <div class="col-sm-10">
-                                <input type="text" name="api_url"
+                                <input type="url" name="api_url"
                                        value="{{ api_url }}"
                                        placeholder="{{ entry_api_url }}" id="input-api_url"
-                                       class="form-control" autocomplete="off"/>
+                                       class="form-control" autocomplete="off"  required/>
                             </div>
                         </div>
                         <div class="form-group">
                             <label class="col-sm-2 control-label"
-                                   for="input-api_username">{{ entry_api_username }}</label>
+                                   for="input-api_username">{{ entry_api_username }} *</label>
                             <div class="col-sm-4">
                                 <input type="text" name="api_username"
                                        value="{{ api_username }}"
                                        placeholder="{{ entry_api_username }}"
                                        id="input-api_username"
-                                       class="form-control" autocomplete="off"/>
+                                       class="form-control" autocomplete="off"  required/>
                             </div>
                             <label class="col-sm-2 control-label"
-                                   for="input-api_password">{{ entry_api_password }}</label>
+                                   for="input-api_password">{{ entry_api_password }} *</label>
                             <div class="col-sm-4">
                                 <input type="text" name="api_password"
                                        value="{{ api_password }}"
@@ -206,13 +206,13 @@
                         </div>
                         <div class="form-group">
                             <label class="col-sm-2 control-label"
-                                   for="input-xml_token">{{ entry_xml_token }}</label>
+                                   for="input-xml_token">{{ entry_xml_token }} *</label>
                             <div class="col-sm-10">
                                 <input type="text" name="xml_token"
                                        value="{{ xml_token }}"
                                        placeholder="{{ entry_xml_token }}"
                                        id="input-xml_token"
-                                       class="form-control" autocomplete="off"/>
+                                       class="form-control" autocomplete="off" required/>
                             </div>
                         </div>
                         <div class="form-group">
@@ -399,8 +399,16 @@
         </div>
     </div>
 </div>
-<script type="text/javascript"><!--
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+<script type="text/javascript">
     $(document).ready(function () {
+
+        $("#form-module").submit(function(e){
+            if(!$("#form-module").valid()){
+                e.preventDefault()
+            }
+        });
+
         $('select[data-display]').on('click', function (){
             var _this = $(this)
             var target = $(_this.attr('data-display'))
