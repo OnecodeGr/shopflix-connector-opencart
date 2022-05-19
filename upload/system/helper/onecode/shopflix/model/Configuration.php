@@ -61,7 +61,11 @@ class Configuration extends Model
             return '';
         }
         $data = $this->loadData();
-        return $data['api_url'] ?? '';
+        $url = $data['api_url'] ? rtrim($data['api_url'],"/").'/' : '';
+        if(filter_var($url, FILTER_VALIDATE_URL)){
+            return $url;
+        }
+        return  '';
     }
 
     public function apiUsername(): string

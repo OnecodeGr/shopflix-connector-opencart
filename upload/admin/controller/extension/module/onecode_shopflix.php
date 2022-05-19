@@ -30,6 +30,13 @@ require_once DIR_SYSTEM . 'library/onecode/EventGroup.php';
  */
 class ControllerExtensionModuleOnecodeShopflix extends Controller
 {
+    const VOUCHER_TYPE_PDF = 'pdf';
+    const VOUCHER_TYPE_CLEAN = 'clean';
+    const VOUCHER_TYPE_SINGLE_PDF = 'singlepdf';
+    const VOUCHER_TYPE_SINGLE_CLEAN = 'singleclean';
+    const VOUCHER_TYPE_SINGLE_PDF_150 = 'singlepdf_100x150';
+    const VOUCHER_TYPE_SINGLE_PDF_170 = 'singlepdf_100x170';
+
     private $error = [];
 
     public function __construct($registry)
@@ -167,6 +174,11 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->document->setTitle($this->language->get('heading_title_main'));
         if ($this->request->server['REQUEST_METHOD'] == 'POST')
         {
+            $url = $this->request->post['api_url'] ? rtrim($this->request->post['api_url'],"/").'/' : '';
+            $this->request->post['api_url'] = '';
+            if(filter_var($url, FILTER_VALIDATE_URL)){
+                $this->request->post['api_url'] = $url;
+            }
             $this->model_extension_module_onecode_shopflix_config->save($this->request->post, $moduleId);
             $this->session->data['success'] = $this->language->get('text_success');
             $this->response->redirect(
@@ -198,6 +210,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             'error_keyword' => $this->error['error_keyword'] ?? '',
             'error_status' => $this->error['error_status'] ?? '',
             'error_convert_to_order' => $this->error['error_convert_to_order'] ?? '',
+            'error_shipment_pdf_type' => $this->error['error_shipment_pdf_type'] ?? '',
             'error_customer_group' => $this->error['error_customer_group'] ?? '',
             'error_api_url' => $this->error['error_api_url'] ?? '',
             'error_api_username' => $this->error['error_api_username'] ?? '',
@@ -260,6 +273,14 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             ], true),
             'user_token' => $user_token,
             'payment_methods' => $payment_methods,
+            'voucher_pdf_types' => [
+                ['id' => self::VOUCHER_TYPE_PDF, 'name' => $this->language->get('text_pdf')],
+                ['id' => self::VOUCHER_TYPE_CLEAN, 'name' => $this->language->get('text_clean')],
+                ['id' => self::VOUCHER_TYPE_SINGLE_PDF, 'name' => $this->language->get('text_single_pdf')],
+                ['id' => self::VOUCHER_TYPE_SINGLE_CLEAN, 'name' => $this->language->get('text_single_clean')],
+                ['id' => self::VOUCHER_TYPE_SINGLE_PDF_150, 'name' => $this->language->get('text_single_pdf_150')],
+                ['id' => self::VOUCHER_TYPE_SINGLE_PDF_170, 'name' => $this->language->get('text_single_pdf_170')],
+            ],
             'shipping_methods' => $shipping_methods,
             'customer_groups' => $customer_groups,
             'product_attributes' => $attributes
