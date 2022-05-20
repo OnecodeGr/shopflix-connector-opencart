@@ -5,6 +5,7 @@ use Onecode\Shopflix\Helper;
 require_once DIR_SYSTEM . 'library/onecode/EventGroup.php';
 
 /**
+ * @property-read \DB $db
  * @property-read \Document $document
  * @property-read \Request $request
  * @property-read \Session $session
@@ -63,15 +64,12 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
     public function index()
     {
         $moduleId = $this->request->get['module_id'] ?? null;
-        if ($moduleId)
-        {
+        if ($moduleId) {
             $this->patch_1_2_3();
             $this->patch_1_3_0();
             $this->patch_1_3_3();
             $this->moduleConfigure($moduleId);
-        }
-        else
-        {
+        } else {
             $module = $this->configHelper->getCurrentModule();
             $this->response->redirect(
                 $this->url->link(
@@ -79,13 +77,18 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                     [
                         'user_token' => $this->session->data['user_token'],
                         'module_id' => $module['module_id'],
-                    ], true
-                ));
+                    ],
+                    true
+                )
+            );
         }
     }
 
     public function install()
     {
+        $max_execution_time = ini_get('max_execution_time');
+        ini_set('max_execution_time', '0');
+        $this->db->query('START TRANSACTION;');
         $this->model_extension_module_onecode_shopflix_product_attributes->install();
         $this->model_extension_module_onecode_shopflix_config->install();
         $this->model_extension_module_onecode_shopflix_event->install();
@@ -95,10 +98,15 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->patch_1_2_3();
         $this->patch_1_3_0();
         $this->patch_1_3_3();
+        $this->db->query('COMMIT;');
+        ini_set('max_execution_time', $max_execution_time);
     }
 
     public function uninstall()
     {
+        $max_execution_time = ini_get('max_execution_time');
+        ini_set('max_execution_time', '0');
+        $this->db->query('START TRANSACTION;');
         $this->model_extension_module_onecode_shopflix_return_order->uninstall();
         $this->model_extension_module_onecode_shopflix_product_attributes->uninstall();
         $this->model_extension_module_onecode_shopflix_config->uninstall();
@@ -108,19 +116,19 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $this->model_extension_module_onecode_shopflix_order_invoice->uninstall();
         $this->model_extension_module_onecode_shopflix_order->uninstall();
         $this->configHelper->updateLatestPatch('0_0_0');
+        $this->db->query('COMMIT;');
+        ini_set('max_execution_time', $max_execution_time);
     }
 
     private function patch_1_2_3()
     {
         $latest_patch = $this->configHelper->getLatestPatch();
         $need_to_run = is_null($latest_patch);
-        if (! $need_to_run)
-        {
+        if (! $need_to_run) {
             $latest_patch = explode('_', $latest_patch);
             $need_to_run = ($latest_patch[0] <= 1 && $latest_patch[1] <= 2 && $latest_patch[2] < 3);
         }
-        if ($need_to_run)
-        {
+        if ($need_to_run) {
             $this->model_extension_module_onecode_shopflix_product->update1_2_3();
             $this->model_extension_module_onecode_shopflix_order->update1_2_3();
             $this->model_extension_module_onecode_shopflix_shipment->update1_2_3();
@@ -128,33 +136,31 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         }
     }
 
-    private function patch_1_3_0(){
+    private function patch_1_3_0()
+    {
         $latest_patch = $this->configHelper->getLatestPatch();
         $need_to_run = is_null($latest_patch);
 
-        if (! $need_to_run)
-        {
+        if (! $need_to_run) {
             $latest_patch = explode('_', $latest_patch);
             $need_to_run = ($latest_patch[0] <= 1 && $latest_patch[1] <= 3);
         }
-        if ($need_to_run)
-        {
+        if ($need_to_run) {
             $this->model_extension_module_onecode_shopflix_order_invoice->install();
             $this->configHelper->updateLatestPatch('1_3_0');
         }
     }
 
-    private function patch_1_3_3(){
+    private function patch_1_3_3()
+    {
         $latest_patch = $this->configHelper->getLatestPatch();
         $need_to_run = is_null($latest_patch);
 
-        if (! $need_to_run)
-        {
+        if (! $need_to_run) {
             $latest_patch = explode('_', $latest_patch);
             $need_to_run = ($latest_patch[0] <= 1 && $latest_patch[1] <= 3 && $latest_patch[2] < 3);
         }
-        if ($need_to_run)
-        {
+        if ($need_to_run) {
             $this->model_extension_module_onecode_shopflix_return_order->install();
             $this->configHelper->updateLatestPatch('1_3_3');
         }
@@ -162,8 +168,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
 
     public function validate(): bool
     {
-        if (! $this->user->hasPermission('modify', 'extension/module/onecode/shopflix/onecode_shopflix'))
-        {
+        if (! $this->user->hasPermission('modify', 'extension/module/onecode/shopflix/onecode_shopflix')) {
             $this->error['warning'] = $this->language->get('error_permission');
         }
         return ! $this->error;
@@ -172,11 +177,10 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
     protected function moduleConfigure($moduleId)
     {
         $this->document->setTitle($this->language->get('heading_title_main'));
-        if ($this->request->server['REQUEST_METHOD'] == 'POST')
-        {
-            $url = $this->request->post['api_url'] ? rtrim($this->request->post['api_url'],"/").'/' : '';
+        if ($this->request->server['REQUEST_METHOD'] == 'POST') {
+            $url = $this->request->post['api_url'] ? rtrim($this->request->post['api_url'], "/") . '/' : '';
             $this->request->post['api_url'] = '';
-            if(filter_var($url, FILTER_VALIDATE_URL)){
+            if (filter_var($url, FILTER_VALIDATE_URL)) {
                 $this->request->post['api_url'] = $url;
             }
             $this->model_extension_module_onecode_shopflix_config->save($this->request->post, $moduleId);
@@ -185,7 +189,8 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                 $this->url->link(Helper\BasicHelper::getMainLink(), [
                     'user_token' => $this->session->data['user_token'],
                     'module_id' => $moduleId,
-                ], true));
+                ], true)
+            );
         }
 
         $data = array_merge([], $this->formBreadcrumbs());
@@ -195,7 +200,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $data['header'] = $this->load->controller('common/header');
         $data['footer'] = $this->load->controller('common/footer');
         $data['column_left'] = $this->load->controller('common/column_left');
-        $this->response->setOutput($this->load->view(Helper\BasicHelper::getPath().'/config', $data));
+        $this->response->setOutput($this->load->view(Helper\BasicHelper::getPath() . '/config', $data));
     }
 
     /**
@@ -283,7 +288,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
             ],
             'shipping_methods' => $shipping_methods,
             'customer_groups' => $customer_groups,
-            'product_attributes' => $attributes
+            'product_attributes' => $attributes,
         ], $this->model_extension_module_onecode_shopflix_config->loadData());
     }
 
@@ -314,17 +319,16 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $module_id = key_exists('module_id', $module) ? $module['module_id'] : 0;
         $url_params = [
             'user_token' => $this->session->data['user_token'],
-            'module_id' => $module_id
+            'module_id' => $module_id,
         ];
-        if ($this->user->hasPermission('access', Helper\BasicHelper::getMainLink()))
-        {
+        if ($this->user->hasPermission('access', Helper\BasicHelper::getMainLink())) {
             $shopflix_menu[] = [
                 'name' => $this->language->get('text_Configuration'),
                 'href' => $this->url->link(
                     Helper\BasicHelper::getMainLink(),
                     $url_params,
                     true
-                )
+                ),
             ];
             $shopflix_menu[] = [
                 'name' => $this->language->get('text_Products'),
@@ -332,7 +336,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                     'extension/module/onecode/shopflix/product',
                     $url_params,
                     true
-                )
+                ),
             ];
             $shopflix_menu[] = [
                 'name' => $this->language->get('text_Orders'),
@@ -340,7 +344,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                     'extension/module/onecode/shopflix/order',
                     $url_params,
                     true
-                )
+                ),
             ];
             $shopflix_menu[] = [
                 'name' => $this->language->get('text_Return_Orders'),
@@ -348,7 +352,7 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                     'extension/module/onecode/shopflix/return_order',
                     $url_params,
                     true
-                )
+                ),
             ];
             $shopflix_menu[] = [
                 'name' => $this->language->get('text_Shipments'),
@@ -356,17 +360,15 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                     'extension/module/onecode/shopflix/shipment',
                     $url_params,
                     true
-                )
+                ),
             ];
         }
-        if (count($shopflix_menu))
-        {
+        if (count($shopflix_menu)) {
             $exists = array_filter($data['menus'], function ($menu) {
                 return $menu['id'] === 'menu-onecdoe';
             });
 
-            if (count($exists) == 0)
-            {
+            if (count($exists) == 0) {
                 $data['menus'][] = [
                     'id' => 'menu-onecdoe',
                     'icon' => 'fa-braille',
@@ -376,10 +378,8 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
                 ];
             }
 
-            foreach ($data['menus'] as &$menu)
-            {
-                if ($menu['id'] === 'menu-onecdoe')
-                {
+            foreach ($data['menus'] as &$menu) {
+                if ($menu['id'] === 'menu-onecdoe') {
                     $menu['children'][] = [
                         'id' => 'menu-onecdoe-shopflix',
                         'icon' => 'fa-cog',
@@ -397,11 +397,11 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $extensions = $this->model_setting_extension->getInstalled('payment');
 
         foreach ($extensions as $key => $value) {
-            if (!is_file(DIR_APPLICATION . 'controller/extension/payment/' . $value . '.php') &&
-                !is_file(DIR_APPLICATION . 'controller/payment/' . $value . '.php')) {
+            if (! is_file(DIR_APPLICATION . 'controller/extension/payment/' . $value . '.php') &&
+                ! is_file(DIR_APPLICATION . 'controller/payment/' . $value . '.php')) {
                 unset($extensions[$key]);
             }
-            if(!$this->config->get('payment_' . $value . '_status')){
+            if (! $this->config->get('payment_' . $value . '_status')) {
                 unset($extensions[$key]);
             }
         }
@@ -413,11 +413,11 @@ class ControllerExtensionModuleOnecodeShopflix extends Controller
         $extensions = $this->model_setting_extension->getInstalled('shipping');
 
         foreach ($extensions as $key => $value) {
-            if (!is_file(DIR_APPLICATION . 'controller/extension/shipping/' . $value . '.php') &&
-                !is_file(DIR_APPLICATION . 'controller/shipping/' . $value . '.php')) {
+            if (! is_file(DIR_APPLICATION . 'controller/extension/shipping/' . $value . '.php') &&
+                ! is_file(DIR_APPLICATION . 'controller/shipping/' . $value . '.php')) {
                 unset($extensions[$key]);
             }
-            if(!$this->config->get('shipping_' . $value . '_status')){
+            if (! $this->config->get('shipping_' . $value . '_status')) {
                 unset($extensions[$key]);
             }
         }
