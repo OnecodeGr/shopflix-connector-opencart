@@ -10,6 +10,6 @@
   "require": {
     "php": ">=7.1, <=7.2",
     "ext-json": "*",
-    "onecode/shopflix-connector-library": "0.0.1"
+    "onecode/shopflix-connector-library": "0.0.2"
   }
 }
