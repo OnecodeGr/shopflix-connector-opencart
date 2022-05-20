@@ -6,6 +6,7 @@ $_['heading_title_main'] = 'OneCodeGr - ShopFLix';
 //Text
 $_['text_success'] = 'Success: You have modified `OneCodeGr - ShopFlix` module!';
 $_['text_edit'] = 'Edit';
+$_['text_sync'] = 'Sync';
 $_['text_enabled'] = 'Enabled';
 $_['text_disabled'] = 'Disabled';
 $_['text_filter'] = 'Filters';
@@ -48,3 +49,4 @@ $_['button_enable_all'] = 'Enable All';
 $_['button_disable_all'] = 'Disable All';
 $_['button_enable'] = 'Enable';
 $_['button_disable'] = 'Disable';
+$_['button_sync'] = 'Sync';

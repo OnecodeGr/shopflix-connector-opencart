@@ -64,23 +64,155 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
 
     public function enableAll()
     {
-        //clear data from table
-        $this->model_extension_module_onecode_shopflix_product->clearAll();
-        //fetch all products
-        $products = $this->model_catalog_product->getProducts(['filter_status' => 1]);
-        //store all product to shopflix table
-        $this->model_extension_module_onecode_shopflix_product->enable(array_column($products, 'product_id'));
+        $filter_manufacturer = (isset($this->request->get['filter_manufacturer'])) ? $this->request->get['filter_manufacturer'] : '';
+        $filter_category = (isset($this->request->get['filter_category'])) ? $this->request->get['filter_category'] : '';
+        $filter_name = (isset($this->request->get['filter_name'])) ? $this->request->get['filter_name'] : '';
+        $filter_model = (isset($this->request->get['filter_model'])) ? $this->request->get['filter_model'] : '';
+        $filter_status = (isset($this->request->get['filter_status'])) ? $this->request->get['filter_status'] : '';
+        $filter_enabled = (isset($this->request->get['filter_enabled'])) ? $this->request->get['filter_enabled'] : '';
+
+        $sort = (isset($this->request->get['sort'])) ? $this->request->get['sort'] : 'p.id';
+        $order = (isset($this->request->get['order'])) ? $this->request->get['order'] : 'DESC';
+        $page = max((isset($this->request->get['page'])) ? (int)$this->request->get['page'] : 1, 1);
+
+        $user_token = $this->session->data['user_token'];
+        $url_params = [];
+        $url_params['user_token'] = $user_token;
+        $url_params['order'] = $order;
+        $url_params['page'] = $page;
+
+        if ($filter_name != '') {
+            $url_params['filter_name'] = urlencode(html_entity_decode($filter_name, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($filter_status != '') {
+            $url_params['filter_status'] = $filter_status;
+        }
+        if ($filter_manufacturer != '') {
+            $url_params['filter_manufacturer'] = $filter_manufacturer;
+        }
+        if ($filter_category != '') {
+            $url_params['filter_category'] = $filter_category;
+        }
+        if ($filter_model != '') {
+            $url_params['filter_model'] = urlencode(html_entity_decode($filter_model, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($filter_enabled != '') {
+            $url_params['filter_enabled'] = $filter_enabled;
+        }
+
+        $filter_data = [
+            'filter_name' => $filter_name,
+            'filter_model' => $filter_model,
+            'filter_manufacturer' => $filter_manufacturer,
+            'filter_category' => $filter_category,
+            'filter_status' => 1,
+            'sort' => $sort,
+            'order' => $order,
+        ];
+
+        $results = $this->product_model->getAllProducts($filter_data);
+
+        $ids = [];
+        if (count($results)) {
+            $ids = array_column($results, 'product_id');
+        }
+        $this->model_extension_module_onecode_shopflix_product->clear($ids);
+        $this->model_extension_module_onecode_shopflix_product->enable($ids);
         $this->response->redirect(
             $this->url->link(
                 $this->getLink(),
-                [
-                    'user_token' => $this->session->data['user_token'],
-                ], true
-            ));
+                http_build_query($url_params),
+                true
+            )
+        );
+    }
+
+    public function syncAll()
+    {
+        $filter_manufacturer = (isset($this->request->get['filter_manufacturer'])) ? $this->request->get['filter_manufacturer'] : '';
+        $filter_category = (isset($this->request->get['filter_category'])) ? $this->request->get['filter_category'] : '';
+        $filter_name = (isset($this->request->get['filter_name'])) ? $this->request->get['filter_name'] : '';
+        $filter_model = (isset($this->request->get['filter_model'])) ? $this->request->get['filter_model'] : '';
+        $filter_status = (isset($this->request->get['filter_status'])) ? $this->request->get['filter_status'] : '';
+        $filter_enabled = (isset($this->request->get['filter_enabled'])) ? $this->request->get['filter_enabled'] : '';
+
+        $sort = (isset($this->request->get['sort'])) ? $this->request->get['sort'] : 'p.id';
+        $order = (isset($this->request->get['order'])) ? $this->request->get['order'] : 'DESC';
+        $page = max((isset($this->request->get['page'])) ? (int)$this->request->get['page'] : 1, 1);
+
+        $user_token = $this->session->data['user_token'];
+        $url_params = [];
+        $url_params['user_token'] = $user_token;
+        $url_params['order'] = $order;
+        $url_params['page'] = $page;
+
+        if ($filter_name != '') {
+            $url_params['filter_name'] = urlencode(html_entity_decode($filter_name, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($filter_status != '') {
+            $url_params['filter_status'] = $filter_status;
+        }
+        if ($filter_manufacturer != '') {
+            $url_params['filter_manufacturer'] = $filter_manufacturer;
+        }
+        if ($filter_category != '') {
+            $url_params['filter_category'] = $filter_category;
+        }
+        if ($filter_model != '') {
+            $url_params['filter_model'] = urlencode(html_entity_decode($filter_model, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($filter_enabled != '') {
+            $url_params['filter_enabled'] = $filter_enabled;
+        }
+
+        $this->model_extension_module_onecode_shopflix_product->sync();
+        $this->response->redirect(
+            $this->url->link(
+                $this->getLink(),
+                http_build_query($url_params),
+                true
+            )
+        );
     }
 
     public function enable()
     {
+        $filter_manufacturer = (isset($this->request->get['filter_manufacturer'])) ? $this->request->get['filter_manufacturer'] : '';
+        $filter_category = (isset($this->request->get['filter_category'])) ? $this->request->get['filter_category'] : '';
+        $filter_name = (isset($this->request->get['filter_name'])) ? $this->request->get['filter_name'] : '';
+        $filter_model = (isset($this->request->get['filter_model'])) ? $this->request->get['filter_model'] : '';
+        $filter_status = (isset($this->request->get['filter_status'])) ? $this->request->get['filter_status'] : '';
+        $filter_enabled = (isset($this->request->get['filter_enabled'])) ? $this->request->get['filter_enabled'] : '';
+
+        $sort = (isset($this->request->get['sort'])) ? $this->request->get['sort'] : 'p.id';
+        $order = (isset($this->request->get['order'])) ? $this->request->get['order'] : 'DESC';
+        $page = max((isset($this->request->get['page'])) ? (int)$this->request->get['page'] : 1, 1);
+
+        $user_token = $this->session->data['user_token'];
+        $url_params = [];
+        $url_params['user_token'] = $user_token;
+        $url_params['order'] = $order;
+        $url_params['page'] = $page;
+
+        if ($filter_name != '') {
+            $url_params['filter_name'] = urlencode(html_entity_decode($filter_name, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($filter_status != '') {
+            $url_params['filter_status'] = $filter_status;
+        }
+        if ($filter_manufacturer != '') {
+            $url_params['filter_manufacturer'] = $filter_manufacturer;
+        }
+        if ($filter_category != '') {
+            $url_params['filter_category'] = $filter_category;
+        }
+        if ($filter_model != '') {
+            $url_params['filter_model'] = urlencode(html_entity_decode($filter_model, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($filter_enabled != '') {
+            $url_params['filter_enabled'] = $filter_enabled;
+        }
+
         if (isset($this->request->post['selected']))
         {
             $id_list = $this->request->post['selected'];
@@ -89,26 +221,113 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
         $this->response->redirect(
             $this->url->link(
                 $this->getLink(),
-                [
-                    'user_token' => $this->session->data['user_token'],
-                ], true
-            ));
+                http_build_query($url_params),
+                true
+            )
+        );
     }
 
     public function disableAll()
     {
-        $this->model_extension_module_onecode_shopflix_product->clearAll();
+        $filter_manufacturer = (isset($this->request->get['filter_manufacturer'])) ? $this->request->get['filter_manufacturer'] : '';
+        $filter_category = (isset($this->request->get['filter_category'])) ? $this->request->get['filter_category'] : '';
+        $filter_name = (isset($this->request->get['filter_name'])) ? $this->request->get['filter_name'] : '';
+        $filter_model = (isset($this->request->get['filter_model'])) ? $this->request->get['filter_model'] : '';
+        $filter_status = (isset($this->request->get['filter_status'])) ? $this->request->get['filter_status'] : '';
+        $filter_enabled = (isset($this->request->get['filter_enabled'])) ? $this->request->get['filter_enabled'] : '';
+
+        $sort = (isset($this->request->get['sort'])) ? $this->request->get['sort'] : 'p.id';
+        $order = (isset($this->request->get['order'])) ? $this->request->get['order'] : 'DESC';
+        $page = max((isset($this->request->get['page'])) ? (int)$this->request->get['page'] : 1, 1);
+
+        $user_token = $this->session->data['user_token'];
+        $url_params = [];
+        $url_params['user_token'] = $user_token;
+        $url_params['order'] = $order;
+        $url_params['page'] = $page;
+
+        if ($filter_name != '') {
+            $url_params['filter_name'] = urlencode(html_entity_decode($filter_name, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($filter_status != '') {
+            $url_params['filter_status'] = $filter_status;
+        }
+        if ($filter_manufacturer != '') {
+            $url_params['filter_manufacturer'] = $filter_manufacturer;
+        }
+        if ($filter_category != '') {
+            $url_params['filter_category'] = $filter_category;
+        }
+        if ($filter_model != '') {
+            $url_params['filter_model'] = urlencode(html_entity_decode($filter_model, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($filter_enabled != '') {
+            $url_params['filter_enabled'] = $filter_enabled;
+        }
+
+        $filter_data = [
+            'filter_name' => $filter_name,
+            'filter_model' => $filter_model,
+            'filter_manufacturer' => $filter_manufacturer,
+            'filter_category' => $filter_category,
+            'filter_status' => 1,
+            'sort' => $sort,
+            'order' => $order,
+        ];
+
+        $results = $this->product_model->getAllProducts($filter_data);
+        $ids = [];
+        if (count($results)) {
+            $ids = array_column($results, 'product_id');
+        }
+        $this->model_extension_module_onecode_shopflix_product->clear($ids);
         $this->response->redirect(
             $this->url->link(
                 $this->getLink(),
-                [
-                    'user_token' => $this->session->data['user_token'],
-                ], true
-            ));
+                http_build_query($url_params),
+                true
+            )
+        );
     }
 
     public function disable()
     {
+        $filter_manufacturer = (isset($this->request->get['filter_manufacturer'])) ? $this->request->get['filter_manufacturer'] : '';
+        $filter_category = (isset($this->request->get['filter_category'])) ? $this->request->get['filter_category'] : '';
+        $filter_name = (isset($this->request->get['filter_name'])) ? $this->request->get['filter_name'] : '';
+        $filter_model = (isset($this->request->get['filter_model'])) ? $this->request->get['filter_model'] : '';
+        $filter_status = (isset($this->request->get['filter_status'])) ? $this->request->get['filter_status'] : '';
+        $filter_enabled = (isset($this->request->get['filter_enabled'])) ? $this->request->get['filter_enabled'] : '';
+
+        $sort = (isset($this->request->get['sort'])) ? $this->request->get['sort'] : 'p.id';
+        $order = (isset($this->request->get['order'])) ? $this->request->get['order'] : 'DESC';
+        $page = max((isset($this->request->get['page'])) ? (int)$this->request->get['page'] : 1, 1);
+
+        $user_token = $this->session->data['user_token'];
+        $url_params = [];
+        $url_params['user_token'] = $user_token;
+        $url_params['order'] = $order;
+        $url_params['page'] = $page;
+
+        if ($filter_name != '') {
+            $url_params['filter_name'] = urlencode(html_entity_decode($filter_name, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($filter_status != '') {
+            $url_params['filter_status'] = $filter_status;
+        }
+        if ($filter_manufacturer != '') {
+            $url_params['filter_manufacturer'] = $filter_manufacturer;
+        }
+        if ($filter_category != '') {
+            $url_params['filter_category'] = $filter_category;
+        }
+        if ($filter_model != '') {
+            $url_params['filter_model'] = urlencode(html_entity_decode($filter_model, ENT_QUOTES, 'UTF-8'));
+        }
+        if ($filter_enabled != '') {
+            $url_params['filter_enabled'] = $filter_enabled;
+        }
+
         $id_list = key_exists('selected', $this->request->post) ? $this->request->post['selected'] : [];
         if (count($id_list))
         {
@@ -117,10 +336,10 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
         $this->response->redirect(
             $this->url->link(
                 $this->getLink(),
-                [
-                    'user_token' => $this->session->data['user_token'],
-                ], true
-            ));
+                http_build_query($url_params),
+                true
+            )
+        );
     }
 
     protected function getList()
@@ -183,6 +402,7 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
         $data['enable'] = $this->url->link($this->getLink() . '/enable', http_build_query($url_params), true);
         $data['disable_all'] = $this->url->link($this->getLink() . '/disableAll', http_build_query($url_params), true);
         $data['disable'] = $this->url->link($this->getLink() . '/disable', http_build_query($url_params), true);
+        $data['sync'] = $this->url->link($this->getLink() . '/syncAll', http_build_query($url_params), true);
 
         $data['products'] = [];
 
@@ -217,7 +437,9 @@ class ControllerExtensionModuleOnecodeShopflixProduct extends Controller
                 'categories' => $categories,
                 'model' => $result['model'],
                 'status' => $result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled'),
-                'enabled' => $result['enabled'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled')
+                'enabled' => $result['enabled'] ? $this->language->get('text_enabled') : $this->language->get(
+                    'text_disabled'
+                ),
             ];
         }
 

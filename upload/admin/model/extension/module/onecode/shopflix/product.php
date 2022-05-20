@@ -22,11 +22,10 @@ class ModelExtensionModuleOnecodeShopflixProduct extends Helper\Model\Product
     {
         $this->createTable();
         $this->update1_2_3();
-        $products = $this->model_catalog_product->getProducts(['filter_status' => 1]);
-        if (count($products))
-        {
-            $this->enable(array_column($products, 'product_id'));
-        }
+        //$products = $this->model_catalog_product->getProducts(['filter_status' => 1]);
+        //if (count($products)) {
+        //    $this->enable(array_column($products, 'product_id'));
+        //}
     }
 
     public function uninstall()
@@ -36,7 +35,20 @@ class ModelExtensionModuleOnecodeShopflixProduct extends Helper\Model\Product
 
     public function update1_2_3()
     {
-        $this->db->query(sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getTableName()));
+        $this->db->query(
+            sprintf('alter table %s convert to character set utf8 collate utf8_general_ci;', self::getTableName())
+        );
+    }
+
+    public function clear(array $ids)
+    {
+        $this->db->query(
+            sprintf(
+                "DELETE FROM  %s WHERE product_id IN (%s)",
+                self::getTableName(),
+                implode(',', $ids)
+            )
+        );
     }
 
     public function clearAll()
@@ -44,15 +56,41 @@ class ModelExtensionModuleOnecodeShopflixProduct extends Helper\Model\Product
         $this->db->query(sprintf("TRUNCATE TABLE %s", self::getTableName()));
     }
 
+    public function sync()
+    {
+        $query = $this->db->query(
+            sprintf(
+                "SELECT p.product_id id FROM %sproduct p  
+                        LEFT JOIN %s sp ON sp.product_id = p.product_id
+                        WHERE p.status = 1 AND sp.product_id IS NULL"
+                ,
+                DB_PREFIX,
+                self::getTableName()
+            )
+        );
+
+        if (count($query->rows)) {
+            $this->enable(array_column($query->rows, 'id'));
+        }
+    }
+
     public function enable(array $ids)
     {
         $query = $this->db->query(sprintf("SELECT product_id FROM %s", self::getTableName()));
         $stored_ids = array_column($query->rows, 'product_id');
         $news = array_diff($ids, $stored_ids);
-        array_walk($news, function ($id) {
-            $this->db->query(sprintf("INSERT INTO %s (`product_id`,`status`) VALUES (%d, 1)", self::getTableName(),
-                $id));
+        $query_insert = sprintf("INSERT INTO %s (`product_id`,`status`) VALUES ", self::getTableName());
+        $query_values = [];
+        array_walk($news, function ($id) use (&$query_values) {
+            $query_values[] = sprintf("(%d, 1)", $id);
         });
+
+        if (count($query_values)) {
+            $chunks = array_chunk($query_values, 1000);
+            foreach ($chunks as $chunk) {
+                $this->db->query(sprintf("%s %s", $query_insert, implode(',', $chunk)));
+            }
+        }
     }
 
     public function disable(array $ids)
@@ -60,8 +98,13 @@ class ModelExtensionModuleOnecodeShopflixProduct extends Helper\Model\Product
         $query = $this->db->query(sprintf("SELECT product_id FROM %s", self::getTableName()));
         $stored_ids = array_column($query->rows, 'product_id');
         $common = array_intersect($ids, $stored_ids);
-        $this->db->query(sprintf("DELETE FROM %s WHERE product_id in (%s)", self::getTableName(), implode(",",
-            $common)));
+        $this->db->query(
+            sprintf(
+                "DELETE FROM %s WHERE product_id in (%s)",
+                self::getTableName(),
+                implode(",", $common)
+            )
+        );
     }
 
     public function getCatalogProductBySku($sku): array

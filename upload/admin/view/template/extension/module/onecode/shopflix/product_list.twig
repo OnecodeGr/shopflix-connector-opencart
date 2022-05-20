@@ -7,6 +7,11 @@
                         onclick="$('#filter-product').toggleClass('hidden-sm hidden-xs');"
                         class="btn btn-default hidden-md hidden-lg"><i class="fa fa-filter"></i>
                 </button>
+                <button type="button" form="form-product" formaction="{{ sync }}"
+                        data-toggle="tooltip" title="{{ button_sync }}" class="btn btn-default"
+                        onclick="confirm('{{ text_confirm }}') ? $('#form-product').attr('action', $(this).attr('formaction')).submit() : false;">
+                    <i class="fa fa-refresh"></i></button>
+
                 <button type="button" form="form-product" formaction="{{ enable_all }}"
                         data-toggle="tooltip" title="{{ button_enable_all }}" class="btn btn-default"
                         onclick="confirm('{{ text_confirm }}') ? $('#form-product').attr('action', $(this).attr('formaction')).submit() : false;">
