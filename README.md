@@ -1,4 +1,6 @@
-# OneCodeGR - ShopFlix plugin [![GitHub version](https://badge.fury.io/gh/OnecodeGr%2Fshopflix-connector-opencart.svg)](https://badge.fury.io/gh/OnecodeGr%2Fshopflix-connector-opencart) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.md)
+# OneCodeGR - ShopFlix plugin
+
+[![GitHub version](https://badge.fury.io/gh/OnecodeGr%2Fshopflix-connector-opencart.svg)](https://badge.fury.io/gh/OnecodeGr%2Fshopflix-connector-opencart) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.md)
 
 This extension is connecting your OpenCart v3.0.3.x with [SHOPFLIX](https://SHOPFLIX.gr)
 
